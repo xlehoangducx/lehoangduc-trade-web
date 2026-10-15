@@ -1,8 +1,12 @@
-/* Modern Cyber Quant Theme - Inspired by kenzocoin.meme */
+/* ==========================================================================
+   NEXUS QUANT - Advanced Cyber Quantitative Terminal Theme
+   Optimized for High-DPI, Perfect Vietnamese Typography, and Glassmorphism
+   ========================================================================== */
+
 :root {
   --bg-primary: #07080d;
-  --bg-secondary: #0e111a;
-  --bg-card: rgba(14, 17, 26, 0.7);
+  --bg-secondary: #0b0e17;
+  --bg-card: rgba(11, 14, 23, 0.75);
   --border-color: rgba(255, 255, 255, 0.08);
   --accent-gold: #f59e0b;
   --accent-cyan: #06b6d4;
@@ -12,51 +16,85 @@
   --text-muted: #9ca3af;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   background-color: var(--bg-primary);
   color: var(--text-main);
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: -0.015em;
   margin: 0;
   padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
 }
 
 .mono-font {
   font-family: 'JetBrains Mono', monospace;
+  letter-spacing: -0.02em;
 }
 
 /* Background Radial Vignette */
 .bg-radial-vignette {
-  background: radial-gradient(circle at 50% 30%, rgba(245, 158, 11, 0.06) 0%, rgba(7, 8, 13, 0.95) 75%);
+  background: radial-gradient(circle at 50% 25%, rgba(245, 158, 11, 0.07) 0%, rgba(7, 8, 13, 0.95) 75%);
 }
 
-/* Kenzo Luxury Card */
+/* Luxury Cyber Glass Card */
 .kenzo-card {
   background: var(--bg-card);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1.5rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
 }
 
 .kenzo-card:hover {
-  border-color: rgba(245, 158, 11, 0.4);
+  border-color: rgba(245, 158, 11, 0.35);
   transform: translateY(-2px);
-  box-shadow: 0 10px 30px -10px rgba(245, 158, 11, 0.15);
+  box-shadow: 0 24px 48px -12px rgba(245, 158, 11, 0.12);
 }
 
-/* Stat Box (Kenzo big numbers) */
+/* Stat Box (Institutional Dashboard) */
 .kenzo-stat-card {
   background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 1.25rem;
-  backdrop-filter: blur(12px);
-  transition: all 0.3s ease;
+  backdrop-filter: blur(16px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.kenzo-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.3), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .kenzo-stat-card:hover {
   border-color: rgba(245, 158, 11, 0.3);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.035);
+  transform: translateY(-2px);
+}
+
+.kenzo-stat-card:hover::before {
+  opacity: 1;
 }
 
 /* Floating Pill Badges */
@@ -64,16 +102,17 @@ body {
   background: rgba(6, 182, 212, 0.1);
   border: 1px solid rgba(6, 182, 212, 0.3);
   color: #06b6d4;
-  padding: 0.2rem 0.6rem;
+  padding: 0.2rem 0.65rem;
   border-radius: 9999px;
   font-size: 10px;
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .pill-badge-gold {
   background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.4);
+  border: 1px solid rgba(245, 158, 11, 0.35);
   color: #f59e0b;
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
@@ -116,4 +155,49 @@ body {
   background: rgba(245, 158, 11, 0.15);
   border: 1px solid rgba(245, 158, 11, 0.4);
   color: #f59e0b;
+}
+
+/* Luxury Terminal Table Styling */
+.terminal-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px;
+}
+
+.terminal-table thead tr th {
+  padding: 0.75rem 1rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  font-family: 'JetBrains Mono', monospace;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.terminal-table tbody tr {
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.terminal-table tbody tr:hover {
+  background: rgba(245, 158, 11, 0.035);
+  border-color: rgba(245, 158, 11, 0.25);
+  transform: scale-[1.002];
+}
+
+.terminal-table tbody td {
+  padding: 0.9rem 1rem;
+  font-size: 0.825rem;
+}
+
+.terminal-table tbody tr td:first-child {
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+}
+
+.terminal-table tbody tr td:last-child {
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
 }

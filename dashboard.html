@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Quant AI Terminal Dashboard · Lê Hoàng Đức</title>
+  <title>NEXUS QUANT · Trading Terminal Dashboard</title>
   <meta name="theme-color" content="#07080d">
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -11,6 +11,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Three.js CDN (Meng To 3D Scrollytelling Architecture) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Custom Cyber Styles -->
@@ -18,8 +20,12 @@
 </head>
 <body class="bg-[#07080d] text-gray-100 min-h-screen flex flex-col justify-between selection:bg-amber-400 selection:text-black overflow-x-hidden relative font-['Be_Vietnam_Pro',sans-serif]">
 
-  <!-- Interactive Galaxy Canvas Background -->
-  <canvas id="galaxyCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-50"></canvas>
+  <!-- 3D Three.js Cyber Trading World (Meng To build-threejs-scroll-worlds) -->
+  <canvas id="threeWorldCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
+  
+  <!-- Interactive Trader Candlestick Trail Canvas (Meng To pointer-trail-emitter) -->
+  <canvas id="candleCursorCanvas" class="fixed inset-0 pointer-events-none z-20"></canvas>
+  
   <div class="fixed inset-0 bg-radial-vignette pointer-events-none z-0"></div>
 
   <!-- Loading Screen (Bảo mật: Che toàn bộ số liệu khi chưa xác thực xong) -->
@@ -36,7 +42,7 @@
       <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-4">
         <i data-lucide="clock" class="w-8 h-8 animate-pulse"></i>
       </div>
-      <h3 class="text-2xl font-bold text-white mb-2 font-['Syne']">Tài Khoản Đang Chờ Phê Duyệt</h3>
+      <h3 class="text-2xl font-bold text-white mb-2">Tài Khoản Đang Chờ Phê Duyệt</h3>
       <p class="text-sm text-gray-400 mb-6 leading-relaxed">
         Chào bạn! Hệ thống đã ghi nhận tài khoản Google. Vui lòng liên hệ <strong class="text-amber-400">Admin Lê Hoàng Đức</strong> để được cấp quyền vận hành Tool Trade Bot.
       </p>
@@ -55,21 +61,39 @@
     <!-- Header Nav -->
     <header class="border-b border-white/10 backdrop-blur-xl bg-[#07080d]/85 sticky top-0 z-40">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-          <a href="index.html" class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 via-yellow-500 to-cyan-500 p-[1.5px] shadow-lg shadow-amber-500/20">
-            <div class="w-full h-full bg-[#07080d] rounded-2xl flex items-center justify-center">
-              <i data-lucide="zap" class="w-5 h-5 text-amber-400"></i>
+        
+        <!-- Brand Logo (High-Tech Quantum Hex Prism) -->
+        <div class="flex items-center space-x-3.5">
+          <a href="index.html" class="relative w-10 h-10 flex items-center justify-center shrink-0 group">
+            <div class="absolute inset-0 bg-gradient-to-tr from-amber-400 via-cyan-400 to-emerald-400 rounded-2xl blur-md opacity-35 group-hover:opacity-60 transition-opacity"></div>
+            <div class="relative w-10 h-10 rounded-2xl bg-[#0b0e17] border border-white/15 p-2 flex items-center justify-center shadow-lg shadow-black/80">
+              <svg class="w-full h-full" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 2L28 9V23L16 30L4 23V9L16 2Z" stroke="url(#dashLogoGrad)" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M16 8L22 12V20L16 24L10 20V12L16 8Z" fill="url(#dashLogoInnerGrad)" fill-opacity="0.3" stroke="url(#dashLogoGrad)" stroke-width="1.5" stroke-linejoin="round"/>
+                <circle cx="16" cy="16" r="2.5" fill="#f59e0b"/>
+                <defs>
+                  <linearGradient id="dashLogoGrad" x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#f59e0b"/>
+                    <stop offset="0.5" stop-color="#06b6d4"/>
+                    <stop offset="1" stop-color="#10b981"/>
+                  </linearGradient>
+                  <linearGradient id="dashLogoInnerGrad" x1="10" y1="8" x2="22" y2="24" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#f59e0b"/>
+                    <stop offset="1" stop-color="#06b6d4"/>
+                  </linearGradient>
+                </defs>
+              </svg>
             </div>
           </a>
           <div>
             <div class="flex items-center space-x-2">
-              <span class="text-lg font-black tracking-wider text-white font-['Syne']">QUANT<span class="text-amber-400">.AI</span></span>
+              <span class="text-lg font-black tracking-wider text-white">NEXUS<span class="text-amber-400 font-extrabold">.QUANT</span></span>
               <span id="botHeartbeatBadge" class="pill-badge-gold">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block mr-1 animate-ping"></span>
                 <span id="botHeartbeatText">ONLINE (SYNC)</span>
               </span>
             </div>
-            <span class="text-[11px] text-gray-400 mono-font">BINANCE FUTURES • MULTI-STRATEGY ENSEMBLE</span>
+            <span class="text-[10px] text-gray-400 mono-font tracking-wide">BINANCE FUTURES • MULTI-STRATEGY ENSEMBLE</span>
           </div>
         </div>
 
@@ -270,9 +294,9 @@
         </div>
 
         <!-- Live Open Positions Table -->
-        <div class="kenzo-card p-6">
+        <div class="kenzo-card p-6 border-white/10">
           <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
-            <h3 class="text-base font-bold text-white flex items-center gap-2 font-['Syne']">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
               <i data-lucide="activity" class="w-5 h-5 text-amber-400"></i>
               <span>Vị Thế Đang Chạy Thời Gian Thực (Active Positions)</span>
             </h3>
@@ -280,20 +304,20 @@
           </div>
 
           <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm mono-font">
+            <table class="terminal-table">
               <thead>
-                <tr class="text-gray-400 border-b border-white/10 text-xs">
-                  <th class="py-3 px-4">CẶP GIAO DỊCH</th>
-                  <th class="py-3 px-4">CHIỀU</th>
-                  <th class="py-3 px-4">ĐÒN BẨY</th>
-                  <th class="py-3 px-4">GIÁ VÀO (ENTRY)</th>
-                  <th class="py-3 px-4">GIÁ HIỆN TẠI</th>
-                  <th class="py-3 px-4">KÝ QUỸ</th>
-                  <th class="py-3 px-4">PNL ƯỚC TÍNH</th>
-                  <th class="py-3 px-4 text-right">THAO TÁC</th>
+                <tr>
+                  <th>Cặp Giao Dịch</th>
+                  <th>Chiều</th>
+                  <th>Đòn Bẩy</th>
+                  <th>Giá Vào (Entry)</th>
+                  <th>Giá Hiện Tại</th>
+                  <th>Ký Quỹ</th>
+                  <th>PnL Ước Tính</th>
+                  <th class="text-right">Thao Tác</th>
                 </tr>
               </thead>
-              <tbody id="positionsTableBody" class="divide-y divide-white/5">
+              <tbody id="positionsTableBody">
                 <tr>
                   <td colspan="8" class="text-center py-8 text-gray-500">
                     <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
@@ -308,14 +332,21 @@
 
       <!-- ================= TAB 2: BÁO CÁO VỐN ================= -->
       <section id="tab-matrix" class="tab-content hidden space-y-8">
-        <div class="kenzo-card p-8">
-          <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-2 font-['Syne']">
-            <i data-lucide="shield-alert" class="w-6 h-6 text-amber-400"></i>
-            <span>Báo Cáo Quản Lý Vốn & Đòn Bẩy Định Lượng (40$ -> 10,000$)</span>
-          </h2>
-          <p class="text-sm text-gray-400 mb-8">
-            Kéo thanh trượt bên dưới để tính toán các chỉ số an toàn tương ứng với số vốn của bạn:
-          </p>
+        <div class="kenzo-card p-6 sm:p-10 border-amber-400/20">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-white/10 mb-6 gap-4">
+            <div>
+              <h2 class="text-xl sm:text-2xl font-black text-white flex items-center gap-2.5">
+                <i data-lucide="shield-alert" class="w-6 h-6 text-amber-400"></i>
+                <span>Báo Cáo Quản Lý Vốn & Đòn Bẩy Định Lượng (40$ -> 10,000$)</span>
+              </h2>
+              <p class="text-xs text-gray-400 mt-1">
+                Kéo thanh trượt mô phỏng hoặc đối chiếu bảng ma trận quy chuẩn bảo vệ tài khoản:
+              </p>
+            </div>
+            <div>
+              <span class="pill-badge-gold">QUY CHUẨN AN TOÀN CHUẨN ATR</span>
+            </div>
+          </div>
 
           <!-- Interactive Capital Calculator Slider -->
           <div class="p-6 bg-white/[0.03] rounded-2xl border border-white/10 mb-8">
@@ -346,6 +377,79 @@
                 <div id="calcLossPerTrade" class="text-xl font-bold text-rose-400 mono-font">4.50$ (1.5%)</div>
               </div>
             </div>
+          </div>
+
+          <!-- Full Terminal Capital Matrix Table -->
+          <div class="overflow-x-auto">
+            <table class="terminal-table">
+              <thead>
+                <tr>
+                  <th>Cột Mốc Vốn</th>
+                  <th>Đòn Bẩy Trần</th>
+                  <th>Số Lệnh Mở</th>
+                  <th>Ký Quỹ / Lệnh</th>
+                  <th>Khoảng Cách Cháy</th>
+                  <th>Đệm An Toàn SL</th>
+                  <th>Mức Lỗ SL / 1 Lệnh</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-white font-bold mono-font text-xs">40$ – 50$ (Hiện tại)</span></td>
+                  <td><span class="px-2.5 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/30 font-bold mono-font text-xs">8x – 10x</span></td>
+                  <td class="text-gray-300 mono-font text-xs">2 lệnh</td>
+                  <td class="text-gray-400 mono-font text-xs">~1.2$ – 1.6$</td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold mono-font text-xs">-10.0%</span></td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-bold mono-font text-xs">Gấp 3.0x SL</span></td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-bold mono-font text-xs">0.65$ (1.5%)</span></td>
+                </tr>
+                <tr>
+                  <td><span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-white font-bold mono-font text-xs">100$</span></td>
+                  <td><span class="px-2.5 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/30 font-bold mono-font text-xs">7x – 10x</span></td>
+                  <td class="text-gray-300 mono-font text-xs">2 – 3 lệnh</td>
+                  <td class="text-gray-400 mono-font text-xs">~2.5$ – 3.0$</td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold mono-font text-xs">-11.5%</span></td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-bold mono-font text-xs">Gấp 3.5x SL</span></td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-bold mono-font text-xs">1.50$ (1.5%)</span></td>
+                </tr>
+                <tr>
+                  <td><span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-white font-bold mono-font text-xs">300$</span></td>
+                  <td><span class="px-2.5 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/30 font-bold mono-font text-xs">7x – 8x</span></td>
+                  <td class="text-gray-300 mono-font text-xs">3 – 4 lệnh</td>
+                  <td class="text-gray-400 mono-font text-xs">~6.0$ – 7.5$</td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold mono-font text-xs">-13.0%</span></td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-bold mono-font text-xs">Gấp 4.0x SL</span></td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-bold mono-font text-xs">4.50$ (1.5%)</span></td>
+                </tr>
+                <tr>
+                  <td><span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-white font-bold mono-font text-xs">500$</span></td>
+                  <td><span class="px-2.5 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/30 font-bold mono-font text-xs">5x – 7x</span></td>
+                  <td class="text-gray-300 mono-font text-xs">4 lệnh</td>
+                  <td class="text-gray-400 mono-font text-xs">~10.0$ – 12.0$</td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold mono-font text-xs">-16.0%</span></td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-bold mono-font text-xs">Gấp 4.8x SL</span></td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-bold mono-font text-xs">7.50$ (1.5%)</span></td>
+                </tr>
+                <tr>
+                  <td><span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-white font-bold mono-font text-xs">1,000$</span></td>
+                  <td><span class="px-2.5 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/30 font-bold mono-font text-xs">5x – 6x</span></td>
+                  <td class="text-gray-300 mono-font text-xs">4 – 5 lệnh</td>
+                  <td class="text-gray-400 mono-font text-xs">~20.0$ – 25.0$</td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold mono-font text-xs">-18.0%</span></td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-bold mono-font text-xs">Gấp 5.5x SL</span></td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-bold mono-font text-xs">12.0$ (1.2%)</span></td>
+                </tr>
+                <tr class="bg-amber-400/[0.04] border-amber-400/30">
+                  <td><span class="px-3 py-1 rounded-lg bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black mono-font text-xs shadow-md shadow-amber-400/20">10,000$ (Cá Voi)</span></td>
+                  <td><span class="px-2.5 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 font-black mono-font text-xs">3x – 4x</span></td>
+                  <td class="text-white font-bold mono-font text-xs">5 – 6 lệnh</td>
+                  <td class="text-white font-semibold mono-font text-xs">~150$ – 180$</td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold mono-font text-xs">-28% – -32%</span></td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-200 border border-cyan-500/30 font-bold mono-font text-xs">Gấp 10.0x SL</span></td>
+                  <td><span class="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-200 border border-rose-500/30 font-bold mono-font text-xs">80.0$ (0.8%)</span></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -548,18 +652,18 @@
 
           <!-- Users Table -->
           <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm mono-font">
+            <table class="terminal-table">
               <thead>
-                <tr class="text-gray-400 border-b border-white/10 text-xs">
-                  <th class="py-3 px-4">THÀNH VIÊN</th>
-                  <th class="py-3 px-4">EMAIL</th>
-                  <th class="py-3 px-4">TRẠNG THÁI</th>
-                  <th class="py-3 px-4">VỐN CÀI ĐẶT</th>
-                  <th class="py-3 px-4">LÃI / LỖ HÔM NAY</th>
-                  <th class="py-3 px-4 text-right">PHÊ DUYỆT / HÀNH ĐỘNG</th>
+                <tr>
+                  <th>Thành Viên</th>
+                  <th>Email</th>
+                  <th>Trạng Thái</th>
+                  <th>Vốn Cài Đặt</th>
+                  <th>Lãi / Lỗ Hôm Nay</th>
+                  <th class="text-right">Phê Duyệt / Hành Động</th>
                 </tr>
               </thead>
-              <tbody id="adminUsersTableBody" class="divide-y divide-white/5">
+              <tbody id="adminUsersTableBody">
                 <!-- Dynamically loaded from Firestore -->
               </tbody>
             </table>
@@ -572,56 +676,14 @@
     <!-- Footer -->
     <footer class="border-t border-white/10 py-6 text-center text-xs text-gray-500 relative z-10">
       <div class="max-w-7xl mx-auto px-4">
-        <p>© 2026 Quant AI Trade Platform by Lê Hoàng Đức. Hệ thống giao dịch định lượng & Quản lý thành viên.</p>
+        <p>© 2026 NEXUS QUANT by Lê Hoàng Đức. Autonomous Quantitative Trading Terminal.</p>
       </div>
     </footer>
   </div>
 
-  <!-- Galaxy Canvas Animation Script (Kenzo style) -->
-  <script>
-    const canvas = document.getElementById('galaxyCanvas');
-    const ctx = canvas.getContext('2d');
-    let width, height, stars = [];
-
-    function resize() {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    for (let i = 0; i < 90; i++) {
-      stars.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        radius: Math.random() * 1.5 + 0.3,
-        alpha: Math.random() * 0.7 + 0.2,
-        dx: (Math.random() - 0.5) * 0.25,
-        dy: (Math.random() - 0.5) * 0.25,
-        color: Math.random() > 0.5 ? '#f59e0b' : '#06b6d4'
-      });
-    }
-
-    function draw() {
-      ctx.clearRect(0, 0, width, height);
-      stars.forEach(s => {
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-        ctx.fillStyle = s.color;
-        ctx.globalAlpha = s.alpha;
-        ctx.fill();
-
-        s.x += s.dx;
-        s.y += s.dy;
-        if (s.x < 0) s.x = width;
-        if (s.x > width) s.x = 0;
-        if (s.y < 0) s.y = height;
-        if (s.y > height) s.y = 0;
-      });
-      requestAnimationFrame(draw);
-    }
-    draw();
-  </script>
+  <!-- Meng To Three.js 3D World & Distance Emitter Modules -->
+  <script src="js/three-world.js"></script>
+  <script src="js/pointer-trail.js"></script>
 
   <!-- App JavaScript Modules -->
   <script type="module" src="js/dashboard.js"></script>
