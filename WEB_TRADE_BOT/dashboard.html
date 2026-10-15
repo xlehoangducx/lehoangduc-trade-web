@@ -62,36 +62,61 @@
     <header class="border-b border-white/10 backdrop-blur-xl bg-[#07080d]/85 sticky top-0 z-40">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         
-        <!-- Brand Logo with Spinning Tech Gear -->
-        <div class="flex items-center space-x-3 shrink-0">
-          <a href="index.html" class="relative w-10 h-10 flex items-center justify-center shrink-0 group">
-            <div class="absolute inset-0 bg-gradient-to-tr from-amber-400 via-yellow-500 to-cyan-500 rounded-2xl blur-md opacity-40 group-hover:opacity-70 transition-opacity"></div>
-            <div class="relative w-10 h-10 rounded-2xl bg-[#0b0e17] border border-amber-400/30 p-1 flex items-center justify-center shadow-lg shadow-black/80 group-hover:scale-105 transition-transform">
-              <svg class="w-full h-full animate-spin-cw" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <linearGradient id="dashGearGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#f59e0b"/>
-                    <stop offset="50%" stop-color="#fbbf24"/>
-                    <stop offset="100%" stop-color="#06b6d4"/>
-                  </linearGradient>
-                </defs>
-                <path d="M 96.00 50.00 L 95.43 57.20 L 84.16 57.64 L 81.19 65.89 L 87.21 77.04 L 82.53 82.53 L 73.15 76.25 L 65.89 81.19 L 64.21 93.75 L 57.20 95.43 L 53.29 84.84 L 44.52 84.57 L 35.79 93.75 L 29.12 90.99 L 32.18 80.13 L 25.25 74.75 L 12.79 77.04 L 9.01 70.88 L 17.88 63.90 L 15.43 55.48 L 4.00 50.00 L 4.57 42.80 L 15.84 42.36 L 18.81 34.11 L 12.79 22.96 L 17.47 17.47 L 26.85 23.75 L 34.11 18.81 L 35.79 6.25 L 42.80 4.57 L 46.71 15.16 L 55.48 15.43 L 64.21 6.25 L 70.88 9.01 L 67.82 19.87 L 74.75 25.25 L 87.21 22.96 L 90.99 29.12 L 82.12 36.10 L 84.57 44.52 Z" fill="url(#dashGearGrad)" stroke="#f59e0b" stroke-width="1.5"/>
-                <circle cx="50" cy="50" r="22" fill="#07080d" stroke="#f59e0b" stroke-width="2"/>
-                <circle cx="50" cy="50" r="16" stroke="#06b6d4" stroke-width="1.2" stroke-dasharray="3 3"/>
-                <circle cx="50" cy="50" r="8" fill="url(#dashGearGrad)"/>
-                <circle cx="50" cy="50" r="3.5" fill="#07080d"/>
-              </svg>
-            </div>
-          </a>
-          <div>
-            <div class="flex items-center space-x-2">
+        <!-- Brand Logo & Top-Left Status -->
+        <div class="flex flex-col justify-center shrink-0">
+          <!-- Top-Left Bot Status Badge -->
+          <div class="mb-1">
+            <span id="botHeartbeatBadge" class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-400 text-[10px] mono-font font-bold shadow-sm shadow-amber-400/10">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+              <span id="botHeartbeatText">OFFLINE (CHỜ KẾT NỐI)</span>
+            </span>
+          </div>
+
+          <!-- Brand & 3D Sharp Gear Logo -->
+          <div class="flex items-center space-x-2.5">
+            <a href="index.html" class="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center shrink-0 group">
+              <div class="absolute inset-0 bg-gradient-to-tr from-amber-400 via-yellow-500 to-cyan-500 rounded-xl blur-md opacity-40 group-hover:opacity-70 transition-opacity"></div>
+              <div class="relative w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#0b0e17] border border-amber-400/30 p-1 flex items-center justify-center shadow-lg shadow-black/80 group-hover:scale-105 transition-transform">
+                <!-- 3D Aggressive Sharp Gear Logo -->
+                <svg class="w-full h-full animate-spin-cw drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="dashSharpBevel" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#fff5cc"/>
+                      <stop offset="25%" stop-color="#f59e0b"/>
+                      <stop offset="70%" stop-color="#b45309"/>
+                      <stop offset="100%" stop-color="#78350f"/>
+                    </linearGradient>
+                    <linearGradient id="dashSharpShadow" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#451a03"/>
+                      <stop offset="100%" stop-color="#0f0702"/>
+                    </linearGradient>
+                    <radialGradient id="dashSharpCore" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stop-color="#06b6d4"/>
+                      <stop offset="60%" stop-color="#0891b2"/>
+                      <stop offset="100%" stop-color="#07080d"/>
+                    </radialGradient>
+                  </defs>
+                  <path d="M 78.0 52.0 L 87.0 57.9 L 95.2 64.8 L 93.4 70.0 L 73.9 66.6 L 69.8 71.8 L 72.0 82.3 L 73.0 93.0 L 68.0 95.4 L 56.5 79.2 L 50.0 80.0 L 44.1 89.0 L 37.2 97.2 L 32.0 95.4 L 35.4 75.9 L 30.2 71.8 L 19.7 74.0 L 9.0 75.0 L 6.6 70.0 L 22.8 58.5 L 22.0 52.0 L 13.0 46.1 L 4.8 39.2 L 6.6 34.0 L 26.1 37.4 L 30.2 32.2 L 28.0 21.7 L 27.0 11.0 L 32.0 8.6 L 43.5 24.8 L 50.0 24.0 L 55.9 15.0 L 62.8 6.8 L 68.0 8.6 L 64.6 28.1 L 69.8 32.2 L 80.3 30.0 L 91.0 29.0 L 93.4 34.0 L 77.2 45.5 Z" fill="url(#dashSharpShadow)"/>
+                  <path d="M 78.0 50.0 L 87.0 55.9 L 95.2 62.8 L 93.4 68.0 L 73.9 64.6 L 69.8 69.8 L 72.0 80.3 L 73.0 91.0 L 68.0 93.4 L 56.5 77.2 L 50.0 78.0 L 44.1 87.0 L 37.2 95.2 L 32.0 93.4 L 35.4 73.9 L 30.2 69.8 L 19.7 72.0 L 9.0 73.0 L 6.6 68.0 L 22.8 56.5 L 22.0 50.0 L 13.0 44.1 L 4.8 37.2 L 6.6 32.0 L 26.1 35.4 L 30.2 30.2 L 28.0 19.7 L 27.0 9.0 L 32.0 6.6 L 43.5 22.8 L 50.0 22.0 L 55.9 13.0 L 62.8 4.8 L 68.0 6.6 L 64.6 26.1 L 69.8 30.2 L 80.3 28.0 L 91.0 27.0 L 93.4 32.0 L 77.2 43.5 Z" fill="url(#dashSharpBevel)" stroke="#fde047" stroke-width="1.2" stroke-linejoin="bevel"/>
+                  <polygon points="50,26 67,36 67,64 50,74 33,64 33,36" fill="#0b0e17" stroke="#f59e0b" stroke-width="1.8"/>
+                  <circle cx="50" cy="26" r="2" fill="#fff" stroke="#b45309" stroke-width="0.8"/>
+                  <circle cx="67" cy="36" r="2" fill="#fff" stroke="#b45309" stroke-width="0.8"/>
+                  <circle cx="67" cy="64" r="2" fill="#fff" stroke="#b45309" stroke-width="0.8"/>
+                  <circle cx="50" cy="74" r="2" fill="#fff" stroke="#b45309" stroke-width="0.8"/>
+                  <circle cx="33" cy="64" r="2" fill="#fff" stroke="#b45309" stroke-width="0.8"/>
+                  <circle cx="33" cy="36" r="2" fill="#fff" stroke="#b45309" stroke-width="0.8"/>
+                  <line x1="50" y1="34" x2="50" y2="42" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+                  <line x1="50" y1="58" x2="50" y2="66" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+                  <line x1="34" y1="50" x2="42" y2="50" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+                  <line x1="58" y1="50" x2="66" y2="50" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/>
+                  <circle cx="50" cy="50" r="10" fill="url(#dashSharpCore)" stroke="#06b6d4" stroke-width="1.5"/>
+                  <circle cx="50" cy="50" r="4" fill="#fff" opacity="0.9"/>
+                </svg>
+              </div>
+            </a>
+            <div>
               <span class="text-base sm:text-lg font-black tracking-wider text-white">Trade<span class="text-amber-400">Matrix</span></span>
-              <span id="botHeartbeatBadge" class="pill-badge-gold">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block mr-1 animate-ping"></span>
-                <span id="botHeartbeatText">ONLINE (SYNC)</span>
-              </span>
             </div>
-            <span class="text-[9px] text-gray-400 mono-font tracking-wide hidden lg:block">BINANCE FUTURES • MULTI-STRATEGY ENSEMBLE</span>
           </div>
         </div>
 
@@ -147,40 +172,49 @@
       <!-- ================= TAB 1: ĐIỀU KHIỂN BOT ================= -->
       <section id="tab-control" class="tab-content space-y-8">
         
-        <!-- Top Metrics Cards -->
+        <!-- Top Metrics Cards with 3D Badges -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          <div class="kenzo-stat-card p-5">
-            <div class="flex items-center justify-between text-gray-400 mb-2">
+          <div class="kenzo-stat-card p-5 group">
+            <div class="flex items-center justify-between text-gray-400 mb-3">
               <span class="text-xs uppercase mono-font font-semibold">Số Dư Khả Dụng</span>
-              <i data-lucide="wallet" class="w-4 h-4 text-cyan-400"></i>
+              <div class="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-cyan-400/25 via-cyan-500/10 to-[#07080d] border border-cyan-400/40 p-2 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:scale-110 transition-transform">
+                <div class="absolute inset-0 bg-cyan-400/15 rounded-xl blur-xs"></div>
+                <i data-lucide="wallet" class="relative w-4 h-4 sm:w-5 sm:h-5 text-cyan-300 drop-shadow-[0_2px_4px_rgba(6,182,212,0.8)]"></i>
+              </div>
             </div>
             <div class="text-2xl sm:text-3xl font-black text-white mono-font flex items-baseline gap-1">
               <span id="statBalance">--</span>
-              <span class="text-xs text-amber-400">USDT</span>
+              <span class="text-xs text-amber-400 font-bold">USDT</span>
             </div>
             <div class="text-xs text-gray-400 mt-2 flex items-center gap-1 mono-font">
               <span id="statBalanceSub">Đang đồng bộ từ bot...</span>
             </div>
           </div>
 
-          <div class="kenzo-stat-card p-5">
-            <div class="flex items-center justify-between text-gray-400 mb-2">
+          <div class="kenzo-stat-card p-5 group">
+            <div class="flex items-center justify-between text-gray-400 mb-3">
               <span class="text-xs uppercase mono-font font-semibold">Lãi Ròng Hôm Nay</span>
-              <i data-lucide="dollar-sign" class="w-4 h-4 text-emerald-400"></i>
+              <div class="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-400/25 via-emerald-500/10 to-[#07080d] border border-emerald-400/40 p-2 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
+                <div class="absolute inset-0 bg-emerald-400/15 rounded-xl blur-xs"></div>
+                <i data-lucide="dollar-sign" class="relative w-4 h-4 sm:w-5 sm:h-5 text-emerald-300 drop-shadow-[0_2px_4px_rgba(16,185,129,0.8)]"></i>
+              </div>
             </div>
             <div class="text-2xl sm:text-3xl font-black text-emerald-400 mono-font flex items-baseline gap-1">
               <span id="statDailyPnl">--</span>
-              <span class="text-xs">USDT</span>
+              <span class="text-xs font-bold">USDT</span>
             </div>
             <div class="text-xs text-gray-400 mt-2 mono-font">
               Quyết toán sàn Binance
             </div>
           </div>
 
-          <div class="kenzo-stat-card p-5">
-            <div class="flex items-center justify-between text-gray-400 mb-2">
+          <div class="kenzo-stat-card p-5 group">
+            <div class="flex items-center justify-between text-gray-400 mb-3">
               <span class="text-xs uppercase mono-font font-semibold">Tỷ Lệ Thắng (Win Rate)</span>
-              <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
+              <div class="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-400/25 via-amber-500/10 to-[#07080d] border border-amber-400/40 p-2 flex items-center justify-center shadow-lg shadow-amber-500/20 group-hover:scale-110 transition-transform">
+                <div class="absolute inset-0 bg-amber-400/15 rounded-xl blur-xs"></div>
+                <i data-lucide="trophy" class="relative w-4 h-4 sm:w-5 sm:h-5 text-amber-300 drop-shadow-[0_2px_4px_rgba(245,158,11,0.8)]"></i>
+              </div>
             </div>
             <div class="text-2xl sm:text-3xl font-black text-amber-400 mono-font">
               <span id="statWinRate">--</span>
@@ -190,10 +224,13 @@
             </div>
           </div>
 
-          <div class="kenzo-stat-card p-5">
-            <div class="flex items-center justify-between text-gray-400 mb-2">
+          <div class="kenzo-stat-card p-5 group">
+            <div class="flex items-center justify-between text-gray-400 mb-3">
               <span class="text-xs uppercase mono-font font-semibold">Vị Thế Mở / Giới Hạn</span>
-              <i data-lucide="layers" class="w-4 h-4 text-purple-400"></i>
+              <div class="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-purple-400/25 via-purple-500/10 to-[#07080d] border border-purple-400/40 p-2 flex items-center justify-center shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform">
+                <div class="absolute inset-0 bg-purple-400/15 rounded-xl blur-xs"></div>
+                <i data-lucide="layers" class="relative w-4 h-4 sm:w-5 sm:h-5 text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.8)]"></i>
+              </div>
             </div>
             <div class="text-2xl sm:text-3xl font-black text-purple-400 mono-font">
               <span id="statOpenPositions">0 / 2</span>
@@ -204,21 +241,22 @@
           </div>
         </div>
 
-        <!-- Matrix Quant Telemetry Stream (Hiệu Ứng Matrix Trên Dashboard) -->
+        <!-- Matrix Quant Telemetry Stream (100% Tiếng Việt Chuẩn & Động Cơ Matrix) -->
         <div class="relative overflow-hidden p-4 rounded-2xl bg-[#080c14]/90 border border-emerald-500/25 matrix-border-glow shadow-xl shadow-black/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <!-- Canvas mini matrix rain stream in the background -->
           <canvas id="dashMatrixMiniCanvas" class="absolute inset-0 w-full h-full pointer-events-none opacity-20 -z-0"></canvas>
           
           <div class="relative z-10 flex items-center space-x-3">
-            <div class="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-              <svg class="w-4 h-4 animate-spin-cw text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14l-1.41 1.41"/>
-                <circle cx="12" cy="12" r="4"/>
+            <div class="relative w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400/25 to-teal-500/10 border border-emerald-400/40 flex items-center justify-center text-emerald-400 shrink-0 shadow-lg shadow-emerald-500/20">
+              <div class="absolute inset-0 bg-emerald-400/10 rounded-xl blur-xs"></div>
+              <svg class="relative w-4 h-4 animate-spin-cw text-emerald-300 drop-shadow-[0_2px_4px_rgba(16,185,129,0.8)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
             </div>
             <div>
               <div class="flex items-center space-x-2">
-                <span class="text-xs font-black text-emerald-400 mono-font tracking-wider matrix-glow">TRADEMATRIX QUANT ENGINE ACTIVE</span>
+                <span class="text-xs font-black text-emerald-400 mono-font tracking-wider matrix-glow">ĐỘNG CƠ ĐỊNH LƯỢNG TRADEMATRIX ĐANG HOẠT ĐỘNG</span>
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
               </div>
               <p class="text-[11px] text-gray-400 mt-0.5">
@@ -228,8 +266,8 @@
           </div>
 
           <div class="relative z-10 flex items-center space-x-2 text-[10px] mono-font shrink-0">
-            <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-bold">ZERO-CUSTODY ENCRYPTED</span>
-            <span class="px-2.5 py-1 rounded-lg bg-white/[0.04] text-gray-300 border border-white/10 font-bold">ATR ADAPTIVE 24/7</span>
+            <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-bold">MÃ HÓA ZERO-CUSTODY (AN TOÀN VÍ)</span>
+            <span class="px-2.5 py-1 rounded-lg bg-white/[0.04] text-gray-300 border border-white/10 font-bold">TỰ ĐỘNG THÍCH ỨNG ATR 24/7</span>
           </div>
         </div>
 
@@ -237,8 +275,10 @@
         <div class="kenzo-card p-6 border-amber-400/20">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
             <div>
-              <h2 class="text-lg font-bold text-white flex items-center gap-2 font-['Syne']">
-                <i data-lucide="power" class="w-5 h-5 text-amber-400"></i>
+              <h2 class="text-lg font-bold text-white flex items-center gap-2.5 font-['Syne']">
+                <div class="relative w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400/25 to-yellow-500/10 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-md shadow-amber-400/20 shrink-0">
+                  <i data-lucide="power" class="w-4 h-4 text-amber-300 drop-shadow-[0_2px_4px_rgba(245,158,11,0.8)]"></i>
+                </div>
                 <span>Trung Tâm Điều Khiển Thực Chiến Từ Xa</span>
               </h2>
               <p class="text-xs text-gray-400 mt-0.5">
@@ -339,8 +379,10 @@
         <!-- Live Open Positions Table -->
         <div class="kenzo-card p-6 border-white/10">
           <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
-            <h3 class="text-base font-bold text-white flex items-center gap-2">
-              <i data-lucide="activity" class="w-5 h-5 text-amber-400"></i>
+            <h3 class="text-base font-bold text-white flex items-center gap-2.5">
+              <div class="relative w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400/25 to-yellow-500/10 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-md shadow-amber-400/20 shrink-0">
+                <i data-lucide="activity" class="w-4 h-4 text-amber-300 drop-shadow-[0_2px_4px_rgba(245,158,11,0.8)]"></i>
+              </div>
               <span>Vị Thế Đang Chạy Thời Gian Thực (Active Positions)</span>
             </h3>
             <span class="text-xs text-gray-400 mono-font">Đồng bộ tự động từ sàn</span>
@@ -378,8 +420,10 @@
         <div class="kenzo-card p-6 sm:p-10 border-amber-400/20">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-white/10 mb-6 gap-4">
             <div>
-              <h2 class="text-xl sm:text-2xl font-black text-white flex items-center gap-2.5">
-                <i data-lucide="shield-alert" class="w-6 h-6 text-amber-400"></i>
+              <h2 class="text-xl sm:text-2xl font-black text-white flex items-center gap-3">
+                <div class="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-400/25 to-yellow-500/10 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-md shadow-amber-400/20 shrink-0">
+                  <i data-lucide="shield-alert" class="w-5 h-5 text-amber-300 drop-shadow-[0_2px_4px_rgba(245,158,11,0.8)]"></i>
+                </div>
                 <span>Báo Cáo Quản Lý Vốn & Đòn Bẩy Định Lượng (40$ -> 10,000$)</span>
               </h2>
               <p class="text-xs text-gray-400 mt-1">
@@ -503,8 +547,9 @@
         <!-- Header -->
         <div class="kenzo-card p-8 max-w-4xl mx-auto">
           <div class="text-center mb-8">
-            <div class="w-16 h-16 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 mx-auto mb-4">
-              <i data-lucide="package" class="w-8 h-8"></i>
+            <div class="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400/25 via-yellow-500/15 to-[#07080d] border border-amber-400/40 flex items-center justify-center text-amber-400 mx-auto mb-4 shadow-xl shadow-amber-400/20">
+              <div class="absolute inset-0 bg-amber-400/10 rounded-2xl blur-xs"></div>
+              <i data-lucide="package" class="relative w-8 h-8 text-amber-300 drop-shadow-[0_2px_6px_rgba(245,158,11,0.8)]"></i>
             </div>
             <h2 class="text-2xl font-bold text-white mb-2">Tải Trọn Bộ Trade Bot & Hướng Dẫn Vận Hành</h2>
             <p class="text-sm text-gray-400 max-w-xl mx-auto">
@@ -664,8 +709,10 @@
         <div class="kenzo-card p-6 border-amber-500/20">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-white/10 mb-6">
             <div>
-              <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                <i data-lucide="users" class="w-6 h-6 text-amber-400"></i>
+              <h2 class="text-xl font-bold text-white flex items-center gap-3">
+                <div class="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-400/25 to-yellow-500/10 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-md shadow-amber-400/20 shrink-0">
+                  <i data-lucide="users" class="w-5 h-5 text-amber-300 drop-shadow-[0_2px_4px_rgba(245,158,11,0.8)]"></i>
+                </div>
                 <span>Trung Tâm Quản Lý Thành Viên & Phân Quyền</span>
               </h2>
               <p class="text-xs text-gray-400 mt-1">

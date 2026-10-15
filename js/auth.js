@@ -111,11 +111,10 @@ onAuthStateChanged(auth, async (user) => {
   if (user) {
     const profile = await syncUserProfile(user);
 
-    // Nếu đang ở trang chủ index.html mà đã đăng nhập rồi -> Tự động chuyển thẳng vào dashboard!
-    const isHomePage = window.location.pathname.endsWith("index.html") || window.location.pathname === "/" || window.location.pathname === "";
-    if (isHomePage) {
-      window.location.href = "dashboard.html";
-      return;
+    // Không tự động chuyển hướng - Cho phép người dùng đọc trang chủ và xem phần tác giả
+    const floatingBtn = document.getElementById("floatingDashboardBtn");
+    if (floatingBtn) {
+      floatingBtn.classList.remove("hidden");
     }
 
     if (btnLogin && userProfile) {
@@ -131,6 +130,10 @@ onAuthStateChanged(auth, async (user) => {
       }
     }
   } else {
+    const floatingBtn = document.getElementById("floatingDashboardBtn");
+    if (floatingBtn) {
+      floatingBtn.classList.add("hidden");
+    }
     if (btnLogin && userProfile) {
       btnLogin.classList.remove("hidden");
       userProfile.classList.add("hidden");
