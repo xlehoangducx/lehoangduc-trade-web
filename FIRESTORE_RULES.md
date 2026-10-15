@@ -16,7 +16,7 @@ service cloud.firestore {
 
     // Collection users: Quản lý thành viên & phân quyền
     match /users/{userId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow create: if request.auth != null && request.auth.uid == userId;
       allow update: if isAdmin() || (request.auth != null && request.auth.uid == userId);
       allow delete: if isAdmin();

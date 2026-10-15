@@ -640,6 +640,19 @@ window.toggleUserStatus = async function(userId, newStatus) {
 
     await updateDoc(userRef, { status: newStatus });
 
+    // Đồng bộ trực tiếp xuống bot_commands để bot PC nhận lệnh khóa/mở ngay tức khắc
+    try {
+      const cmdRef = doc(db, "bot_commands", userId);
+      await setDoc(cmdRef, {
+        command: newStatus === "revoked" ? "stop" : "status_update",
+        license_status: newStatus,
+        status: "pending",
+        created_at: serverTimestamp()
+      }, { merge: true });
+    } catch (cmde) {
+      console.warn("Could not sync to bot_commands:", cmde);
+    }
+
     alert(`Đã cập nhật trạng thái bản quyền thành: ${newStatus.toUpperCase()}`);
 
   } catch (e) {
@@ -697,6 +710,17 @@ window.deleteMember = async function(userId, memberName) {
 
 
   try {
+
+    // Gửi lệnh dừng và khóa bot từ xa trước khi xóa tài khoản
+    try {
+      const cmdRef = doc(db, "bot_commands", userId);
+      await setDoc(cmdRef, {
+        command: "stop",
+        license_status: "revoked",
+        status: "pending",
+        created_at: serverTimestamp()
+      }, { merge: true });
+    } catch (cmde) {}
 
     const userRef = doc(db, "users", userId);
 
