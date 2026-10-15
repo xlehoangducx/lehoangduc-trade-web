@@ -43,6 +43,8 @@ if (btnLogin) {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       await syncUserProfile(user);
+      // Đăng nhập xong bay thẳng vào Dashboard
+      window.location.href = "dashboard.html";
     } catch (error) {
       console.error("Login Error:", error);
       alert("Đăng nhập thất bại: " + error.message);
@@ -108,6 +110,14 @@ export async function syncUserProfile(user) {
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     const profile = await syncUserProfile(user);
+
+    // Nếu đang ở trang chủ index.html mà đã đăng nhập rồi -> Tự động chuyển thẳng vào dashboard!
+    const isHomePage = window.location.pathname.endsWith("index.html") || window.location.pathname === "/" || window.location.pathname === "";
+    if (isHomePage) {
+      window.location.href = "dashboard.html";
+      return;
+    }
+
     if (btnLogin && userProfile) {
       btnLogin.classList.add("hidden");
       userProfile.classList.remove("hidden");

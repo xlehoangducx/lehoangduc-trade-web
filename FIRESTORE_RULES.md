@@ -22,15 +22,15 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Collection bots_telemetry: Dữ liệu Lãi/Lỗ & Trạng thái Bot
+    // Collection bots_telemetry: Dữ liệu Lãi/Lỗ & Trạng thái Bot từ máy tính (Client) gửi lên
     match /bots_telemetry/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow read: if request.auth != null;
+      allow write: if true;
     }
 
     // Collection bot_commands: Điều khiển Bật / Tắt / Đổi cấu hình Bot từ Web
     match /bot_commands/{userId} {
-      allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow read, write: if true;
     }
   }
 }
