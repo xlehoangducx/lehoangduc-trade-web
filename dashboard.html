@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Quant AI Terminal Dashboard · Lê Đức Hoàng</title>
+  <meta name="theme-color" content="#07080d">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts Outfit, Syne, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Custom Cyber Styles -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-[#07080d] text-gray-100 min-h-screen flex flex-col justify-between selection:bg-amber-400 selection:text-black overflow-x-hidden relative">
+
+  <!-- Interactive Galaxy Canvas Background -->
+  <canvas id="galaxyCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-50"></canvas>
+  <div class="fixed inset-0 bg-radial-vignette pointer-events-none z-0"></div>
+
+  <!-- Loading Screen (Bảo mật: Che toàn bộ số liệu khi chưa xác thực xong) -->
+  <div id="authLoadingScreen" class="fixed inset-0 z-50 bg-[#07080d] flex flex-col items-center justify-center p-4">
+    <div class="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 mb-4 animate-spin">
+      <i data-lucide="loader-2" class="w-6 h-6"></i>
+    </div>
+    <div class="text-sm font-semibold text-gray-300 mono-font tracking-wide">Đang xác thực bảo mật tài khoản...</div>
+  </div>
+
+  <!-- Pending Approval Screen (Hiển thị riêng cho Gmail chưa được duyệt - Hoàn toàn không thấy số liệu Admin) -->
+  <div id="pendingOverlay" class="hidden fixed inset-0 z-50 bg-[#07080d] flex items-center justify-center p-4">
+    <div class="kenzo-card max-w-md w-full p-8 text-center border-amber-500/30 shadow-2xl shadow-amber-500/10">
+      <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto mb-4">
+        <i data-lucide="clock" class="w-8 h-8 animate-pulse"></i>
+      </div>
+      <h3 class="text-2xl font-bold text-white mb-2 font-['Syne']">Tài Khoản Đang Chờ Phê Duyệt</h3>
+      <p class="text-sm text-gray-400 mb-6 leading-relaxed">
+        Chào bạn! Hệ thống đã ghi nhận tài khoản Google. Vui lòng liên hệ <strong class="text-amber-400">Admin Lê Đức Hoàng</strong> để được cấp quyền vận hành Tool Trade Bot.
+      </p>
+      <div class="p-3 bg-white/[0.04] rounded-xl border border-white/10 mb-6 mono-font text-xs text-gray-300">
+        Email: <span id="pendingEmail" class="text-amber-400 font-bold"></span>
+      </div>
+      <button id="btnPendingLogout" class="w-full py-3 rounded-full border border-white/10 text-gray-300 hover:text-white hover:bg-white/5 transition text-sm font-semibold">
+        Đăng Xuất
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Dashboard App (Chỉ hiển thị khi đã được cấp quyền) -->
+  <div id="dashboardApp" class="hidden flex-1 flex flex-col justify-between relative z-10">
+
+    <!-- Header Nav -->
+    <header class="border-b border-white/10 backdrop-blur-xl bg-[#07080d]/85 sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <a href="index.html" class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-400 via-yellow-500 to-cyan-500 p-[1.5px] shadow-lg shadow-amber-500/20">
+            <div class="w-full h-full bg-[#07080d] rounded-2xl flex items-center justify-center">
+              <i data-lucide="zap" class="w-5 h-5 text-amber-400"></i>
+            </div>
+          </a>
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="text-lg font-black tracking-wider text-white font-['Syne']">QUANT<span class="text-amber-400">.AI</span></span>
+              <span id="botHeartbeatBadge" class="pill-badge-gold">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block mr-1 animate-ping"></span>
+                <span id="botHeartbeatText">ONLINE (SYNC)</span>
+              </span>
+            </div>
+            <span class="text-[11px] text-gray-400 mono-font">BINANCE FUTURES • MULTI-STRATEGY ENSEMBLE</span>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="hidden md:flex items-center space-x-1 bg-white/[0.04] p-1.5 rounded-full border border-white/10">
+          <button data-tab="tab-control" class="nav-tab active px-5 py-2 rounded-full text-xs font-bold transition text-black bg-amber-400 uppercase tracking-wider">
+            <i data-lucide="terminal" class="w-3.5 h-3.5 inline mr-1"></i>Điều Khiển
+          </button>
+          <button data-tab="tab-matrix" class="nav-tab px-5 py-2 rounded-full text-xs font-bold transition text-gray-400 hover:text-white uppercase tracking-wider">
+            <i data-lucide="shield" class="w-3.5 h-3.5 inline mr-1"></i>Báo Cáo Vốn
+          </button>
+          <button data-tab="tab-download" class="nav-tab px-5 py-2 rounded-full text-xs font-bold transition text-gray-400 hover:text-white uppercase tracking-wider">
+            <i data-lucide="download" class="w-3.5 h-3.5 inline mr-1"></i>Tải Tool
+          </button>
+          <button id="adminNavTab" data-tab="tab-admin" class="hidden nav-tab px-5 py-2 rounded-full text-xs font-bold transition text-amber-400 hover:text-amber-300 uppercase tracking-wider">
+            <i data-lucide="crown" class="w-3.5 h-3.5 inline mr-1"></i>Hạm Đội Admin
+          </button>
+        </nav>
+
+        <!-- User Menu -->
+        <div class="flex items-center space-x-3">
+          <img id="dashUserAvatar" src="https://ui-avatars.com/api/?name=User" class="w-10 h-10 rounded-full border-2 border-amber-400/60" alt="Avatar">
+          <div class="hidden sm:block text-left">
+            <div id="dashUserName" class="text-sm font-bold leading-tight text-white">Trader</div>
+            <span id="dashUserRoleBadge" class="text-[10px] px-2 py-0.5 rounded-full badge-live mono-font uppercase font-bold">MEMBER</span>
+          </div>
+          <button id="btnDashLogout" title="Đăng xuất" class="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition">
+            <i data-lucide="log-out" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+      <!-- ================= TAB 1: ĐIỀU KHIỂN BOT ================= -->
+      <section id="tab-control" class="tab-content space-y-8">
+        
+        <!-- Top Metrics Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div class="kenzo-stat-card p-5">
+            <div class="flex items-center justify-between text-gray-400 mb-2">
+              <span class="text-xs uppercase mono-font font-semibold">Số Dư Khả Dụng</span>
+              <i data-lucide="wallet" class="w-4 h-4 text-cyan-400"></i>
+            </div>
+            <div class="text-2xl sm:text-3xl font-black text-white mono-font flex items-baseline gap-1">
+              <span id="statBalance">--</span>
+              <span class="text-xs text-amber-400">USDT</span>
+            </div>
+            <div class="text-xs text-gray-400 mt-2 flex items-center gap-1 mono-font">
+              <span id="statBalanceSub">Đang đồng bộ từ bot...</span>
+            </div>
+          </div>
+
+          <div class="kenzo-stat-card p-5">
+            <div class="flex items-center justify-between text-gray-400 mb-2">
+              <span class="text-xs uppercase mono-font font-semibold">Lãi Ròng Hôm Nay</span>
+              <i data-lucide="dollar-sign" class="w-4 h-4 text-emerald-400"></i>
+            </div>
+            <div class="text-2xl sm:text-3xl font-black text-emerald-400 mono-font flex items-baseline gap-1">
+              <span id="statDailyPnl">--</span>
+              <span class="text-xs">USDT</span>
+            </div>
+            <div class="text-xs text-gray-400 mt-2 mono-font">
+              Quyết toán sàn Binance
+            </div>
+          </div>
+
+          <div class="kenzo-stat-card p-5">
+            <div class="flex items-center justify-between text-gray-400 mb-2">
+              <span class="text-xs uppercase mono-font font-semibold">Tỷ Lệ Thắng (Win Rate)</span>
+              <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
+            </div>
+            <div class="text-2xl sm:text-3xl font-black text-amber-400 mono-font">
+              <span id="statWinRate">--</span>
+            </div>
+            <div class="text-xs text-gray-400 mt-2 mono-font">
+              Lịch sử các lệnh đã đóng
+            </div>
+          </div>
+
+          <div class="kenzo-stat-card p-5">
+            <div class="flex items-center justify-between text-gray-400 mb-2">
+              <span class="text-xs uppercase mono-font font-semibold">Vị Thế Mở / Giới Hạn</span>
+              <i data-lucide="layers" class="w-4 h-4 text-purple-400"></i>
+            </div>
+            <div class="text-2xl sm:text-3xl font-black text-purple-400 mono-font">
+              <span id="statOpenPositions">0 / 2</span>
+            </div>
+            <div class="text-xs text-gray-400 mt-2 mono-font">
+              Quản trị rủi ro đồng pha
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Toolbar -->
+        <div class="kenzo-card p-6 border-amber-400/20">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+            <div>
+              <h2 class="text-lg font-bold text-white flex items-center gap-2 font-['Syne']">
+                <i data-lucide="power" class="w-5 h-5 text-amber-400"></i>
+                <span>Trung Tâm Điều Khiển Thực Chiến Từ Xa</span>
+              </h2>
+              <p class="text-xs text-gray-400 mt-0.5">
+                Mọi lệnh bấm trên web sẽ đồng bộ trực tiếp xuống máy treo bot qua Cloud Firebase.
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2.5">
+              <button id="btnStartBot" class="flex items-center space-x-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-extrabold px-5 py-2.5 rounded-full text-xs transition uppercase tracking-wider active:scale-95 shadow-lg shadow-emerald-500/20">
+                <i data-lucide="play" class="w-3.5 h-3.5 fill-black"></i>
+                <span>Bật Bot</span>
+              </button>
+              <button id="btnStopBot" class="flex items-center space-x-1.5 bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 font-bold px-5 py-2.5 rounded-full text-xs transition uppercase tracking-wider active:scale-95">
+                <i data-lucide="square" class="w-3.5 h-3.5 fill-current"></i>
+                <span>Tạm Dừng</span>
+              </button>
+              <button id="btnTriggerCycle" class="flex items-center space-x-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-gray-200 border border-white/10 px-4 py-2.5 rounded-full text-xs font-semibold transition">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span>Quét Chu Kỳ Ngay</span>
+              </button>
+              <button id="btnEmergencyClose" class="flex items-center space-x-1.5 bg-red-600 hover:bg-red-500 text-white font-bold px-4 py-2.5 rounded-full text-xs transition uppercase tracking-wider active:scale-95 shadow-lg shadow-red-600/30">
+                <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+                <span>Đóng Toàn Bộ Vị Thế</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 1-Click Capital & Leverage Preset Selector -->
+          <div class="pt-6">
+            <div class="flex items-center justify-between mb-3">
+              <label class="text-xs font-bold text-gray-300 uppercase mono-font flex items-center gap-2">
+                <i data-lucide="sliders" class="w-4 h-4 text-amber-400"></i>
+                <span>Chọn Mốc Vốn Định Lượng (1-Click Preset Sync)</span>
+              </label>
+              <span class="text-xs text-amber-400 mono-font">Tự động cấu hình chuẩn theo bảng báo cáo</span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+              <button data-preset="40" class="btn-preset active p-3 rounded-2xl border border-amber-400/40 bg-amber-400/10 text-left transition hover:border-amber-400">
+                <div class="text-[10px] text-gray-400 mono-font">Hiện tại</div>
+                <div class="text-sm font-black text-white mono-font">40$ – 50$</div>
+                <div class="text-[11px] text-amber-400 mt-0.5">10x • 2 Lệnh</div>
+              </button>
+
+              <button data-preset="100" class="btn-preset p-3 rounded-2xl border border-white/10 bg-white/[0.03] text-left transition hover:border-amber-400">
+                <div class="text-[10px] text-gray-400 mono-font">Giai đoạn 1</div>
+                <div class="text-sm font-black text-white mono-font">100$</div>
+                <div class="text-[11px] text-gray-300 mt-0.5">8x • 3 Lệnh</div>
+              </button>
+
+              <button data-preset="300" class="btn-preset p-3 rounded-2xl border border-white/10 bg-white/[0.03] text-left transition hover:border-amber-400">
+                <div class="text-[10px] text-gray-400 mono-font">Giai đoạn 2</div>
+                <div class="text-sm font-black text-white mono-font">300$</div>
+                <div class="text-[11px] text-gray-300 mt-0.5">8x • 4 Lệnh</div>
+              </button>
+
+              <button data-preset="500" class="btn-preset p-3 rounded-2xl border border-white/10 bg-white/[0.03] text-left transition hover:border-amber-400">
+                <div class="text-[10px] text-gray-400 mono-font">Giai đoạn 3</div>
+                <div class="text-sm font-black text-white mono-font">500$</div>
+                <div class="text-[11px] text-gray-300 mt-0.5">6x • 4 Lệnh</div>
+              </button>
+
+              <button data-preset="1000" class="btn-preset p-3 rounded-2xl border border-white/10 bg-white/[0.03] text-left transition hover:border-amber-400">
+                <div class="text-[10px] text-gray-400 mono-font">Chuyên nghiệp</div>
+                <div class="text-sm font-black text-white mono-font">1,000$</div>
+                <div class="text-[11px] text-gray-300 mt-0.5">5x • 5 Lệnh</div>
+              </button>
+
+              <button data-preset="10000" class="btn-preset p-3 rounded-2xl border border-white/10 bg-white/[0.03] text-left transition hover:border-amber-400">
+                <div class="text-[10px] text-gray-400 mono-font">Cá Voi (Whale)</div>
+                <div class="text-sm font-black text-white mono-font">10,000$</div>
+                <div class="text-[11px] text-gray-300 mt-0.5">4x • 6 Lệnh</div>
+              </button>
+            </div>
+
+            <!-- Manual Controls Inputs -->
+            <div class="mt-6 pt-6 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs text-gray-400 mb-1 mono-font">TRẦN ĐÒN BẨY TỐI ĐA (LEVERAGE CAP)</label>
+                <div class="flex items-center space-x-2">
+                  <input id="inputLeverage" type="number" min="1" max="20" value="10" class="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-white mono-font focus:outline-none focus:border-amber-400">
+                  <span class="text-sm text-gray-400 font-bold mono-font">X</span>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs text-gray-400 mb-1 mono-font">SỐ LỆNH MỞ TỐI ĐA (MAX TRADES)</label>
+                <input id="inputMaxTrades" type="number" min="1" max="6" value="2" class="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-white mono-font focus:outline-none focus:border-amber-400">
+              </div>
+              <div class="flex items-end">
+                <button id="btnSaveConfig" class="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-extrabold py-2.5 rounded-xl text-xs transition uppercase tracking-wider shadow-lg shadow-amber-400/20 active:scale-95 flex items-center justify-center space-x-2">
+                  <i data-lucide="check" class="w-4 h-4"></i>
+                  <span>Áp Dụng Xuống Bot Ngay</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Open Positions Table -->
+        <div class="kenzo-card p-6">
+          <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+            <h3 class="text-base font-bold text-white flex items-center gap-2 font-['Syne']">
+              <i data-lucide="activity" class="w-5 h-5 text-amber-400"></i>
+              <span>Vị Thế Đang Chạy Thời Gian Thực (Active Positions)</span>
+            </h3>
+            <span class="text-xs text-gray-400 mono-font">Đồng bộ tự động từ sàn</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm mono-font">
+              <thead>
+                <tr class="text-gray-400 border-b border-white/10 text-xs">
+                  <th class="py-3 px-4">CẶP GIAO DỊCH</th>
+                  <th class="py-3 px-4">CHIỀU</th>
+                  <th class="py-3 px-4">ĐÒN BẨY</th>
+                  <th class="py-3 px-4">GIÁ VÀO (ENTRY)</th>
+                  <th class="py-3 px-4">GIÁ HIỆN TẠI</th>
+                  <th class="py-3 px-4">KÝ QUỸ</th>
+                  <th class="py-3 px-4">PNL ƯỚC TÍNH</th>
+                  <th class="py-3 px-4 text-right">THAO TÁC</th>
+                </tr>
+              </thead>
+              <tbody id="positionsTableBody" class="divide-y divide-white/5">
+                <tr>
+                  <td colspan="8" class="text-center py-8 text-gray-500">
+                    <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+                    <span>Hiện tại không có vị thế mở. Bot đang quét tìm cơ hội đẹp...</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 2: BÁO CÁO VỐN ================= -->
+      <section id="tab-matrix" class="tab-content hidden space-y-8">
+        <div class="kenzo-card p-8">
+          <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-2 font-['Syne']">
+            <i data-lucide="shield-alert" class="w-6 h-6 text-amber-400"></i>
+            <span>Báo Cáo Quản Lý Vốn & Đòn Bẩy Định Lượng (40$ -> 10,000$)</span>
+          </h2>
+          <p class="text-sm text-gray-400 mb-8">
+            Kéo thanh trượt bên dưới để tính toán các chỉ số an toàn tương ứng với số vốn của bạn:
+          </p>
+
+          <!-- Interactive Capital Calculator Slider -->
+          <div class="p-6 bg-white/[0.03] rounded-2xl border border-white/10 mb-8">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+              <span class="text-sm font-semibold text-gray-300">Mô phỏng quy mô vốn của bạn:</span>
+              <div class="text-2xl font-black text-amber-400 mono-font">
+                <span id="sliderValueText">300</span> USDT
+              </div>
+            </div>
+
+            <input id="capitalSlider" type="range" min="40" max="10000" step="10" value="300" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-amber-400 mb-6">
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-white/10">
+              <div>
+                <div class="text-xs text-gray-400 mono-font">ĐÒN BẨY KHUYÊN DÙNG</div>
+                <div id="calcLeverage" class="text-xl font-bold text-amber-400 mono-font">7x – 8x</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-400 mono-font">SỐ LỆNH MỞ TỐI ĐA</div>
+                <div id="calcMaxTrades" class="text-xl font-bold text-white mono-font">3 – 4 lệnh</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-400 mono-font">KHOẢNG CÁCH CHÁY VÍ</div>
+                <div id="calcLiqDistance" class="text-xl font-bold text-emerald-400 mono-font">-13.0%</div>
+              </div>
+              <div>
+                <div class="text-xs text-gray-400 mono-font">MỨC LỖ SL / 1 LỆNH</div>
+                <div id="calcLossPerTrade" class="text-xl font-bold text-rose-400 mono-font">4.50$ (1.5%)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 3: TẢI TOOL & CÀI ĐẶT ================= -->
+      <section id="tab-download" class="tab-content hidden space-y-8">
+        <div class="kenzo-card p-8 max-w-3xl mx-auto">
+          <div class="text-center mb-8">
+            <div class="w-16 h-16 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 mx-auto mb-4">
+              <i data-lucide="package" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-2 font-['Syne']">Tải Trọn Bộ Trade Bot v2.0 Client</h2>
+            <p class="text-sm text-gray-400">
+              Chạy cục bộ trên máy tính cá nhân để bảo mật 100% API Key sàn Binance.
+            </p>
+          </div>
+
+          <div class="p-5 rounded-2xl bg-amber-400/5 border border-amber-400/20 mb-8">
+            <label class="block text-xs text-gray-400 mb-1 mono-font font-bold">MÃ ĐỊNH DANH (USER TOKEN CỦA BẠN):</label>
+            <div class="flex items-center space-x-2">
+              <input id="userTokenBox" type="text" readonly value="Loading..." class="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 text-amber-400 mono-font text-sm select-all">
+              <button onclick="navigator.clipboard.writeText(document.getElementById('userTokenBox').value); alert('Đã sao chép Token!')" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold mono-font transition">
+                Copy
+              </button>
+            </div>
+            <span class="text-[11px] text-gray-400 mt-1.5 block">
+              Mỗi thành viên có một mã Token riêng biệt để xem PnL của chính mình mà không bị trùng với người khác.
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 4: HẠM ĐỘI ADMIN (CHỈ ADMIN THẤY) ================= -->
+      <section id="tab-admin" class="tab-content hidden space-y-8">
+        <div class="kenzo-card p-6 border-amber-500/20">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-white/10 mb-6">
+            <div>
+              <h2 class="text-xl font-bold text-white flex items-center gap-2 font-['Syne']">
+                <i data-lucide="crown" class="w-6 h-6 text-amber-400"></i>
+                <span>Trung Tâm Điều Phối Hạm Đội (Master Fleet Manager)</span>
+              </h2>
+              <p class="text-xs text-gray-400 mt-1">
+                Theo dõi số dư, trạng thái duyệt và lãi/lỗ của tất cả người dùng trong hệ thống.
+              </p>
+            </div>
+            <div>
+              <span class="pill-badge-gold">SUPER ADMIN</span>
+            </div>
+          </div>
+
+          <!-- Fleet Stats Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+              <span class="text-xs text-gray-400 mono-font">TỔNG THÀNH VIÊN ĐĂNG KÝ</span>
+              <div id="fleetTotalUsers" class="text-2xl font-black text-white mono-font mt-1">1</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+              <span class="text-xs text-gray-400 mono-font">BOT ĐANG HOẠT ĐỘNG</span>
+              <div id="fleetActiveBots" class="text-2xl font-black text-emerald-400 mono-font mt-1">1 Online</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10">
+              <span class="text-xs text-gray-400 mono-font">TỔNG LỢI NHUẬN HỆ THỐNG</span>
+              <div id="fleetTotalPnl" class="text-2xl font-black text-amber-400 mono-font mt-1">+0.55 USDT</div>
+            </div>
+          </div>
+
+          <!-- Users Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm mono-font">
+              <thead>
+                <tr class="text-gray-400 border-b border-white/10 text-xs">
+                  <th class="py-3 px-4">THÀNH VIÊN</th>
+                  <th class="py-3 px-4">EMAIL</th>
+                  <th class="py-3 px-4">TRẠNG THÁI</th>
+                  <th class="py-3 px-4">VỐN CÀI ĐẶT</th>
+                  <th class="py-3 px-4">LÃI / LỖ HÔM NAY</th>
+                  <th class="py-3 px-4 text-right">PHÊ DUYỆT / HÀNH ĐỘNG</th>
+                </tr>
+              </thead>
+              <tbody id="adminUsersTableBody" class="divide-y divide-white/5">
+                <!-- Dynamically loaded from Firestore -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-white/10 py-6 text-center text-xs text-gray-500 relative z-10">
+      <div class="max-w-7xl mx-auto px-4">
+        <p>© 2026 Quant AI Trade Platform by Lê Đức Hoàng. Master Admin & Distributed Bot Fleet.</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Galaxy Canvas Animation Script (Kenzo style) -->
+  <script>
+    const canvas = document.getElementById('galaxyCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height, stars = [];
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    for (let i = 0; i < 90; i++) {
+      stars.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 1.5 + 0.3,
+        alpha: Math.random() * 0.7 + 0.2,
+        dx: (Math.random() - 0.5) * 0.25,
+        dy: (Math.random() - 0.5) * 0.25,
+        color: Math.random() > 0.5 ? '#f59e0b' : '#06b6d4'
+      });
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, width, height);
+      stars.forEach(s => {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        ctx.fillStyle = s.color;
+        ctx.globalAlpha = s.alpha;
+        ctx.fill();
+
+        s.x += s.dx;
+        s.y += s.dy;
+        if (s.x < 0) s.x = width;
+        if (s.x > width) s.x = 0;
+        if (s.y < 0) s.y = height;
+        if (s.y > height) s.y = 0;
+      });
+      requestAnimationFrame(draw);
+    }
+    draw();
+  </script>
+
+  <!-- App JavaScript Modules -->
+  <script type="module" src="js/dashboard.js"></script>
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

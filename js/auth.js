@@ -1,0 +1,129 @@
+// Authentication Module with Firebase v10
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+import { 
+  getAuth, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signOut, 
+  onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+import { 
+  getFirestore, 
+  doc, 
+  getDoc, 
+  setDoc, 
+  serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js";
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+export { app, auth, db };
+
+// DOM Elements
+const btnLogin = document.getElementById("btnLogin");
+const btnLogout = document.getElementById("btnLogout");
+const authNavContainer = document.getElementById("authNavContainer");
+const userProfile = document.getElementById("userProfile");
+const userAvatar = document.getElementById("userAvatar");
+const userName = document.getElementById("userName");
+const userRoleBadge = document.getElementById("userRoleBadge");
+
+// Login Handler
+if (btnLogin) {
+  btnLogin.addEventListener("click", async () => {
+    try {
+      btnLogin.disabled = true;
+      btnLogin.innerHTML = `<span class="animate-spin mr-2">⏳</span> Đang đăng nhập...`;
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      await syncUserProfile(user);
+    } catch (error) {
+      console.error("Login Error:", error);
+      alert("Đăng nhập thất bại: " + error.message);
+    } finally {
+      if (btnLogin) {
+        btnLogin.disabled = false;
+        btnLogin.innerHTML = `<span>Đăng Nhập Google</span>`;
+      }
+    }
+  });
+}
+
+// Logout Handler
+if (btnLogout) {
+  btnLogout.addEventListener("click", async () => {
+    try {
+      await signOut(auth);
+      window.location.href = "index.html";
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
+  });
+}
+
+// Sync User to Firestore (Bootstrap Admin & Members)
+export async function syncUserProfile(user) {
+  if (!user) return null;
+  const userRef = doc(db, "users", user.uid);
+  const userSnap = await getDoc(userRef);
+
+  const isAdmin = ADMIN_EMAILS.includes(user.email.toLowerCase());
+  
+  if (!userSnap.exists()) {
+    // Tạo profile mới lần đầu
+    const newProfile = {
+      uid: user.uid,
+      email: user.email.toLowerCase(),
+      displayName: user.displayName || "Trader",
+      photoURL: user.photoURL || "",
+      role: isAdmin ? "admin" : "member",
+      status: isAdmin ? "approved" : "pending", // Admin được duyệt ngay, Member chờ Admin duyệt
+      createdAt: serverTimestamp(),
+      lastLogin: serverTimestamp(),
+      assignedBalance: 40.0,
+      assignedLeverage: 10
+    };
+    await setDoc(userRef, newProfile);
+    return newProfile;
+  } else {
+    // Cập nhật thời gian đăng nhập
+    const currentData = userSnap.data();
+    if (isAdmin && currentData.role !== "admin") {
+      await setDoc(userRef, { role: "admin", status: "approved" }, { merge: true });
+      currentData.role = "admin";
+      currentData.status = "approved";
+    }
+    await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
+    return currentData;
+  }
+}
+
+// Listen to Auth State
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    const profile = await syncUserProfile(user);
+    if (btnLogin && userProfile) {
+      btnLogin.classList.add("hidden");
+      userProfile.classList.remove("hidden");
+      if (userAvatar) userAvatar.src = user.photoURL || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.displayName);
+      if (userName) userName.textContent = user.displayName;
+      if (userRoleBadge) {
+        userRoleBadge.textContent = profile?.role === "admin" ? "ADMIN" : (profile?.status === "approved" ? "MEMBER" : "CHỜ DUYỆT");
+        userRoleBadge.className = profile?.role === "admin" 
+          ? "text-[10px] px-2 py-0.5 rounded-full badge-admin mono-font uppercase"
+          : (profile?.status === "approved" ? "text-[10px] px-2 py-0.5 rounded-full badge-live mono-font uppercase" : "text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 mono-font uppercase");
+      }
+    }
+  } else {
+    if (btnLogin && userProfile) {
+      btnLogin.classList.remove("hidden");
+      userProfile.classList.add("hidden");
+    }
+  }
+});
