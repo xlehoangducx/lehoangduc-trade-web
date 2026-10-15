@@ -36,29 +36,28 @@
       <!-- Brand Logo (High-Tech Quantum Hex Prism) -->
       <a href="index.html" class="flex items-center space-x-3.5 group">
         <div class="relative w-11 h-11 flex items-center justify-center shrink-0">
-          <div class="absolute inset-0 bg-gradient-to-tr from-amber-400 via-cyan-400 to-emerald-400 rounded-2xl blur-md opacity-35 group-hover:opacity-60 transition-opacity"></div>
-          <div class="relative w-11 h-11 rounded-2xl bg-[#0b0e17] border border-white/15 p-2 flex items-center justify-center shadow-lg shadow-black/80 group-hover:scale-105 transition-transform">
-            <svg class="w-full h-full" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M16 2L28 9V23L16 30L4 23V9L16 2Z" stroke="url(#heroLogoGrad)" stroke-width="2" stroke-linejoin="round"/>
-              <path d="M16 8L22 12V20L16 24L10 20V12L16 8Z" fill="url(#heroLogoInnerGrad)" fill-opacity="0.3" stroke="url(#heroLogoGrad)" stroke-width="1.5" stroke-linejoin="round"/>
-              <circle cx="16" cy="16" r="2.5" fill="#f59e0b"/>
+          <div class="absolute inset-0 bg-gradient-to-tr from-amber-400 via-yellow-500 to-cyan-500 rounded-2xl blur-md opacity-40 group-hover:opacity-70 transition-opacity"></div>
+          <div class="relative w-11 h-11 rounded-2xl bg-[#0b0e17] border border-amber-400/30 p-1.5 flex items-center justify-center shadow-lg shadow-black/80 group-hover:scale-105 transition-transform">
+            <!-- Continuous Spinning Tech Gear Logo -->
+            <svg class="w-full h-full animate-spin-cw" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <linearGradient id="heroLogoGrad" x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#f59e0b"/>
-                  <stop offset="0.5" stop-color="#06b6d4"/>
-                  <stop offset="1" stop-color="#10b981"/>
-                </linearGradient>
-                <linearGradient id="heroLogoInnerGrad" x1="10" y1="8" x2="22" y2="24" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#f59e0b"/>
-                  <stop offset="1" stop-color="#06b6d4"/>
+                <linearGradient id="navGearGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#f59e0b"/>
+                  <stop offset="50%" stop-color="#fbbf24"/>
+                  <stop offset="100%" stop-color="#06b6d4"/>
                 </linearGradient>
               </defs>
+              <path d="M 96.00 50.00 L 95.43 57.20 L 84.16 57.64 L 81.19 65.89 L 87.21 77.04 L 82.53 82.53 L 73.15 76.25 L 65.89 81.19 L 64.21 93.75 L 57.20 95.43 L 53.29 84.84 L 44.52 84.57 L 35.79 93.75 L 29.12 90.99 L 32.18 80.13 L 25.25 74.75 L 12.79 77.04 L 9.01 70.88 L 17.88 63.90 L 15.43 55.48 L 4.00 50.00 L 4.57 42.80 L 15.84 42.36 L 18.81 34.11 L 12.79 22.96 L 17.47 17.47 L 26.85 23.75 L 34.11 18.81 L 35.79 6.25 L 42.80 4.57 L 46.71 15.16 L 55.48 15.43 L 64.21 6.25 L 70.88 9.01 L 67.82 19.87 L 74.75 25.25 L 87.21 22.96 L 90.99 29.12 L 82.12 36.10 L 84.57 44.52 Z" fill="url(#navGearGrad)" stroke="#f59e0b" stroke-width="1.5"/>
+              <circle cx="50" cy="50" r="22" fill="#07080d" stroke="#f59e0b" stroke-width="2"/>
+              <circle cx="50" cy="50" r="16" stroke="#06b6d4" stroke-width="1.2" stroke-dasharray="3 3"/>
+              <circle cx="50" cy="50" r="8" fill="url(#navGearGrad)"/>
+              <circle cx="50" cy="50" r="3.5" fill="#07080d"/>
             </svg>
           </div>
         </div>
         <div>
           <div class="flex items-center space-x-2">
-            <span class="text-xl font-black tracking-wider text-white">NEXUS<span class="text-amber-400 font-extrabold">.QUANT</span></span>
+            <span class="text-xl font-black tracking-wider text-white">Trade<span class="text-amber-400 font-extrabold">Matrix</span></span>
             <span class="pill-badge">v2.0 PRO</span>
           </div>
           <span class="text-[10px] text-gray-400 mono-font tracking-wider block">ALGORITHMIC TRADING TERMINAL</span>
@@ -69,7 +68,10 @@
       <nav class="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-400">
         <a href="#about" class="hover:text-amber-400 transition">Kiến Trúc</a>
         <a href="#matrix-section" class="hover:text-amber-400 transition">Bảng Quản Lý Vốn</a>
-        <a href="#rules" class="hover:text-amber-400 transition">Nguyên Tắc An Toàn</a>
+        <a href="#author" class="hover:text-amber-400 transition flex items-center gap-1.5 text-amber-400/90">
+          <svg class="w-3.5 h-3.5 animate-spin-cw text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14l-1.41 1.41"/><circle cx="12" cy="12" r="4"/></svg>
+          <span>Tác Giả & Liên Hệ</span>
+        </a>
       </nav>
 
       <!-- Auth Action Button -->
@@ -134,10 +136,86 @@
         </a>
       </div>
 
-      <!-- Interactive Trader Hint -->
-      <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/[0.02] border border-white/5 text-[11px] text-gray-400 mono-font mb-20">
-        <i data-lucide="mouse-pointer" class="w-3.5 h-3.5 text-amber-400"></i>
-        <span>Di chuyển chuột trên màn hình để xem hiệu ứng nến Nhật xanh / đỏ</span>
+      <!-- Big Cyber Gear Mechanism Centerpiece (Cỗ Máy Bánh Răng TradeMatrix Đang Hoạt Động) -->
+      <div class="my-14 relative flex flex-col items-center justify-center animate-gear-engine">
+        
+        <!-- Ambient Glowing Aura -->
+        <div class="absolute w-80 h-80 rounded-full bg-gradient-to-tr from-amber-500/20 via-cyan-500/15 to-emerald-500/20 blur-3xl pointer-events-none -z-10 animate-gear-glow"></div>
+
+        <!-- Multi-Gear Interlocking Assembly -->
+        <div class="relative w-72 sm:w-96 h-64 sm:h-72 flex items-center justify-center">
+          
+          <!-- Outer Tech HUD Angle Compass -->
+          <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-25" viewBox="0 0 380 280">
+            <circle cx="160" cy="140" r="125" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4 8"/>
+            <circle cx="160" cy="140" r="135" fill="none" stroke="#06b6d4" stroke-width="0.8" stroke-dasharray="2 12"/>
+          </svg>
+
+          <!-- 1. BIG MAIN GEAR (Gold / Amber, 12 Teeth, Clockwise) -->
+          <div class="absolute left-6 sm:left-12 top-6 sm:top-8 w-44 sm:w-52 h-44 sm:h-52 z-10">
+            <svg class="w-full h-full animate-spin-cw drop-shadow-[0_0_20px_rgba(245,158,11,0.45)]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="mainGearGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#f59e0b"/>
+                  <stop offset="50%" stop-color="#fbbf24"/>
+                  <stop offset="100%" stop-color="#d97706"/>
+                </linearGradient>
+              </defs>
+              <path d="M 96.00 50.00 L 95.43 57.20 L 84.16 57.64 L 81.19 65.89 L 87.21 77.04 L 82.53 82.53 L 73.15 76.25 L 65.89 81.19 L 64.21 93.75 L 57.20 95.43 L 53.29 84.84 L 44.52 84.57 L 35.79 93.75 L 29.12 90.99 L 32.18 80.13 L 25.25 74.75 L 12.79 77.04 L 9.01 70.88 L 17.88 63.90 L 15.43 55.48 L 4.00 50.00 L 4.57 42.80 L 15.84 42.36 L 18.81 34.11 L 12.79 22.96 L 17.47 17.47 L 26.85 23.75 L 34.11 18.81 L 35.79 6.25 L 42.80 4.57 L 46.71 15.16 L 55.48 15.43 L 64.21 6.25 L 70.88 9.01 L 67.82 19.87 L 74.75 25.25 L 87.21 22.96 L 90.99 29.12 L 82.12 36.10 L 84.57 44.52 Z" fill="url(#mainGearGrad)" stroke="#f59e0b" stroke-width="1.5"/>
+              <circle cx="50" cy="50" r="28" fill="#07080d" stroke="#f59e0b" stroke-width="2"/>
+              <circle cx="50" cy="50" r="22" stroke="#06b6d4" stroke-width="1" stroke-dasharray="3 3"/>
+              <circle cx="50" cy="33" r="4.5" fill="url(#mainGearGrad)"/>
+              <circle cx="50" cy="67" r="4.5" fill="url(#mainGearGrad)"/>
+              <circle cx="33" cy="50" r="4.5" fill="url(#mainGearGrad)"/>
+              <circle cx="67" cy="50" r="4.5" fill="url(#mainGearGrad)"/>
+              <circle cx="50" cy="50" r="11" fill="url(#mainGearGrad)"/>
+              <circle cx="50" cy="50" r="5" fill="#07080d"/>
+            </svg>
+          </div>
+
+          <!-- 2. SECONDARY GEAR (Cyan, 8 Teeth, Counter-Clockwise, Meshing) -->
+          <div class="absolute right-6 sm:right-10 top-2 sm:top-4 w-28 sm:w-36 h-28 sm:h-36 z-20">
+            <svg class="w-full h-full animate-spin-ccw drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="cyanGearGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#06b6d4"/>
+                  <stop offset="100%" stop-color="#0891b2"/>
+                </linearGradient>
+              </defs>
+              <path d="M 96.00 50.00 L 91.19 65.89 L 77.04 87.21 L 57.20 95.43 L 35.79 93.75 L 17.88 63.90 L 4.00 50.00 L 15.84 42.36 L 17.47 17.47 L 35.79 6.25 L 55.48 15.43 L 87.21 22.96 L 82.12 36.10 Z" fill="url(#cyanGearGrad)" stroke="#06b6d4" stroke-width="1.5"/>
+              <circle cx="50" cy="50" r="22" fill="#07080d" stroke="#06b6d4" stroke-width="2"/>
+              <circle cx="50" cy="50" r="16" stroke="#f59e0b" stroke-width="1" stroke-dasharray="2 3"/>
+              <circle cx="50" cy="50" r="8" fill="url(#cyanGearGrad)"/>
+              <circle cx="50" cy="50" r="4" fill="#07080d"/>
+            </svg>
+          </div>
+
+          <!-- 3. TERTIARY GEAR (Emerald, 6 Teeth, Clockwise) -->
+          <div class="absolute right-12 sm:right-16 bottom-3 sm:bottom-4 w-20 sm:w-24 h-20 sm:h-24 z-20">
+            <svg class="w-full h-full animate-spin-cw-fast drop-shadow-[0_0_12px_rgba(16,185,129,0.5)]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="emeraldGearGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#10b981"/>
+                  <stop offset="100%" stop-color="#059669"/>
+                </linearGradient>
+              </defs>
+              <circle cx="50" cy="50" r="38" stroke="url(#emeraldGearGrad)" stroke-width="6" stroke-dasharray="14 14"/>
+              <circle cx="50" cy="50" r="24" fill="#07080d" stroke="#10b981" stroke-width="1.5"/>
+              <circle cx="50" cy="50" r="10" fill="url(#emeraldGearGrad)"/>
+              <circle cx="50" cy="50" r="4" fill="#07080d"/>
+            </svg>
+          </div>
+
+        </div>
+
+        <!-- Engine Status Caption Badge -->
+        <div class="inline-flex items-center space-x-2.5 px-4 py-1.5 rounded-full bg-white/[0.03] border border-amber-400/25 text-gray-300 text-xs mono-font backdrop-blur-md shadow-lg shadow-black/50 mt-2">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+          <span class="text-white font-bold">TRADEMATRIX KINETIC ENGINE</span>
+          <span class="text-gray-500">|</span>
+          <span class="text-amber-400 font-semibold">ĐỘNG CƠ ĐỊNH LƯỢNG VẬN HÀNH LIÊN TỤC 24/7</span>
+        </div>
+
       </div>
 
       <!-- Intro Cards (Mục đích sử dụng & Bảo mật Zero-Custody) -->
@@ -211,7 +289,7 @@
               <tr>
                 <td>
                   <span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-white font-bold mono-font text-xs">
-                    40$ – 50$ (Hiện tại)
+                    40$ – 50$
                   </span>
                 </td>
                 <td>
@@ -386,6 +464,157 @@
           </table>
         </div>
       </div>
+
+      <!-- ================= AUTHOR PROFILE & MATRIX CYBER SECTION ================= -->
+      <section id="author" class="relative my-20 pt-6">
+        
+        <!-- Glowing Matrix Glass Container -->
+        <div class="kenzo-card p-6 sm:p-10 lg:p-12 relative overflow-hidden border-amber-400/30 matrix-border-glow shadow-2xl shadow-black/80">
+          
+          <!-- Matrix Rain Canvas Background -->
+          <canvas id="authorMatrixCanvas" class="absolute inset-0 w-full h-full pointer-events-none opacity-30 -z-0"></canvas>
+          
+          <div class="relative z-10">
+            <!-- Header Tag -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-white/10 mb-8 gap-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400">
+                  <svg class="w-5 h-5 animate-spin-cw text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14l-1.41 1.41"/>
+                    <circle cx="12" cy="12" r="4"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2 class="text-xl sm:text-2xl font-black text-white tracking-wide">
+                    Kiến Trúc Sư Hệ Thống & Sáng Lập Viên
+                  </h2>
+                  <p class="text-xs text-gray-400">
+                    Người phát triển thuật toán định lượng và xây dựng nền tảng TradeMatrix.
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <span class="pill-badge-gold">FOUNDER PROFILE</span>
+                <span class="pill-badge">LÊ HOÀNG ĐỨC</span>
+              </div>
+            </div>
+
+            <!-- Bento Content Grid: Photos on Left, Bio & Manifesto on Right -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              
+              <!-- Left Column: Bento Photo Showcase (D:\ANH) -->
+              <div class="lg:col-span-5 space-y-4">
+                <!-- Main Featured Photo -->
+                <div class="relative rounded-2xl overflow-hidden border border-amber-400/30 group shadow-xl shadow-black/60 bg-[#07080d]">
+                  <img src="assets/images/1_opt.webp" alt="Lê Hoàng Đức" class="w-full h-80 sm:h-96 object-cover object-top transition duration-500 group-hover:scale-105">
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                  <div class="absolute bottom-4 left-4 right-4">
+                    <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/40 text-amber-300 text-[11px] font-bold mono-font mb-1.5 backdrop-blur-md">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                      <span>KỶ LUẬT & TỈ MỈ TUYỆT ĐỐI</span>
+                    </div>
+                    <p class="text-xs text-gray-300 font-light">
+                      Mỗi tham số thuật toán đều được kiểm định khắt khe như từng chi tiết trong nghệ thuật đỉnh cao.
+                    </p>
+                  </div>
+                </div>
+
+                <!-- 2 Supporting Photos Row -->
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="relative rounded-xl overflow-hidden border border-white/10 group bg-[#07080d]">
+                    <img src="assets/images/2_opt.webp" alt="Precision Work" class="w-full h-36 object-cover object-top transition duration-500 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                    <div class="absolute bottom-2 left-2 right-2">
+                      <span class="text-[10px] text-cyan-300 mono-font font-bold block">PRECISION CUT</span>
+                      <span class="text-[9px] text-gray-400">Độ chính xác cao</span>
+                    </div>
+                  </div>
+
+                  <div class="relative rounded-xl overflow-hidden border border-white/10 group bg-[#07080d]">
+                    <img src="assets/images/3_opt.webp" alt="Research & Strategy" class="w-full h-36 object-cover object-center transition duration-500 group-hover:scale-110">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                    <div class="absolute bottom-2 left-2 right-2">
+                      <span class="text-[10px] text-emerald-300 mono-font font-bold block">STRATEGY LAB</span>
+                      <span class="text-[9px] text-gray-400">Chiến lược thực chiến</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: Bio, Philosophy & Social Connect -->
+              <div class="lg:col-span-7 space-y-6 text-left">
+                <div>
+                  <span class="text-xs font-bold text-amber-400 mono-font uppercase tracking-wider block mb-1">KIẾN TRÚC SƯ THUẬT TOÁN</span>
+                  <h3 class="text-2xl sm:text-4xl font-black text-white tracking-tight">
+                    LÊ HOÀNG ĐỨC
+                  </h3>
+                  <p class="text-sm text-gray-400 mono-font mt-1">
+                    Buôn Ma Thuột, Đắk Lắk · Quantitative Developer & System Architect
+                  </p>
+                </div>
+
+                <!-- Manifesto Quote -->
+                <div class="p-5 rounded-2xl bg-white/[0.03] border-l-4 border-amber-400 border-white/10 text-gray-200 text-sm leading-relaxed italic">
+                  “Sự tỉ mỉ, kiên nhẫn và kỷ luật trong từng chi tiết tạo nên sự hoàn hảo — dù là trong ẩm thực đỉnh cao hay trong việc xây dựng các thuật toán định lượng khắt khe nhất. TradeMatrix sinh ra không phải để kiếm tiền chớp nhoáng theo cảm xúc, mà là một cỗ máy toán học bền bỉ, bảo toàn vốn tuyệt đối trước mọi bão giông của thị trường.”
+                </div>
+
+                <!-- 3 Feature Pillars -->
+                <div class="space-y-3">
+                  <div class="flex items-start space-x-3 p-3.5 rounded-xl bg-white/[0.02] border border-white/5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                      <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-xs font-bold text-white uppercase mono-font">Bảo Mật Zero-Custody Tuyệt Đối</h4>
+                      <p class="text-xs text-gray-400 mt-0.5">Khóa API Binance Futures lưu 100% trên máy tính cá nhân của bạn. Không ai có quyền truy cập hay rút tiền.</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start space-x-3 p-3.5 rounded-xl bg-white/[0.02] border border-white/5">
+                    <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                      <i data-lucide="sliders" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-xs font-bold text-white uppercase mono-font">Cơ Chế Đòn Bẩy Nghịch Đảo Chuẩn ATR</h4>
+                      <p class="text-xs text-gray-400 mt-0.5">Tự động co giãn đòn bẩy và khối lượng vào lệnh theo mốc vốn, giữ đệm an toàn cháy tài khoản luôn xa hơn 15% – 32%.</p>
+                    </div>
+                  </div>
+
+                  <div class="flex items-start space-x-3 p-3.5 rounded-xl bg-white/[0.02] border border-white/5">
+                    <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+                      <i data-lucide="user-check" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <h4 class="text-xs font-bold text-white uppercase mono-font">Hỗ Trợ & Cấp Quyền Trực Tiếp</h4>
+                      <p class="text-xs text-gray-400 mt-0.5">Tôi trực tiếp phê duyệt thành viên, giải đáp kỹ thuật và đồng hành cùng người dùng trong suốt quá trình vận hành tool.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Call-to-Action Links -->
+                <div class="pt-4 flex flex-col sm:flex-row items-center gap-4">
+                  <a href="https://www.facebook.com/lehoangducbmt/" target="_blank" rel="noopener noreferrer" class="w-full sm:w-auto inline-flex items-center justify-center space-x-3 px-8 py-3.5 rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-blue-500/25 transition transform hover:-translate-y-0.5 active:scale-95 group">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    </svg>
+                    <span>Kết Nối Facebook Lê Hoàng Đức</span>
+                    <span class="font-bold group-hover:translate-x-1 transition-transform">›</span>
+                  </a>
+
+                  <a href="dashboard.html" class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-white font-semibold text-xs transition uppercase tracking-wider">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 text-amber-400"></i>
+                    <span>Mở Bảng Điều Khiển</span>
+                  </a>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </section>
+
     </div>
   </main>
 
@@ -394,15 +623,16 @@
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center space-x-2">
         <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-        <span>Hệ thống vận hành cá nhân · Cloudflare Pages & Firebase</span>
+        <span>Hệ thống vận hành cá nhân TradeMatrix · Phát triển bởi Lê Hoàng Đức</span>
       </div>
-      <p>© 2026 Quant AI Trade Platform by Lê Hoàng Đức. All rights reserved.</p>
+      <p>© 2026 TradeMatrix Terminal by Lê Hoàng Đức. All rights reserved.</p>
     </div>
   </footer>
 
   <!-- Meng To Three.js 3D World & Distance Emitter Modules -->
   <script src="js/three-world.js"></script>
   <script src="js/pointer-trail.js"></script>
+  <script src="js/matrix-rain.js"></script>
 
   <!-- Firebase & App Script -->
   <script type="module" src="js/auth.js"></script>

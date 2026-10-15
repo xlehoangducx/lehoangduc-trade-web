@@ -201,3 +201,56 @@ h1, h2, h3, h4, h5, h6 {
   border-top-right-radius: 12px;
   border-bottom-right-radius: 12px;
 }
+
+/* ==========================================================================
+   Spinning Gear & Mechanical Engine Animations
+   ========================================================================== */
+@keyframes spin-cw {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spin-ccw {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes gear-float {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-8px) scale(1.01); }
+}
+
+@keyframes gear-pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 16px rgba(245, 158, 11, 0.35)); }
+  50% { filter: drop-shadow(0 0 32px rgba(6, 182, 212, 0.5)); }
+}
+
+.animate-spin-cw {
+  animation: spin-cw 20s linear infinite;
+}
+
+.animate-spin-cw-fast {
+  animation: spin-cw 8s linear infinite;
+}
+
+.animate-spin-ccw {
+  animation: spin-ccw 14s linear infinite;
+}
+
+.animate-gear-engine {
+  animation: gear-float 6s ease-in-out infinite;
+}
+
+.animate-gear-glow {
+  animation: gear-pulse-glow 5s ease-in-out infinite;
+}
+
+/* Matrix Glow & Rain styling */
+.matrix-glow {
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.7);
+}
+
+.matrix-border-glow {
+  box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25), inset 0 0 15px rgba(16, 185, 129, 0.05);
+}
+
