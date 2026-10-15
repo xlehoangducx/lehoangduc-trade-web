@@ -4,23 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Quant AI Terminal · Lê Hoàng Đức</title>
-  <meta name="description" content="Hệ thống giao dịch định lượng tự động Binance Futures tích hợp AI Ollama và quản trị vốn ma trận.">
+  <meta name="description" content="Không gian giao dịch định lượng cá nhân của Lê Hoàng Đức trên Binance Futures.">
   <meta name="theme-color" content="#07080d">
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts Outfit, Syne, JetBrains Mono -->
+  <!-- Google Fonts Be Vietnam Pro & JetBrains Mono (100% Vietnamese Font Fix) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Outfit:wght@300;400;500;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Custom Cyber Styles -->
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="bg-[#07080d] text-gray-100 min-h-screen flex flex-col justify-between selection:bg-amber-400 selection:text-black overflow-x-hidden relative">
+<body class="bg-[#07080d] text-gray-100 min-h-screen flex flex-col justify-between selection:bg-amber-400 selection:text-black overflow-x-hidden relative font-['Be_Vietnam_Pro',sans-serif]">
 
-  <!-- Interactive Galaxy Canvas Background (Inspired by kenzocoin.meme) -->
-  <canvas id="galaxyCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-70"></canvas>
+  <!-- Interactive Galaxy Canvas Background -->
+  <canvas id="galaxyCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-60"></canvas>
+  
+  <!-- Interactive Trader Candlestick Trail Canvas (Hiệu ứng nến xanh/đỏ lướt chuột) -->
+  <canvas id="candleCursorCanvas" class="fixed inset-0 pointer-events-none z-20"></canvas>
+  
   <div class="fixed inset-0 bg-radial-vignette pointer-events-none z-0"></div>
 
   <!-- Header Nav -->
@@ -31,28 +35,28 @@
       <a href="index.html" class="flex items-center space-x-3 group">
         <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-400 via-yellow-500 to-cyan-500 p-[1.5px] shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
           <div class="w-full h-full bg-[#07080d] rounded-2xl flex items-center justify-center">
-            <i data-lucide="zap" class="w-5 h-5 text-amber-400"></i>
+            <i data-lucide="activity" class="w-5 h-5 text-amber-400"></i>
           </div>
         </div>
         <div>
           <div class="flex items-center space-x-2">
-            <span class="text-xl font-black tracking-wider text-white font-['Syne']">QUANT<span class="text-amber-400">.AI</span></span>
-            <span class="pill-badge">v2.0 PRO</span>
+            <span class="text-xl font-extrabold tracking-wider text-white">QUANT<span class="text-amber-400">.AI</span></span>
+            <span class="pill-badge">LÊ HOÀNG ĐỨC</span>
           </div>
-          <span class="text-[11px] text-gray-400 mono-font tracking-wide">BINANCE FUTURES • OLLAMA LLM</span>
+          <span class="text-[11px] text-gray-400 mono-font tracking-wide">PRIVATE QUANTITATIVE TRADING HUB</span>
         </div>
       </a>
 
       <!-- Quick Nav Links -->
       <nav class="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-400">
-        <a href="#features" class="hover:text-amber-400 transition">Tính Năng</a>
-        <a href="#matrix-section" class="hover:text-amber-400 transition">Ma Trận Vốn</a>
-        <a href="#rules" class="hover:text-amber-400 transition">Quy Tắc Rút Lãi</a>
+        <a href="#about" class="hover:text-amber-400 transition">Giới Thiệu</a>
+        <a href="#matrix-section" class="hover:text-amber-400 transition">Bảng Quản Lý Vốn</a>
+        <a href="#rules" class="hover:text-amber-400 transition">Nguyên Tắc An Toàn</a>
       </nav>
 
       <!-- Auth Action Button -->
       <div id="authNavContainer" class="flex items-center space-x-4">
-        <button id="btnLogin" class="btn-kenzo flex items-center space-x-2 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-400 text-black font-extrabold px-6 py-2.5 rounded-full shadow-lg shadow-amber-500/25 transition-all duration-300 active:scale-95 text-sm uppercase tracking-wider">
+        <button id="btnLogin" class="btn-kenzo flex items-center space-x-2 bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 hover:from-amber-300 hover:to-yellow-400 text-black font-extrabold px-6 py-2.5 rounded-full shadow-lg shadow-amber-500/25 transition-all duration-300 active:scale-95 text-xs uppercase tracking-wider">
           <svg class="w-4 h-4" viewBox="0 0 24 24">
             <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -60,22 +64,19 @@
             <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
           </svg>
           <span>Đăng Nhập Google</span>
-          <span class="text-black font-black text-base ml-1">›</span>
+          <span class="text-black font-black text-sm ml-1">›</span>
         </button>
 
         <div id="userProfile" class="hidden flex items-center space-x-3">
           <img id="userAvatar" src="" class="w-10 h-10 rounded-full border-2 border-amber-400" alt="Avatar">
           <div class="hidden sm:block text-left">
-            <div id="userName" class="text-sm font-bold leading-tight text-white">Admin</div>
+            <div id="userName" class="text-sm font-bold leading-tight text-white">Trader</div>
             <span id="userRoleBadge" class="text-[10px] px-2 py-0.5 rounded-full badge-admin mono-font uppercase font-bold">ADMIN</span>
           </div>
-          <a href="dashboard.html" class="bg-amber-400/10 hover:bg-amber-400/20 text-amber-400 border border-amber-400/40 px-5 py-2 rounded-full text-sm font-bold transition flex items-center space-x-1.5 shadow-md shadow-amber-400/10">
-            <span>Mở Terminal</span>
+          <a href="dashboard.html" class="bg-amber-400/10 hover:bg-amber-400/20 text-amber-400 border border-amber-400/40 px-5 py-2 rounded-full text-xs font-bold transition flex items-center space-x-1.5 shadow-md shadow-amber-400/10 uppercase tracking-wider">
+            <span>Mở Dashboard</span>
             <span class="font-bold">›</span>
           </a>
-          <button id="btnLogout" title="Đăng xuất" class="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition">
-            <i data-lucide="log-out" class="w-5 h-5"></i>
-          </button>
         </div>
       </div>
     </div>
@@ -83,110 +84,87 @@
 
   <!-- Hero Section -->
   <main class="flex-1 relative z-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28 text-center">
       
-      <!-- Top Announcement Pill -->
-      <div class="text-center max-w-4xl mx-auto mb-16">
-        <div class="inline-flex items-center space-x-2.5 px-4 py-1.5 rounded-full bg-white/[0.04] border border-amber-400/30 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-8 shadow-lg shadow-amber-400/10 backdrop-blur-md">
-          <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-          <span>Hệ Thống Giao Dịch Định Lượng Tự Động Thế Hệ Mới</span>
-        </div>
-
-        <!-- Big Hero Heading -->
-        <h1 class="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight text-white mb-6 font-['Syne'] leading-[1.05]">
-          ĐÒN BẨY ĐỊNH LƯỢNG <br>
-          <span class="bg-gradient-to-r from-amber-300 via-yellow-400 to-cyan-400 bg-clip-text text-transparent">BẢO VỆ TÀI SẢN 24/7</span>
-        </h1>
-
-        <p class="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed font-light">
-          Vận hành Auto Trade Bot trên Binance Futures kết hợp trí tuệ nhân tạo Ollama, điều phối rủi ro tự động từ quy mô <strong class="text-white">40$</strong> đến <strong class="text-amber-400">10,000$</strong>.
-        </p>
-
-        <!-- Big CTA Buttons -->
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button onclick="document.getElementById('btnLogin').click()" class="w-full sm:w-auto flex items-center justify-center space-x-3 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-extrabold px-10 py-4 rounded-full shadow-2xl shadow-amber-500/30 transition-all text-base tracking-wide uppercase group">
-            <i data-lucide="terminal" class="w-5 h-5 text-black"></i>
-            <span>Kết Nối Google · Vào Terminal</span>
-            <span class="text-xl font-bold group-hover:translate-x-1 transition-transform">›</span>
-          </button>
-          
-          <a href="#matrix-section" class="w-full sm:w-auto flex items-center justify-center space-x-2 bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 px-8 py-4 rounded-full text-white font-semibold transition-all text-base backdrop-blur-md">
-            <span>Tra Cứu Báo Cáo Vốn</span>
-            <span class="text-gray-400">↓</span>
-          </a>
-        </div>
+      <!-- Announcement Tag -->
+      <div class="inline-flex items-center space-x-2.5 px-4 py-1.5 rounded-full bg-white/[0.04] border border-amber-400/30 text-amber-400 text-xs font-semibold uppercase tracking-wider mb-8 shadow-lg shadow-amber-400/10 backdrop-blur-md">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>Hệ Thống Tự Động Hóa Giao Dịch Cá Nhân</span>
       </div>
 
-      <!-- Live Performance Counter Stats (Kenzo style) -->
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mb-24 max-w-5xl mx-auto">
-        <div class="kenzo-stat-card p-6 text-center">
-          <div class="text-3xl sm:text-5xl font-black text-amber-400 mono-font mb-1">70.0%</div>
-          <div class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Tỷ Lệ Thắng (Win Rate)</div>
-          <div class="text-[11px] text-emerald-400 mt-1 mono-font">35 Thắng / 15 Thua</div>
-        </div>
+      <!-- Main Headline with Clean Vietnamese Typography -->
+      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white mb-6 leading-tight">
+        KHÔNG GIAN GIAO DỊCH ĐỊNH LƯỢNG <br>
+        <span class="bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent">LÊ HOÀNG ĐỨC</span>
+      </h1>
 
-        <div class="kenzo-stat-card p-6 text-center">
-          <div class="text-3xl sm:text-5xl font-black text-emerald-400 mono-font mb-1">+0.55u</div>
-          <div class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Lãi Ròng Ca Đêm</div>
-          <div class="text-[11px] text-gray-400 mt-1 mono-font">+1.28% Tăng Trưởng</div>
-        </div>
+      <p class="text-base sm:text-lg text-gray-300 max-w-2xl mx-auto mb-10 leading-relaxed font-light">
+        Nền tảng điều phối và giám sát Tool Trade Bot phái sinh Binance Futures. Tích hợp mô hình AI và phương pháp quản trị vốn ma trận độc quyền.
+      </p>
 
-        <div class="kenzo-stat-card p-6 text-center">
-          <div class="text-3xl sm:text-5xl font-black text-cyan-400 mono-font mb-1">117+</div>
-          <div class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Lệnh Đối Soát Sàn</div>
-          <div class="text-[11px] text-cyan-400 mt-1 mono-font">Stop-Loss Chuẩn ATR</div>
-        </div>
-
-        <div class="kenzo-stat-card p-6 text-center">
-          <div class="text-3xl sm:text-5xl font-black text-purple-400 mono-font mb-1">0 ĐỒNG</div>
-          <div class="text-xs uppercase tracking-wider text-gray-400 font-semibold">Chi Phí Server Web</div>
-          <div class="text-[11px] text-purple-400 mt-1 mono-font">Cloudflare & Firebase</div>
-        </div>
+      <!-- Big CTA Buttons -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+        <button onclick="document.getElementById('btnLogin').click()" class="w-full sm:w-auto flex items-center justify-center space-x-3 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-extrabold px-10 py-4 rounded-full shadow-2xl shadow-amber-500/30 transition-all text-sm tracking-wide uppercase active:scale-95 group">
+          <i data-lucide="log-in" class="w-4 h-4 text-black"></i>
+          <span>Đăng Nhập Google Để Truy Cập</span>
+          <span class="text-lg font-bold group-hover:translate-x-1 transition-transform">›</span>
+        </button>
+        
+        <a href="#matrix-section" class="w-full sm:w-auto flex items-center justify-center space-x-2 bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 px-8 py-4 rounded-full text-white font-medium transition-all text-sm backdrop-blur-md">
+          <span>Xem Bảng Tra Cứu Vốn</span>
+          <span class="text-gray-400">↓</span>
+        </a>
       </div>
 
-      <!-- Feature Grid -->
-      <div id="features" class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
-        <div class="kenzo-card p-8">
-          <div class="w-14 h-14 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 mb-6">
-            <i data-lucide="cpu" class="w-7 h-7"></i>
+      <!-- Interactive Trader Hint -->
+      <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/[0.02] border border-white/5 text-[11px] text-gray-400 mono-font mb-20">
+        <i data-lucide="mouse-pointer" class="w-3.5 h-3.5 text-amber-400"></i>
+        <span>Di chuyển chuột trên màn hình để xem hiệu ứng nến Nhật xanh / đỏ</span>
+      </div>
+
+      <!-- Intro Cards (Mục đích sử dụng & Không kêu gọi lợi nhuận) -->
+      <div id="about" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20 text-left">
+        <div class="kenzo-card p-6">
+          <div class="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 mb-4">
+            <i data-lucide="shield" class="w-6 h-6"></i>
           </div>
-          <h3 class="text-xl font-bold text-white mb-3 font-['Syne']">Trí Tuệ Nhân Tạo Cục Bộ</h3>
-          <p class="text-sm text-gray-400 leading-relaxed">
-            Mô hình Ollama AI chạy trực tiếp trên card đồ họa local, thẩm định đa khung thời gian và kích hoạt VETO chặn bẫy thanh khoản cá mập.
+          <h3 class="text-lg font-bold text-white mb-2">Bảo Toàn Vốn Tuyệt Đối</h3>
+          <p class="text-xs text-gray-400 leading-relaxed">
+            Hệ thống tuân thủ nghiêm ngặt quy tắc đòn bẩy nghịch đảo: Vốn càng lớn, đòn bẩy càng hạ thấp để khoảng cách thanh lý luôn cách xa hơn 15% - 30%.
           </p>
         </div>
 
-        <div class="kenzo-card p-8">
-          <div class="w-14 h-14 rounded-2xl bg-cyan-400/10 border border-cyan-400/30 flex items-center justify-center text-cyan-400 mb-6">
-            <i data-lucide="activity" class="w-7 h-7"></i>
+        <div class="kenzo-card p-6">
+          <div class="w-12 h-12 rounded-2xl bg-cyan-400/10 border border-cyan-400/30 flex items-center justify-center text-cyan-400 mb-4">
+            <i data-lucide="cpu" class="w-6 h-6"></i>
           </div>
-          <h3 class="text-xl font-bold text-white mb-3 font-['Syne']">Đòn Bẩy Thích Ứng (Dynamic)</h3>
-          <p class="text-sm text-gray-400 leading-relaxed">
-            Tự động nâng/hạ đòn bẩy theo điểm tự tin chiến lược. Giữ khoảng cách cháy xa ngoài 10% – 30% để tài khoản an toàn trước bão giá.
+          <h3 class="text-lg font-bold text-white mb-2">Trí Tuệ Nhân Tạo Hỗ Trợ</h3>
+          <p class="text-xs text-gray-400 leading-relaxed">
+            Mô hình AI quét đa khung thời gian để nhận diện xu hướng vĩ mô của Bitcoin, chặn đứng các lệnh bắt dao rơi và bẫy thanh khoản cá mập.
           </p>
         </div>
 
-        <div class="kenzo-card p-8">
-          <div class="w-14 h-14 rounded-2xl bg-emerald-400/10 border border-emerald-400/30 flex items-center justify-center text-emerald-400 mb-6">
-            <i data-lucide="crown" class="w-7 h-7"></i>
+        <div class="kenzo-card p-6">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-400/10 border border-emerald-400/30 flex items-center justify-center text-emerald-400 mb-4">
+            <i data-lucide="lock" class="w-6 h-6"></i>
           </div>
-          <h3 class="text-xl font-bold text-white mb-3 font-['Syne']">Hạm Đội Phân Phối Admin</h3>
-          <p class="text-sm text-gray-400 leading-relaxed">
-            Admin toàn quyền duyệt học viên, theo dõi số dư và lãi/lỗ của từng bot con theo thời gian thực mà không làm lộ dữ liệu cá nhân.
+          <h3 class="text-lg font-bold text-white mb-2">Nghiên Cứu Cá Nhân</h3>
+          <p class="text-xs text-gray-400 leading-relaxed">
+            Công cụ phục vụ thử nghiệm và tối ưu hóa định lượng cá nhân của Lê Hoàng Đức. Không kêu gọi đầu tư, không nhận ủy thác, không cam kết lợi nhuận.
           </p>
         </div>
       </div>
 
       <!-- Matrix Preview Section -->
-      <div id="matrix-section" class="kenzo-card p-8 sm:p-12 mb-16">
-        <div class="flex flex-col md:flex-row md:items-center justify-between pb-8 border-b border-white/10 mb-8">
+      <div id="matrix-section" class="kenzo-card p-8 sm:p-12 mb-16 text-left">
+        <div class="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-white/10 mb-6">
           <div>
-            <h2 class="text-3xl font-extrabold text-white flex items-center gap-3 font-['Syne']">
-              <i data-lucide="shield-check" class="w-8 h-8 text-amber-400"></i>
-              <span>Ma Trận Quản Lý Vốn & Đòn Bẩy Định Lượng</span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-white flex items-center gap-3">
+              <i data-lucide="table" class="w-7 h-7 text-amber-400"></i>
+              <span>Bảng Ma Trận Quản Lý Vốn & Đòn Bẩy Định Lượng</span>
             </h2>
-            <p class="text-sm text-gray-400 mt-2">
-              Quy luật cốt lõi: Vốn càng lớn $\rightarrow$ Đòn bẩy bắt buộc càng giảm để triệt tiêu hoàn toàn rủi ro cháy tài khoản.
+            <p class="text-xs sm:text-sm text-gray-400 mt-1">
+              Bảng tra cứu quy chuẩn an toàn cho tài khoản chạy từ 40$ đến 10,000$.
             </p>
           </div>
           <div class="mt-4 md:mt-0">
@@ -198,69 +176,69 @@
           <table class="w-full text-left text-sm mono-font">
             <thead>
               <tr class="text-gray-400 border-b border-white/10 text-xs">
-                <th class="py-4 px-4 font-bold text-gray-300">CỘT MỐC VỐN</th>
-                <th class="py-4 px-4 font-bold text-amber-400">ĐÒN BẨY TỐI ĐA</th>
-                <th class="py-4 px-4 font-bold text-gray-300">SỐ LỆNH</th>
-                <th class="py-4 px-4 font-bold text-gray-300">KÝ QUỸ / LỆNH</th>
-                <th class="py-4 px-4 font-bold text-emerald-400">KHOẢNG CÁCH CHÁY</th>
-                <th class="py-4 px-4 font-bold text-cyan-400">ĐỆM AN TOÀN SL</th>
-                <th class="py-4 px-4 font-bold text-rose-400">MỨC LỖ SL / LỆNH</th>
+                <th class="py-3 px-4 font-bold text-gray-300">CỘT MỐC VỐN</th>
+                <th class="py-3 px-4 font-bold text-amber-400">ĐÒN BẨY TỐI ĐA</th>
+                <th class="py-3 px-4 font-bold text-gray-300">SỐ LỆNH</th>
+                <th class="py-3 px-4 font-bold text-gray-300">KÝ QUỸ / LỆNH</th>
+                <th class="py-3 px-4 font-bold text-emerald-400">KHOẢNG CÁCH CHÁY</th>
+                <th class="py-3 px-4 font-bold text-cyan-400">ĐỆM AN TOÀN SL</th>
+                <th class="py-3 px-4 font-bold text-rose-400">MỨC LỖ SL / LỆNH</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-white/5">
               <tr class="hover:bg-white/[0.03] transition">
-                <td class="py-4 px-4 font-bold text-white">40$ – 50$ (Hiện tại)</td>
-                <td class="py-4 px-4 text-amber-400 font-bold">8x – 10x</td>
-                <td class="py-4 px-4">2 lệnh</td>
-                <td class="py-4 px-4 text-gray-300">~1.2$ – 1.6$</td>
-                <td class="py-4 px-4 text-emerald-400">-10.0%</td>
-                <td class="py-4 px-4 text-cyan-400">Gấp 3.0x SL</td>
-                <td class="py-4 px-4 text-rose-400 font-bold">0.65$ (1.5%)</td>
+                <td class="py-3.5 px-4 font-bold text-white">40$ – 50$ (Hiện tại)</td>
+                <td class="py-3.5 px-4 text-amber-400 font-bold">8x – 10x</td>
+                <td class="py-3.5 px-4">2 lệnh</td>
+                <td class="py-3.5 px-4 text-gray-300">~1.2$ – 1.6$</td>
+                <td class="py-3.5 px-4 text-emerald-400">-10.0%</td>
+                <td class="py-3.5 px-4 text-cyan-400">Gấp 3.0x SL</td>
+                <td class="py-3.5 px-4 text-rose-400 font-bold">0.65$ (1.5%)</td>
               </tr>
               <tr class="hover:bg-white/[0.03] transition">
-                <td class="py-4 px-4 font-bold text-white">100$</td>
-                <td class="py-4 px-4 text-amber-400 font-bold">7x – 10x</td>
-                <td class="py-4 px-4">2 – 3 lệnh</td>
-                <td class="py-4 px-4 text-gray-300">~2.5$ – 3.0$</td>
-                <td class="py-4 px-4 text-emerald-400">-11.5%</td>
-                <td class="py-4 px-4 text-cyan-400">Gấp 3.5x SL</td>
-                <td class="py-4 px-4 text-rose-400 font-bold">1.50$ (1.5%)</td>
+                <td class="py-3.5 px-4 font-bold text-white">100$</td>
+                <td class="py-3.5 px-4 text-amber-400 font-bold">7x – 10x</td>
+                <td class="py-3.5 px-4">2 – 3 lệnh</td>
+                <td class="py-3.5 px-4 text-gray-300">~2.5$ – 3.0$</td>
+                <td class="py-3.5 px-4 text-emerald-400">-11.5%</td>
+                <td class="py-3.5 px-4 text-cyan-400">Gấp 3.5x SL</td>
+                <td class="py-3.5 px-4 text-rose-400 font-bold">1.50$ (1.5%)</td>
               </tr>
               <tr class="hover:bg-white/[0.03] transition">
-                <td class="py-4 px-4 font-bold text-white">300$</td>
-                <td class="py-4 px-4 text-amber-400 font-bold">7x – 8x</td>
-                <td class="py-4 px-4">3 – 4 lệnh</td>
-                <td class="py-4 px-4 text-gray-300">~6.0$ – 7.5$</td>
-                <td class="py-4 px-4 text-emerald-400">-13.0%</td>
-                <td class="py-4 px-4 text-cyan-400">Gấp 4.0x SL</td>
-                <td class="py-4 px-4 text-rose-400 font-bold">4.50$ (1.5%)</td>
+                <td class="py-3.5 px-4 font-bold text-white">300$</td>
+                <td class="py-3.5 px-4 text-amber-400 font-bold">7x – 8x</td>
+                <td class="py-3.5 px-4">3 – 4 lệnh</td>
+                <td class="py-3.5 px-4 text-gray-300">~6.0$ – 7.5$</td>
+                <td class="py-3.5 px-4 text-emerald-400">-13.0%</td>
+                <td class="py-3.5 px-4 text-cyan-400">Gấp 4.0x SL</td>
+                <td class="py-3.5 px-4 text-rose-400 font-bold">4.50$ (1.5%)</td>
               </tr>
               <tr class="hover:bg-white/[0.03] transition">
-                <td class="py-4 px-4 font-bold text-white">500$</td>
-                <td class="py-4 px-4 text-amber-400 font-bold">5x – 7x</td>
-                <td class="py-4 px-4">4 lệnh</td>
-                <td class="py-4 px-4 text-gray-300">~10.0$ – 12.0$</td>
-                <td class="py-4 px-4 text-emerald-400">-16.0%</td>
-                <td class="py-4 px-4 text-cyan-400">Gấp 4.8x SL</td>
-                <td class="py-4 px-4 text-rose-400 font-bold">7.50$ (1.5%)</td>
+                <td class="py-3.5 px-4 font-bold text-white">500$</td>
+                <td class="py-3.5 px-4 text-amber-400 font-bold">5x – 7x</td>
+                <td class="py-3.5 px-4">4 lệnh</td>
+                <td class="py-3.5 px-4 text-gray-300">~10.0$ – 12.0$</td>
+                <td class="py-3.5 px-4 text-emerald-400">-16.0%</td>
+                <td class="py-3.5 px-4 text-cyan-400">Gấp 4.8x SL</td>
+                <td class="py-3.5 px-4 text-rose-400 font-bold">7.50$ (1.5%)</td>
               </tr>
               <tr class="hover:bg-white/[0.03] transition">
-                <td class="py-4 px-4 font-bold text-white">1,000$</td>
-                <td class="py-4 px-4 text-amber-400 font-bold">5x – 6x</td>
-                <td class="py-4 px-4">4 – 5 lệnh</td>
-                <td class="py-4 px-4 text-gray-300">~20.0$ – 25.0$</td>
-                <td class="py-4 px-4 text-emerald-400">-18.0%</td>
-                <td class="py-4 px-4 text-cyan-400">Gấp 5.5x SL</td>
-                <td class="py-4 px-4 text-rose-400 font-bold">12.0$ (1.2%)</td>
+                <td class="py-3.5 px-4 font-bold text-white">1,000$</td>
+                <td class="py-3.5 px-4 text-amber-400 font-bold">5x – 6x</td>
+                <td class="py-3.5 px-4">4 – 5 lệnh</td>
+                <td class="py-3.5 px-4 text-gray-300">~20.0$ – 25.0$</td>
+                <td class="py-3.5 px-4 text-emerald-400">-18.0%</td>
+                <td class="py-3.5 px-4 text-cyan-400">Gấp 5.5x SL</td>
+                <td class="py-3.5 px-4 text-rose-400 font-bold">12.0$ (1.2%)</td>
               </tr>
               <tr class="hover:bg-white/[0.03] transition bg-amber-400/[0.02]">
-                <td class="py-4 px-4 font-black text-amber-400">10,000$ (Cá Voi)</td>
-                <td class="py-4 px-4 text-amber-300 font-black">3x – 4x</td>
-                <td class="py-4 px-4 font-bold">5 – 6 lệnh</td>
-                <td class="py-4 px-4 text-white">~150$ – 180$</td>
-                <td class="py-4 px-4 text-emerald-400 font-bold">-28% – -32%</td>
-                <td class="py-4 px-4 text-cyan-400 font-bold">Gấp 10.0x SL</td>
-                <td class="py-4 px-4 text-rose-400 font-bold">80.0$ (0.8%)</td>
+                <td class="py-3.5 px-4 font-black text-amber-400">10,000$ (Cá Voi)</td>
+                <td class="py-3.5 px-4 text-amber-300 font-black">3x – 4x</td>
+                <td class="py-3.5 px-4 font-bold">5 – 6 lệnh</td>
+                <td class="py-3.5 px-4 text-white">~150$ – 180$</td>
+                <td class="py-3.5 px-4 text-emerald-400 font-bold">-28% – -32%</td>
+                <td class="py-3.5 px-4 text-cyan-400 font-bold">Gấp 10.0x SL</td>
+                <td class="py-3.5 px-4 text-rose-400 font-bold">80.0$ (0.8%)</td>
               </tr>
             </tbody>
           </table>
@@ -270,63 +248,143 @@
   </main>
 
   <!-- Footer -->
-  <footer class="border-t border-white/10 py-10 text-center text-xs text-gray-500 relative z-10">
+  <footer class="border-t border-white/10 py-8 text-center text-xs text-gray-500 relative z-10">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center space-x-2">
         <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-        <span>Hệ thống vận hành phân tán 0 đồng · Cloudflare & Firebase</span>
+        <span>Hệ thống vận hành cá nhân · Cloudflare Pages & Firebase</span>
       </div>
       <p>© 2026 Quant AI Trade Platform by Lê Hoàng Đức. All rights reserved.</p>
     </div>
   </footer>
 
-  <!-- Galaxy Canvas Animation Script (Kenzo style) -->
+  <!-- Background Galaxy Canvas Animation -->
   <script>
-    const canvas = document.getElementById('galaxyCanvas');
-    const ctx = canvas.getContext('2d');
-    let width, height, stars = [];
+    const galaxyCanvas = document.getElementById('galaxyCanvas');
+    const gCtx = galaxyCanvas.getContext('2d');
+    let gWidth, gHeight, stars = [];
 
-    function resize() {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+    function resizeGalaxy() {
+      gWidth = galaxyCanvas.width = window.innerWidth;
+      gHeight = galaxyCanvas.height = window.innerHeight;
     }
-    window.addEventListener('resize', resize);
-    resize();
+    window.addEventListener('resize', resizeGalaxy);
+    resizeGalaxy();
 
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < 90; i++) {
       stars.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
+        x: Math.random() * gWidth,
+        y: Math.random() * gHeight,
         radius: Math.random() * 1.5 + 0.3,
-        alpha: Math.random() * 0.8 + 0.2,
-        dx: (Math.random() - 0.5) * 0.3,
-        dy: (Math.random() - 0.5) * 0.3,
+        alpha: Math.random() * 0.7 + 0.2,
+        dx: (Math.random() - 0.5) * 0.2,
+        dy: (Math.random() - 0.5) * 0.2,
         color: Math.random() > 0.4 ? '#f59e0b' : '#06b6d4'
       });
     }
 
-    function draw() {
-      ctx.clearRect(0, 0, width, height);
+    function drawGalaxy() {
+      gCtx.clearRect(0, 0, gWidth, gHeight);
       stars.forEach(s => {
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
-        ctx.fillStyle = s.color;
-        ctx.globalAlpha = s.alpha;
-        ctx.fill();
+        gCtx.beginPath();
+        gCtx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        gCtx.fillStyle = s.color;
+        gCtx.globalAlpha = s.alpha;
+        gCtx.fill();
 
         s.x += s.dx;
         s.y += s.dy;
-        if (s.x < 0) s.x = width;
-        if (s.x > width) s.x = 0;
-        if (s.y < 0) s.y = height;
-        if (s.y > height) s.y = 0;
+        if (s.x < 0) s.x = gWidth;
+        if (s.x > gWidth) s.x = 0;
+        if (s.y < 0) s.y = gHeight;
+        if (s.y > gHeight) s.y = 0;
       });
-      requestAnimationFrame(draw);
+      requestAnimationFrame(drawGalaxy);
     }
-    draw();
+    drawGalaxy();
   </script>
 
-  <!-- Firebase & App Script (Modular v10) -->
+  <!-- Interactive Candlestick & Spark Cursor Trail (Hiệu ứng nến xanh/đỏ lướt chuột) -->
+  <script>
+    const candleCanvas = document.getElementById('candleCursorCanvas');
+    const cCtx = candleCanvas.getContext('2d');
+    let cWidth, cHeight, candles = [];
+
+    function resizeCandle() {
+      cWidth = candleCanvas.width = window.innerWidth;
+      cHeight = candleCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCandle);
+    resizeCandle();
+
+    let lastMouseX = 0, lastMouseY = 0;
+
+    window.addEventListener('mousemove', (e) => {
+      const dist = Math.hypot(e.clientX - lastMouseX, e.clientY - lastMouseY);
+      if (dist > 18) { // Tạo nến mới khi chuột di chuyển
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+
+        const isBullish = Math.random() > 0.45; // 55% nến xanh, 45% nến đỏ
+        candles.push({
+          x: e.clientX,
+          y: e.clientY,
+          width: Math.random() * 4 + 4,
+          bodyHeight: Math.random() * 14 + 8,
+          wickHeight: Math.random() * 24 + 16,
+          isBullish: isBullish,
+          color: isBullish ? '#10b981' : '#ef4444',
+          alpha: 1.0,
+          vy: -(Math.random() * 1.2 + 0.8), // Bay nhẹ lên trên
+          vx: (Math.random() - 0.5) * 0.8,
+          symbol: Math.random() > 0.75 ? (Math.random() > 0.5 ? '$' : '₿') : null
+        });
+      }
+    });
+
+    function drawCandles() {
+      cCtx.clearRect(0, 0, cWidth, cHeight);
+      for (let i = candles.length - 1; i >= 0; i--) {
+        const c = candles[i];
+        cCtx.save();
+        cCtx.globalAlpha = c.alpha;
+
+        if (c.symbol) {
+          // Vẽ ký hiệu tiền tệ bay lên
+          cCtx.font = 'bold 12px "JetBrains Mono", monospace';
+          cCtx.fillStyle = '#f59e0b';
+          cCtx.fillText(c.symbol, c.x, c.y);
+        } else {
+          // Vẽ Râu nến
+          cCtx.strokeStyle = c.color;
+          cCtx.lineWidth = 1.2;
+          cCtx.beginPath();
+          cCtx.moveTo(c.x, c.y - c.wickHeight / 2);
+          cCtx.lineTo(c.x, c.y + c.wickHeight / 2);
+          cCtx.stroke();
+
+          // Vẽ Thân nến
+          cCtx.fillStyle = c.color;
+          cCtx.fillRect(c.x - c.width / 2, c.y - c.bodyHeight / 2, c.width, c.bodyHeight);
+        }
+
+        cCtx.restore();
+
+        // Di chuyển và mờ dần
+        c.y += c.vy;
+        c.x += c.vx;
+        c.alpha -= 0.022; // Mờ dần trong khoảng 1 giây
+
+        if (c.alpha <= 0) {
+          candles.splice(i, 1);
+        }
+      }
+      requestAnimationFrame(drawCandles);
+    }
+    drawCandles();
+  </script>
+
+  <!-- Firebase & App Script -->
   <script type="module" src="js/auth.js"></script>
   <script>
     lucide.createIcons();

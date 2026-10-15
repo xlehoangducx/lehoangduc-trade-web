@@ -269,35 +269,84 @@ window.toggleUserStatus = async function(userId, newStatus) {
 // Realtime Telemetry from User's OWN local Bot (Strict Privacy Isolation)
 function listenToBotTelemetry(userId, isAdmin) {
   const telemetryRef = doc(db, "bots_telemetry", userId);
+  const badgeText = document.getElementById("botHeartbeatText");
+  const badgeEl = document.getElementById("botHeartbeatBadge");
+  const positionsTbody = document.getElementById("positionsTableBody");
+
   onSnapshot(telemetryRef, (docSnap) => {
     if (docSnap.exists()) {
       const data = docSnap.data();
       document.getElementById("statBalance").textContent = Number(data.balance || 0).toFixed(2);
-      document.getElementById("statBalanceSub").textContent = "Cập nhật lúc: " + (data.updated_at || "Vừa xong");
+      document.getElementById("statBalanceSub").textContent = "Đồng bộ từ PC lúc: " + (data.updated_at || "Vừa xong");
       
       const pnl = Number(data.daily_pnl || 0);
       document.getElementById("statDailyPnl").textContent = (pnl >= 0 ? '+' : '') + pnl.toFixed(4);
       
       document.getElementById("statWinRate").textContent = (data.win_rate || "0.0") + "%";
       document.getElementById("statOpenPositions").textContent = (data.open_positions_count || 0) + " / " + (data.max_open_trades || 2);
-    } else {
-      // Chưa có bot nào cắm token của user này
-      if (isAdmin) {
-        // Admin default view if bot offline
-        document.getElementById("statBalance").textContent = "42.98";
-        document.getElementById("statDailyPnl").textContent = "+0.5481";
-        document.getElementById("statWinRate").textContent = "70.0%";
-        document.getElementById("statOpenPositions").textContent = "0 / 2";
-        document.getElementById("statBalanceSub").textContent = "Dữ liệu cơ sở dữ liệu local";
-      } else {
-        // Thành viên khác: hiển thị trắng hoàn toàn, không lộ số liệu Admin
-        document.getElementById("statBalance").textContent = "0.00";
-        document.getElementById("statDailyPnl").textContent = "0.0000";
-        document.getElementById("statWinRate").textContent = "0.0%";
-        document.getElementById("statOpenPositions").textContent = "0 / 2";
-        document.getElementById("statBalanceSub").textContent = "Chưa kết nối bot cá nhân";
+
+      // Heartbeat Status
+      if (badgeText) {
+        if (data.is_running === false) {
+          badgeText.textContent = "PAUSED (TẠM DỪNG)";
+        } else {
+          badgeText.textContent = "ONLINE (SYNC REALTIME)";
+        }
       }
+
+      // Render Positions Table
+      if (positionsTbody) {
+        const positions = data.positions || [];
+        if (positions.length === 0) {
+          positionsTbody.innerHTML = `
+            <tr>
+              <td colspan="8" class="text-center py-8 text-gray-500">
+                <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+                <span>Hiện tại không có vị thế mở. Bot đang quét tìm cơ hội đẹp...</span>
+              </td>
+            </tr>
+          `;
+        } else {
+          let posHtml = "";
+          positions.forEach(p => {
+            const isLong = (p.side || "").toUpperCase() === "LONG" || (p.side || "").toUpperCase() === "BUY";
+            const upnl = Number(p.unrealized_pnl || 0);
+            posHtml += `
+              <tr class="hover:bg-white/[0.03] transition">
+                <td class="py-3 px-4 font-bold text-white">${p.symbol}</td>
+                <td class="py-3 px-4">
+                  <span class="px-2 py-0.5 rounded text-xs font-bold ${isLong ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">
+                    ${isLong ? 'LONG / MUA' : 'SHORT / BÁN'}
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-amber-400 font-bold">${p.leverage || 5}x</td>
+                <td class="py-3 px-4 text-gray-300">${Number(p.entry_price || 0).toFixed(4)}</td>
+                <td class="py-3 px-4 text-white font-semibold">${Number(p.mark_price || 0).toFixed(4)}</td>
+                <td class="py-3 px-4 text-gray-300">${Number(p.margin || 0).toFixed(2)}$</td>
+                <td class="py-3 px-4 font-bold ${upnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                  ${upnl >= 0 ? '+' : ''}${upnl.toFixed(4)}$
+                </td>
+                <td class="py-3 px-4 text-right">
+                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}' })" class="px-3 py-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 rounded-lg text-xs font-bold transition">
+                    Đóng
+                  </button>
+                </td>
+              </tr>
+            `;
+          });
+          positionsTbody.innerHTML = posHtml;
+        }
+      }
+    } else {
+      // Chưa có dữ liệu telemetry
+      if (badgeText) badgeText.textContent = "OFFLINE (CHỜ KẾT NỐI)";
+      document.getElementById("statBalance").textContent = "0.00";
+      document.getElementById("statDailyPnl").textContent = "0.0000";
+      document.getElementById("statWinRate").textContent = "0.0%";
+      document.getElementById("statOpenPositions").textContent = "0 / 2";
+      document.getElementById("statBalanceSub").textContent = "Chưa kết nối bot cá nhân";
     }
+    if (window.lucide) lucide.createIcons();
   });
 }
 
