@@ -19,19 +19,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
 import { 
-
   doc, 
-
   setDoc, 
-
   collection, 
-
   onSnapshot, 
-
   updateDoc, 
-
+  deleteDoc, 
   serverTimestamp 
-
 } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
 
@@ -414,7 +408,7 @@ function listenToAdminFleet() {
 
     let activeBots = 0;
 
-    let totalPnl = 0.0;
+    let systemTotalPnl = 0.0;
 
 
 
@@ -422,17 +416,121 @@ function listenToAdminFleet() {
 
       const u = docSnap.data();
 
-      const isApproved = u.status === "approved";
-
       const isAdmin = u.role === "admin";
 
-      const balance = u.assignedBalance || 40.0;
+      const isApproved = u.status === "approved";
 
-      const pnl = u.livePnl || 0.0;
+      const balance = Number(u.assignedBalance || 40.0);
 
-      totalPnl += pnl;
+      const dailyPnl = Number(u.livePnl || 0.0);
+
+      const totalPnl = Number(u.totalPnl !== undefined ? u.totalPnl : dailyPnl);
+
+      systemTotalPnl += totalPnl;
 
       if (isApproved) activeBots++;
+
+
+
+      // 20% Profit sharing calculation (only on positive net profit)
+
+      const fee20 = totalPnl > 0 ? (totalPnl * 0.20) : 0.0;
+
+      const isFeePaid = Boolean(u.feePaid);
+
+
+
+      // Status badge
+
+      let statusBadge = "";
+
+      if (u.status === "approved") {
+
+        statusBadge = `<span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mono-font text-xs font-bold">ĐÃ CẤP QUYỀN</span>`;
+
+      } else if (u.status === "revoked" || u.status === "blocked") {
+
+        statusBadge = `<span class="px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30 mono-font text-xs font-bold">ĐÃ KHÓA / KÍCH</span>`;
+
+      } else {
+
+        statusBadge = `<span class="px-2.5 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 mono-font text-xs font-bold">CHỜ DUYỆT</span>`;
+
+      }
+
+
+
+      // Fee status badge
+
+      let feeBadge = "";
+
+      if (fee20 > 0) {
+
+        if (isFeePaid) {
+
+          feeBadge = `<span class="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 mono-font text-[11px] font-bold" title="${u.feePaidAt ? 'Nộp: ' + u.feePaidAt : 'Đã xác nhận'}">✓ ĐÃ NỘP</span>`;
+
+        } else {
+
+          feeBadge = `<span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 mono-font text-[11px] font-bold">CHƯA NỘP</span>`;
+
+        }
+
+      } else {
+
+        feeBadge = `<span class="text-gray-500 mono-font text-[11px]">0.00$ (Chưa có lãi)</span>`;
+
+      }
+
+
+
+      // Action buttons
+
+      let actionsHtml = "";
+
+      if (isAdmin) {
+
+        actionsHtml = `<span class="text-xs text-amber-400/80 mono-font font-bold">Super Admin</span>`;
+
+      } else {
+
+        let permBtn = "";
+
+        if (u.status === "approved") {
+
+          permBtn = `<button onclick="toggleUserStatus('${docSnap.id}', 'revoked')" class="text-xs px-2.5 py-1 rounded-xl bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 border border-rose-500/30 font-bold transition whitespace-nowrap" title="Kích ra khỏi hệ thống & khóa bot trên máy tính thành viên">⛔ Kích / Khóa</button>`;
+
+        } else if (u.status === "revoked" || u.status === "blocked") {
+
+          permBtn = `<button onclick="toggleUserStatus('${docSnap.id}', 'approved')" class="text-xs px-2.5 py-1 rounded-xl bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/30 font-bold transition whitespace-nowrap" title="Mở khóa và cấp lại quyền cho bot chạy">🔓 Mở Lại</button>`;
+
+        } else {
+
+          permBtn = `<button onclick="toggleUserStatus('${docSnap.id}', 'approved')" class="text-xs px-2.5 py-1 rounded-xl bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 border border-emerald-500/30 font-bold transition whitespace-nowrap" title="Duyệt cấp quyền sử dụng bot">✅ Duyệt</button>`;
+
+        }
+
+
+
+        let feeBtn = "";
+
+        if (fee20 > 0) {
+
+          feeBtn = `<button onclick="toggleFeePaid('${docSnap.id}', ${!isFeePaid})" class="text-xs px-2.5 py-1 rounded-xl ${isFeePaid ? 'bg-white/[0.05] text-gray-400 hover:text-white' : 'bg-amber-400/20 text-amber-300 hover:bg-amber-400/30 border border-amber-400/40'} font-bold transition whitespace-nowrap" title="${isFeePaid ? 'Bấm để hủy xác nhận' : 'Xác nhận khi thành viên đã chuyển khoản'}">${isFeePaid ? '↩ Hủy Phí' : '💰 Đã Thu'}</button>`;
+
+        }
+
+
+
+        const memberEscaped = (u.displayName || u.email || 'Thành viên').replace(/'/g, "\\'");
+
+        const delBtn = `<button onclick="deleteMember('${docSnap.id}', '${memberEscaped}')" class="text-xs px-2.5 py-1 rounded-xl bg-red-600/10 text-red-400 hover:bg-red-600/20 border border-red-500/20 font-bold transition whitespace-nowrap" title="Xóa tài khoản này">🗑️ Xóa</button>`;
+
+
+
+        actionsHtml = `<div class="flex items-center justify-end gap-1.5 flex-wrap">${permBtn}${feeBtn}${delBtn}</div>`;
+
+      }
 
 
 
@@ -444,11 +542,11 @@ function listenToAdminFleet() {
 
             <div class="flex items-center space-x-3">
 
-              <img src="${u.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.displayName)}" class="w-8 h-8 rounded-full border border-amber-400/40">
+              <img src="${u.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.displayName || 'User')}" class="w-8 h-8 rounded-full border border-amber-400/40 shrink-0">
 
               <div>
 
-                <div class="font-bold text-white leading-tight text-xs">${u.displayName}</div>
+                <div class="font-bold text-white leading-tight text-xs">${u.displayName || 'Thành viên'}</div>
 
                 <span class="text-[10px] text-gray-400 mono-font">${isAdmin ? 'SUPER ADMIN' : 'MEMBER'}</span>
 
@@ -458,43 +556,45 @@ function listenToAdminFleet() {
 
           </td>
 
-          <td class="text-gray-300 mono-font text-xs">${u.email}</td>
+          <td class="text-gray-300 mono-font text-xs">${u.email || '--'}</td>
 
-          <td>
-
-            <span class="px-2.5 py-0.5 rounded-full ${isApproved ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'} mono-font text-xs font-bold">
-
-              ${isApproved ? 'ĐÃ DUYỆT' : 'CHỜ DUYỆT'}
-
-            </span>
-
-          </td>
+          <td>${statusBadge}</td>
 
           <td><span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-amber-400 font-bold mono-font text-xs">${balance.toFixed(2)}$</span></td>
 
           <td>
 
-            <span class="px-2.5 py-0.5 rounded-full mono-font font-bold text-xs ${pnl >= 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+            <span class="px-2.5 py-0.5 rounded-full mono-font font-bold text-xs ${dailyPnl >= 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
 
-              ${pnl >= 0 ? '+' : ''}${pnl.toFixed(4)}$
+              ${dailyPnl >= 0 ? '+' : ''}${dailyPnl.toFixed(4)}$
 
             </span>
 
           </td>
 
-          <td class="text-right space-x-2">
+          <td>
 
-            ${!isAdmin ? `
+            <span class="px-2.5 py-0.5 rounded-full mono-font font-bold text-xs ${totalPnl >= 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
 
-              <button onclick="toggleUserStatus('${docSnap.id}', '${isApproved ? 'pending' : 'approved'}')" class="text-xs px-3.5 py-1.5 rounded-xl ${isApproved ? 'bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 border border-rose-500/30' : 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/30'} font-bold transition">
+              ${totalPnl >= 0 ? '+' : ''}${totalPnl.toFixed(4)}$
 
-                ${isApproved ? 'Khóa Quyền' : 'Duyệt Quyền'}
-
-              </button>
-
-            ` : '<span class="text-xs text-gray-500 mono-font">Cố định</span>'}
+            </span>
 
           </td>
+
+          <td>
+
+            <span class="font-bold mono-font text-xs ${fee20 > 0 ? 'text-amber-400 font-black' : 'text-gray-500'}">
+
+              ${fee20.toFixed(2)}$
+
+            </span>
+
+          </td>
+
+          <td>${feeBadge}</td>
+
+          <td class="text-right">${actionsHtml}</td>
 
         </tr>
 
@@ -510,7 +610,7 @@ function listenToAdminFleet() {
 
     document.getElementById("fleetActiveBots").textContent = activeBots + " Online";
 
-    document.getElementById("fleetTotalPnl").textContent = (totalPnl >= 0 ? '+' : '') + totalPnl.toFixed(2) + " USDT";
+    document.getElementById("fleetTotalPnl").textContent = (systemTotalPnl >= 0 ? '+' : '') + systemTotalPnl.toFixed(2) + " USDT";
 
     if (window.lucide) lucide.createIcons();
 
@@ -524,17 +624,89 @@ function listenToAdminFleet() {
 
 window.toggleUserStatus = async function(userId, newStatus) {
 
+  const confirmMsg = newStatus === 'revoked' 
+
+    ? 'Bạn có chắc muốn KÍCH RA / KHÓA BẢN QUYỀN thành viên này? Bot trên máy tính của họ sẽ lập tức bị buộc dừng hoạt động!' 
+
+    : `Xác nhận chuyển trạng thái thành viên sang: [${newStatus.toUpperCase()}]?`;
+
+  if (!confirm(confirmMsg)) return;
+
+
+
   try {
 
     const userRef = doc(db, "users", userId);
 
     await updateDoc(userRef, { status: newStatus });
 
-    alert(`Đã chuyển trạng thái user thành [${newStatus.toUpperCase()}] thành công!`);
+    alert(`Đã cập nhật trạng thái bản quyền thành: ${newStatus.toUpperCase()}`);
 
   } catch (e) {
 
     alert("Lỗi: " + e.message);
+
+  }
+
+};
+
+
+
+window.toggleFeePaid = async function(userId, newFeeState) {
+
+  const msg = newFeeState 
+
+    ? 'Xác nhận ĐÃ NHẬN TIỀN phí chia sẻ lợi nhuận 20% từ thành viên này?' 
+
+    : 'Hủy xác nhận thu tiền của thành viên này?';
+
+  if (!confirm(msg)) return;
+
+
+
+  try {
+
+    const userRef = doc(db, "users", userId);
+
+    const updateData = { feePaid: newFeeState };
+
+    if (newFeeState) {
+
+      updateData.feePaidAt = new Date().toLocaleString("vi-VN");
+
+    }
+
+    await updateDoc(userRef, updateData);
+
+    alert(newFeeState ? "Đã ghi nhận ĐÃ THU TIỀN thành công!" : "Đã hủy trạng thái thu tiền.");
+
+  } catch (e) {
+
+    alert("Lỗi: " + e.message);
+
+  }
+
+};
+
+
+
+window.deleteMember = async function(userId, memberName) {
+
+  if (!confirm(`CẢNH BÁO: Bạn có chắc chắn muốn XÓA VĨNH VIỄN thành viên [${memberName}] khỏi hệ thống TradeMatrix? Dữ liệu của họ sẽ bị xóa khỏi cơ sở dữ liệu.`)) return;
+
+
+
+  try {
+
+    const userRef = doc(db, "users", userId);
+
+    await deleteDoc(userRef);
+
+    alert(`Đã xóa thành viên [${memberName}] thành công!`);
+
+  } catch (e) {
+
+    alert("Lỗi khi xóa: " + e.message);
 
   }
 

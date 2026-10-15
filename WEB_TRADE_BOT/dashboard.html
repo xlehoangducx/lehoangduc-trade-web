@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>TradeMatrix · Trading Terminal Dashboard</title>
   <meta name="theme-color" content="#07080d">
+  <!-- Chrome Tab 3D Gear Favicon -->
+  <link rel="icon" type="image/png" href="assets/img/gear-gold-3d.png">
+  <link rel="apple-touch-icon" href="assets/img/gear-gold-3d.png">
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts Be Vietnam Pro & JetBrains Mono (100% Vietnamese Font Fix) -->
@@ -307,7 +310,7 @@
               </button>
 
               <button data-preset="10000" class="btn-preset p-3 rounded-2xl border border-white/10 bg-white/[0.03] text-left transition hover:border-amber-400">
-                <div class="text-[10px] text-gray-400 mono-font">Cá Voi (Whale)</div>
+                <div class="text-[10px] text-gray-400 mono-font">Mốc tối đa</div>
                 <div class="text-sm font-black text-white mono-font">10,000$</div>
                 <div class="text-[11px] text-gray-300 mt-0.5">4x • 6 Lệnh</div>
               </button>
@@ -487,7 +490,7 @@
                   <td><span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-bold mono-font text-xs">12.0$ (1.2%)</span></td>
                 </tr>
                 <tr class="bg-amber-400/[0.04] border-amber-400/30">
-                  <td><span class="px-3 py-1 rounded-lg bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black mono-font text-xs shadow-md shadow-amber-400/20">10,000$ (Cá Voi)</span></td>
+                  <td><span class="px-3 py-1 rounded-lg bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black mono-font text-xs shadow-md shadow-amber-400/20">10,000$</span></td>
                   <td><span class="px-2.5 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 font-black mono-font text-xs">3x – 4x</span></td>
                   <td class="text-white font-bold mono-font text-xs">5 – 6 lệnh</td>
                   <td class="text-white font-semibold mono-font text-xs">~150$ – 180$</td>
@@ -700,6 +703,14 @@
             </div>
           </div>
 
+          <!-- Profit Sharing Policy Banner -->
+          <div class="p-4 rounded-2xl bg-amber-400/5 border border-amber-400/20 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2.5 text-gray-300">
+              <i data-lucide="percent" class="w-4 h-4 text-amber-400 shrink-0"></i>
+              <span><b>Chính sách chia sẻ lợi nhuận 20% (High-Water Mark):</b> Phí chỉ phát sinh khi tổng lãi ròng > 0. Nếu thành viên không nộp phí, Admin có thể bấm <b>Khóa / Kích Ra</b> để bot từ xa lập tức dừng hoạt động.</span>
+            </div>
+          </div>
+
           <!-- Users Table -->
           <div class="overflow-x-auto">
             <table class="terminal-table">
@@ -707,10 +718,13 @@
                 <tr>
                   <th>Thành Viên</th>
                   <th>Email</th>
-                  <th>Trạng Thái</th>
-                  <th>Vốn Cài Đặt</th>
-                  <th>Lãi / Lỗ Hôm Nay</th>
-                  <th class="text-right">Phê Duyệt / Hành Động</th>
+                  <th>Bản Quyền</th>
+                  <th>Vốn Cài</th>
+                  <th>Lãi Hôm Nay</th>
+                  <th>Tổng Lãi Ròng</th>
+                  <th>Phí Chia Sẻ (20%)</th>
+                  <th>Thu Phí</th>
+                  <th class="text-right">Hành Động Quản Trị</th>
                 </tr>
               </thead>
               <tbody id="adminUsersTableBody">
