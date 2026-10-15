@@ -588,11 +588,11 @@
             </div>
           </div>
 
-          <!-- Hướng Dẫn 4 Bước Chi Tiết -->
+          <!-- Hướng Dẫn 6 Bước Vận Hành Chi Tiết -->
           <div class="border-t border-white/10 pt-8">
             <h3 class="text-lg font-bold text-white mb-6 flex items-center gap-2">
               <i data-lucide="list-ordered" class="w-5 h-5 text-amber-400"></i>
-              <span>Quy Trình 4 Bước Vận Hành Dành Cho Thành Viên</span>
+              <span>Quy Trình 6 Bước Cài Đặt & Vận Hành Chuẩn Cho Thành Viên</span>
             </h3>
 
             <div class="space-y-6">
@@ -602,23 +602,32 @@
                   1
                 </div>
                 <div class="flex-1">
-                  <h4 class="text-sm font-bold text-white">Đăng ký & Được Admin Lê Hoàng Đức Phê Duyệt</h4>
+                  <h4 class="text-sm font-bold text-white">Đăng Ký & Được Super Admin Lê Hoàng Đức Duyệt Quyền</h4>
                   <p class="text-xs text-gray-400 mt-1 leading-relaxed">
-                    Đăng nhập tài khoản Google vào web. Sau khi đăng nhập, nhắn tin cho Admin Lê Hoàng Đức để được bấm duyệt cấp quyền truy cập. Nếu chưa được duyệt, hệ thống sẽ tạm khóa màn hình điều khiển để đảm bảo an toàn.
+                    Đăng nhập tài khoản Google vào trang web này. Sau khi đăng nhập, nhắn tin cho Admin Lê Hoàng Đức để được bấm duyệt cấp quyền bản quyền. Nếu chưa được duyệt, bot sẽ bị tạm khóa không cho bắt đầu giao dịch.
                   </p>
                 </div>
               </div>
 
               <!-- Bước 2 -->
               <div class="flex items-start space-x-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
-                <div class="w-8 h-8 rounded-full bg-amber-400 text-black font-extrabold flex items-center justify-center shrink-0 mono-font text-sm">
+                <div class="w-8 h-8 rounded-full bg-cyan-400 text-black font-extrabold flex items-center justify-center shrink-0 mono-font text-sm">
                   2
                 </div>
                 <div class="flex-1">
-                  <h4 class="text-sm font-bold text-white">Tải Thư Mục Tool Về Máy Tính & Giải Nén</h4>
-                  <p class="text-xs text-gray-400 mt-1 leading-relaxed">
-                    Tải file ZIP về máy, giải nén vào ổ đĩa bất kỳ (khuyến nghị để ở <code class="text-amber-400 mono-font">D:\TRADE</code> hoặc thư mục riêng của bạn). Thư mục chứa toàn bộ thuật toán phân tích, quản trị vốn và các file chạy tự động.
+                  <div class="flex items-center justify-between flex-wrap gap-2">
+                    <h4 class="text-sm font-bold text-white">Cài Đặt Bộ Não AI Ollama (Chạy Offline 100% Trên Máy)</h4>
+                    <a href="https://ollama.com/download/windows" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-bold hover:bg-cyan-500/30 transition">
+                      <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                      <span>Tải Ollama Cho Windows</span>
+                    </a>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1.5 leading-relaxed">
+                    Tải và cài đặt phần mềm Ollama để chạy mô hình AI Offline (giúp bot phân tích đa tầng, nhận định xu hướng và chế độ thị trường). Sau khi cài xong, mở CMD/PowerShell và gõ lệnh sau để tải model AI:
                   </p>
+                  <div class="mt-2 p-2.5 bg-black/60 rounded-xl border border-white/10 text-xs mono-font text-amber-400 select-all">
+                    ollama run qwen2.5:7b
+                  </div>
                 </div>
               </div>
 
@@ -628,22 +637,54 @@
                   3
                 </div>
                 <div class="flex-1">
-                  <h4 class="text-sm font-bold text-white">Nhấp Đúp START.bat Để Mở Giao Diện Tool Trên Máy Tính</h4>
+                  <h4 class="text-sm font-bold text-white">Tải Thư Mục Tool & Chạy File install.bat Để Tạo Môi Trường</h4>
                   <p class="text-xs text-gray-400 mt-1 leading-relaxed">
-                    Nhấp đúp chuột vào file <code class="text-amber-400 mono-font font-bold">START.bat</code> trong thư mục vừa giải nén. Trình duyệt web sẽ tự động mở bảng điều khiển cục bộ tại <code class="text-amber-400 mono-font font-bold">http://127.0.0.1:5000</code>.
+                    Tải file ZIP về máy, giải nén vào thư mục riêng (khuyến nghị <code class="text-amber-400 mono-font font-bold">D:\TRADE</code>). Nhấp đúp chuột vào file <code class="text-amber-400 mono-font font-bold">install.bat</code> để tool tự động kiểm tra Python 3.11+, khởi tạo môi trường ảo <code class="text-amber-400 mono-font">venv</code> và cài đặt toàn bộ thư viện cần thiết.
                   </p>
                 </div>
               </div>
 
               <!-- Bước 4 -->
-              <div class="flex items-start space-x-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
-                <div class="w-8 h-8 rounded-full bg-emerald-400 text-black font-extrabold flex items-center justify-center shrink-0 mono-font text-sm">
+              <div class="flex items-start space-x-4 p-4 rounded-2xl bg-rose-500/[0.05] border border-rose-500/20">
+                <div class="w-8 h-8 rounded-full bg-rose-500 text-white font-extrabold flex items-center justify-center shrink-0 mono-font text-sm shadow-md shadow-rose-500/30">
                   4
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h4 class="text-sm font-bold text-white">Đồng Bộ Giờ Sàn Bằng File Fix_Time.bat</h4>
+                    <span class="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-extrabold uppercase mono-font">Bắt Buộc Quyền Admin</span>
+                  </div>
+                  <p class="text-xs text-gray-300 mt-1.5 leading-relaxed">
+                    ⚠️ <b>LƯU Ý CỰC KỲ QUAN TRỌNG:</b> Bấm <b>chuột phải</b> vào file <code class="text-rose-400 mono-font font-bold">Fix_Time.bat</code> $\rightarrow$ Chọn <b>"Run as administrator" (Chạy với quyền Quản trị viên)</b>.
+                  </p>
+                  <p class="text-xs text-gray-400 mt-1 leading-relaxed">
+                    Sàn Binance kiểm tra độ lệch thời gian rất khắt khe (lệch quá 1 giây sẽ bị sàn từ chối đặt lệnh). File này sẽ tự động ép đồng hồ Windows chuẩn từng mili-giây với máy chủ Binance, đảm bảo khớp lệnh 100% trơn tru!
+                  </p>
+                </div>
+              </div>
+
+              <!-- Bước 5 -->
+              <div class="flex items-start space-x-4 p-4 rounded-2xl bg-white/[0.02] border border-white/5">
+                <div class="w-8 h-8 rounded-full bg-amber-400 text-black font-extrabold flex items-center justify-center shrink-0 mono-font text-sm">
+                  5
+                </div>
+                <div class="flex-1">
+                  <h4 class="text-sm font-bold text-white">Nhấp Đúp START.bat Để Mở Giao Diện Tool Trên Máy Tính</h4>
+                  <p class="text-xs text-gray-400 mt-1 leading-relaxed">
+                    Nhấp đúp chuột vào file <code class="text-amber-400 mono-font font-bold">START.bat</code>. Trình duyệt web sẽ tự động mở bảng điều khiển cục bộ tại <code class="text-amber-400 mono-font font-bold">http://127.0.0.1:5000</code>.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Bước 6 -->
+              <div class="flex items-start space-x-4 p-4 rounded-2xl bg-emerald-500/[0.03] border border-emerald-500/20">
+                <div class="w-8 h-8 rounded-full bg-emerald-400 text-black font-extrabold flex items-center justify-center shrink-0 mono-font text-sm shadow-md shadow-emerald-500/20">
+                  6
                 </div>
                 <div class="flex-1">
                   <h4 class="text-sm font-bold text-white">Nhập Token Web & API Binance Trực Tiếp Trên Giao Diện Tool</h4>
                   <p class="text-xs text-gray-400 mt-1 leading-relaxed mb-3">
-                    Không cần mở code hay sửa file thủ công, bạn nhập trực tiếp bằng các nút trên thanh điều khiển của Tool:
+                    Không cần mở code hay sửa file thủ công, bạn nhập trực tiếp bằng 2 nút trên thanh điều khiển của Tool:
                   </p>
 
                   <div class="space-y-3">
@@ -657,7 +698,7 @@
                       </p>
                     </div>
 
-                    <div class="p-3.5 bg-black/50 rounded-xl border border-white/10 text-xs">
+                    <div class="p-3.5 bg-black/50 rounded-xl border border-cyan-400/30 text-xs">
                       <div class="text-cyan-400 font-bold mb-1 flex items-center gap-1.5">
                         <i data-lucide="key" class="w-4 h-4"></i>
                         <span>2. Bấm nút [🔑 API Binance]:</span>
