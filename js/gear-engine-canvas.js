@@ -1,6 +1,8 @@
 /**
  * TradeMatrix Live 3-Gear Electric Lightning & Matrix Canvas Engine
- * Procedural continuous lightning arcs, sparks, and streaming matrix code
+ * - Dynamic Breathing / Surging Energy Modulation (mạnh nhẹ lúc ít lúc nhiều)
+ * - Bi-directional high-speed Matrix streams (chạy nhanh qua lại, lúc ít lúc nhiều)
+ * - Continuous rotating plasma lightning & explosive spark showers
  * 100% Transparent background - 60 FPS Canvas Animation
  */
 
@@ -15,12 +17,16 @@ class GearEngineCanvas {
     this.isRunning = true;
     this.time = 0;
     
+    // Dynamic Energy Surge State (modulates between 0.1 = calm and 1.0 = super storm)
+    this.energyIntensity = 0.5;
+    
     // Electric sparks pool
     this.sparks = [];
-    this.maxSparks = 60;
+    this.maxSparks = 100;
     
-    // Matrix data streams drifting across
+    // Matrix data streams drifting across back and forth
     this.matrixStreams = [];
+    this.maxMatrixStreams = 28;
     this.initMatrixStreams();
     
     this.resize();
@@ -55,31 +61,45 @@ class GearEngineCanvas {
 
   initMatrixStreams() {
     this.matrixStreams = [];
-    const count = 12;
-    const glyphs = '01TRADEMATRIXQUANT1010101089ABCDEF01';
+    const glyphs = '01TRADEMATRIXQUANT1010101089ABCDEF01⚡';
     
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < this.maxMatrixStreams; i++) {
+      // Half streams go Left-to-Right, half streams go Right-to-Left (chạy qua lại)
+      const direction = i % 2 === 0 ? 1 : -1;
+      const baseSpeed = 1.8 + Math.random() * 3.2;
+      
       this.matrixStreams.push({
         x: Math.random() * (this.width || 600),
         y: Math.random() * (this.height || 360),
-        vx: 1.2 + Math.random() * 2.2, // Drifting horizontally across
-        vy: (Math.random() - 0.4) * 0.8,
-        chars: Array.from({ length: 6 + Math.floor(Math.random() * 8) }, () => glyphs[Math.floor(Math.random() * glyphs.length)]),
-        color: i % 2 === 0 ? '#00f3ff' : '#10b981',
-        size: 11 + Math.random() * 4,
-        alpha: 0.3 + Math.random() * 0.5,
+        direction: direction,
+        baseSpeed: baseSpeed * direction,
+        vy: (Math.random() - 0.5) * 0.6,
+        chars: Array.from({ length: 5 + Math.floor(Math.random() * 9) }, () => glyphs[Math.floor(Math.random() * glyphs.length)]),
+        color: i % 3 === 0 ? '#00f3ff' : (i % 3 === 1 ? '#10b981' : '#fbbf24'),
+        size: 10 + Math.random() * 4,
+        baseAlpha: 0.25 + Math.random() * 0.45,
         changeTick: 0
       });
     }
   }
 
+  // Update dynamic energy surge cycle (dao động mạnh nhẹ tự nhiên)
+  updateEnergyCycle() {
+    const cycleTime = this.time * 0.028; // ~7-8s per full surge cycle
+    // Complex wave combining two sinusoidal harmonics + subtle noise
+    const raw = Math.sin(cycleTime) * 0.65 + Math.sin(cycleTime * 2.2) * 0.35;
+    // Map to 0.1 (calm/whisper) -> 1.0 (violent super-charged thunderstorm)
+    this.energyIntensity = Math.max(0.12, Math.min(1.0, (raw + 1) * 0.5));
+  }
+
   // Generate fractal electric lightning bolt between two points
-  drawLightning(x1, y1, x2, y2, displacement, branchChance = 0.35, color = '#00f3ff') {
+  drawLightning(x1, y1, x2, y2, displacement, branchChance = 0.35, color = '#00f3ff', powerScale = 1.0) {
     const points = [{ x: x1, y: y1 }, { x: x2, y: y2 }];
-    let currentDisplacement = displacement;
+    let currentDisplacement = displacement * powerScale;
     
     // Recursive subdivision for realistic jagged lightning
-    for (let iter = 0; iter < 4; iter++) {
+    const iterations = powerScale > 0.6 ? 4 : 3;
+    for (let iter = 0; iter < iterations; iter++) {
       for (let i = points.length - 1; i > 0; i--) {
         const p1 = points[i - 1];
         const p2 = points[i];
@@ -97,10 +117,10 @@ class GearEngineCanvas {
       this.ctx.lineTo(points[i].x, points[i].y);
     }
     this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = 4.5;
+    this.ctx.lineWidth = (2.5 + powerScale * 4.0);
     this.ctx.shadowColor = color;
-    this.ctx.shadowBlur = 18;
-    this.ctx.globalAlpha = 0.4;
+    this.ctx.shadowBlur = 12 + powerScale * 20;
+    this.ctx.globalAlpha = 0.3 + powerScale * 0.55;
     this.ctx.stroke();
 
     // Hot White Core Arc
@@ -110,40 +130,41 @@ class GearEngineCanvas {
       this.ctx.lineTo(points[i].x, points[i].y);
     }
     this.ctx.strokeStyle = '#ffffff';
-    this.ctx.lineWidth = 1.8;
+    this.ctx.lineWidth = 1.2 + powerScale * 1.8;
     this.ctx.shadowColor = '#ffffff';
-    this.ctx.shadowBlur = 10;
-    this.ctx.globalAlpha = 0.95;
+    this.ctx.shadowBlur = 8 + powerScale * 12;
+    this.ctx.globalAlpha = 0.85 + powerScale * 0.15;
     this.ctx.stroke();
 
     // Reset shadow
     this.ctx.shadowBlur = 0;
     this.ctx.globalAlpha = 1.0;
 
-    // Optional branch fork
-    if (Math.random() < branchChance && points.length > 4) {
+    // Fork branches when power is high
+    if (Math.random() < branchChance * powerScale && points.length > 4) {
       const forkIdx = Math.floor(points.length / 2);
       const start = points[forkIdx];
-      const endX = start.x + (Math.random() - 0.5) * 50;
-      const endY = start.y + (Math.random() - 0.5) * 50;
-      this.drawLightning(start.x, start.y, endX, endY, displacement * 0.5, 0, color);
+      const endX = start.x + (Math.random() - 0.5) * (60 * powerScale);
+      const endY = start.y + (Math.random() - 0.5) * (60 * powerScale);
+      this.drawLightning(start.x, start.y, endX, endY, displacement * 0.5, 0, color, powerScale * 0.7);
     }
   }
 
   // Spawn bursting electrical sparks at gear contact points
   emitSparks(x, y, count = 2) {
-    for (let i = 0; i < count; i++) {
+    const actualCount = Math.round(count * (0.4 + this.energyIntensity * 1.6));
+    for (let i = 0; i < actualCount; i++) {
       if (this.sparks.length >= this.maxSparks) this.sparks.shift();
       const angle = Math.random() * Math.PI * 2;
-      const speed = 1.5 + Math.random() * 4.5;
+      const speed = (1.5 + Math.random() * 4.5) * (0.7 + this.energyIntensity * 0.8);
       this.sparks.push({
-        x: x + (Math.random() - 0.5) * 10,
-        y: y + (Math.random() - 0.5) * 10,
+        x: x + (Math.random() - 0.5) * 12,
+        y: y + (Math.random() - 0.5) * 12,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         life: 1.0,
-        decay: 0.03 + Math.random() * 0.04,
-        size: 1.5 + Math.random() * 2.5,
+        decay: 0.025 + Math.random() * 0.035,
+        size: (1.5 + Math.random() * 2.5) * (0.8 + this.energyIntensity * 0.5),
         color: Math.random() > 0.4 ? '#00f3ff' : '#ffd700'
       });
     }
@@ -154,7 +175,7 @@ class GearEngineCanvas {
       const s = this.sparks[i];
       s.x += s.vx;
       s.y += s.vy;
-      s.vy += 0.08; // Gravity drift
+      s.vy += 0.08;
       s.life -= s.decay;
 
       if (s.life <= 0) {
@@ -163,7 +184,7 @@ class GearEngineCanvas {
       }
 
       this.ctx.save();
-      this.ctx.globalAlpha = s.life;
+      this.ctx.globalAlpha = s.life * (0.4 + this.energyIntensity * 0.6);
       this.ctx.fillStyle = s.color;
       this.ctx.shadowColor = s.color;
       this.ctx.shadowBlur = 8;
@@ -174,25 +195,35 @@ class GearEngineCanvas {
     }
   }
 
-  // Draw matrix code streams drifting across
+  // Draw matrix code streams running fast and slow, few or many (chạy nhanh qua lại, lúc ít lúc nhiều)
   updateMatrixStreams() {
     this.ctx.save();
     this.ctx.font = 'bold 12px "JetBrains Mono", monospace';
 
-    for (const stream of this.matrixStreams) {
-      stream.x += stream.vx;
+    // Modulate visible stream count based on energy intensity (lúc ít lúc nhiều: 6 -> 28 streams)
+    const activeCount = Math.floor(6 + this.energyIntensity * (this.maxMatrixStreams - 6));
+    
+    // High energy boosts stream velocity significantly (chạy nhanh qua lại)
+    const speedBoost = 0.8 + this.energyIntensity * 2.5;
+
+    for (let i = 0; i < activeCount; i++) {
+      const stream = this.matrixStreams[i];
+      stream.x += stream.baseSpeed * speedBoost;
       stream.y += stream.vy;
 
-      // Wrap around screen
-      if (stream.x > this.width + 120) {
-        stream.x = -100;
+      // Wrap around bounds (Left to Right and Right to Left)
+      if (stream.direction > 0 && stream.x > this.width + 120) {
+        stream.x = -80;
+        stream.y = Math.random() * this.height;
+      } else if (stream.direction < 0 && stream.x < -120) {
+        stream.x = this.width + 80;
         stream.y = Math.random() * this.height;
       }
 
       stream.changeTick++;
-      if (stream.changeTick > 8) {
+      if (stream.changeTick > 6) {
         stream.changeTick = 0;
-        const glyphs = '010101ABCDEF9';
+        const glyphs = '010101TRADEMATRIXQUANT89';
         const randIdx = Math.floor(Math.random() * stream.chars.length);
         stream.chars[randIdx] = glyphs[Math.floor(Math.random() * glyphs.length)];
       }
@@ -200,21 +231,22 @@ class GearEngineCanvas {
       // Draw streaming string
       for (let j = 0; j < stream.chars.length; j++) {
         const char = stream.chars[j];
-        const cx = stream.x - j * 14;
+        // Offset character based on direction
+        const cx = stream.x - (stream.direction * j * 14);
         const cy = stream.y;
-        const charAlpha = Math.max(0, stream.alpha * (1 - j / stream.chars.length));
+        const charAlpha = Math.max(0, stream.baseAlpha * (1 - j / stream.chars.length) * (0.5 + this.energyIntensity * 0.7));
 
         if (j === 0) {
           // Leading bright white/cyan head
           this.ctx.fillStyle = '#ffffff';
           this.ctx.shadowColor = stream.color;
-          this.ctx.shadowBlur = 12;
+          this.ctx.shadowBlur = 12 + this.energyIntensity * 10;
         } else {
           this.ctx.fillStyle = stream.color;
-          this.ctx.shadowBlur = 6;
+          this.ctx.shadowBlur = 4 + this.energyIntensity * 6;
         }
 
-        this.ctx.globalAlpha = charAlpha;
+        this.ctx.globalAlpha = Math.min(1.0, charAlpha);
         this.ctx.fillText(char, cx, cy);
       }
     }
@@ -224,28 +256,31 @@ class GearEngineCanvas {
 
   // Rotating electric orbital halo encircling the gears
   drawRotatingElectricHalo(cx, cy, radius, speedMultiplier = 1, color = '#00f3ff') {
-    const angle = (this.time * 0.03 * speedMultiplier) % (Math.PI * 2);
-    const arcLength = 0.8 + Math.sin(this.time * 0.05) * 0.3;
+    const speed = (0.02 + this.energyIntensity * 0.04) * speedMultiplier;
+    const angle = (this.time * speed) % (Math.PI * 2);
+    const arcLength = (0.6 + Math.sin(this.time * 0.05) * 0.4) * (0.7 + this.energyIntensity * 0.6);
 
     this.ctx.save();
     this.ctx.beginPath();
     this.ctx.arc(cx, cy, radius, angle, angle + arcLength);
     this.ctx.strokeStyle = color;
-    this.ctx.lineWidth = 2.5;
+    this.ctx.lineWidth = 1.5 + this.energyIntensity * 3.0;
     this.ctx.shadowColor = color;
-    this.ctx.shadowBlur = 14;
-    this.ctx.globalAlpha = 0.75;
+    this.ctx.shadowBlur = 10 + this.energyIntensity * 18;
+    this.ctx.globalAlpha = 0.35 + this.energyIntensity * 0.55;
     this.ctx.stroke();
 
     // Spark dot at lead of arc
-    const sparkX = cx + Math.cos(angle + arcLength) * radius;
-    const sparkY = cy + Math.sin(angle + arcLength) * radius;
-    this.ctx.beginPath();
-    this.ctx.arc(sparkX, sparkY, 3, 0, Math.PI * 2);
-    this.ctx.fillStyle = '#ffffff';
-    this.ctx.shadowColor = '#ffffff';
-    this.ctx.shadowBlur = 10;
-    this.ctx.fill();
+    if (this.energyIntensity > 0.3) {
+      const sparkX = cx + Math.cos(angle + arcLength) * radius;
+      const sparkY = cy + Math.sin(angle + arcLength) * radius;
+      this.ctx.beginPath();
+      this.ctx.arc(sparkX, sparkY, 2.5 + this.energyIntensity * 2, 0, Math.PI * 2);
+      this.ctx.fillStyle = '#ffffff';
+      this.ctx.shadowColor = '#ffffff';
+      this.ctx.shadowBlur = 12;
+      this.ctx.fill();
+    }
 
     this.ctx.restore();
   }
@@ -253,6 +288,9 @@ class GearEngineCanvas {
   animate() {
     if (!this.isRunning) return;
     this.time++;
+
+    // 1. Update dynamic energy surge wave (mạnh nhẹ lúc ít lúc nhiều)
+    this.updateEnergyCycle();
 
     // Clear with transparent alpha so 3D candlesticks behind shine through!
     this.ctx.clearRect(0, 0, this.width, this.height);
@@ -269,49 +307,53 @@ class GearEngineCanvas {
     const gearRadius2 = isMobile ? 55 : 85;
     const gearRadius3 = isMobile ? 65 : 105;
 
-    // 1. Matrix digital data streams drifting across
+    // 2. Matrix digital data streams running back and forth, fast/slow, few/many
     this.updateMatrixStreams();
 
-    // 2. Rotating continuous electric halos orbiting each gear
+    // 3. Rotating continuous electric halos orbiting each gear (intensity dynamically scales)
     this.drawRotatingElectricHalo(gear1X, centerY, gearRadius1 * 1.05, 1.2, '#00f3ff');
     this.drawRotatingElectricHalo(gear2X, centerY, gearRadius2 * 1.05, -1.6, '#38bdf8');
     this.drawRotatingElectricHalo(gear3X, centerY, gearRadius3 * 1.05, 1.1, '#ffd700');
 
-    // 3. Electric Lightning bolts arcing between meshing gears
-    // Arc between Gear 1 (Left Steel) & Gear 2 (Center Titanium)
-    if (this.time % 2 === 0) {
-      const contact1X = (gear1X + gear2X) * 0.5 + (Math.random() - 0.5) * 8;
-      const contact1Y = centerY + (Math.random() - 0.5) * 20;
+    // 4. Electric Lightning bolts arcing between meshing gears (mạnh nhẹ lúc ít lúc nhiều)
+    const pScale = this.energyIntensity;
+
+    // Strike chance increases with energy intensity
+    const strikeInterval1 = pScale > 0.6 ? 1 : (pScale > 0.3 ? 2 : 4);
+    if (this.time % strikeInterval1 === 0) {
+      const contact1X = (gear1X + gear2X) * 0.5 + (Math.random() - 0.5) * 10;
+      const contact1Y = centerY + (Math.random() - 0.5) * 22;
       
       const g1EdgeX = gear1X + Math.cos(0.1) * (gearRadius1 * 0.95);
       const g1EdgeY = centerY + Math.sin(0.1) * (gearRadius1 * 0.95);
       const g2EdgeX = gear2X - Math.cos(0.1) * (gearRadius2 * 0.95);
       const g2EdgeY = centerY - Math.sin(0.1) * (gearRadius2 * 0.95);
       
-      this.drawLightning(g1EdgeX, g1EdgeY, g2EdgeX, g2EdgeY, 22, 0.4, '#00f3ff');
+      this.drawLightning(g1EdgeX, g1EdgeY, g2EdgeX, g2EdgeY, 24, 0.45, '#00f3ff', pScale);
       this.emitSparks(contact1X, contact1Y, 1);
     }
 
-    // Arc between Gear 2 (Center Titanium) & Gear 3 (Right Gold)
-    if (this.time % 3 === 0 || this.time % 2 === 1) {
-      const contact2X = (gear2X + gear3X) * 0.5 + (Math.random() - 0.5) * 8;
-      const contact2Y = centerY + (Math.random() - 0.5) * 20;
+    const strikeInterval2 = pScale > 0.6 ? 1 : (pScale > 0.3 ? 3 : 5);
+    if (this.time % strikeInterval2 === 0) {
+      const contact2X = (gear2X + gear3X) * 0.5 + (Math.random() - 0.5) * 10;
+      const contact2Y = centerY + (Math.random() - 0.5) * 22;
       
       const g2EdgeX = gear2X + Math.cos(-0.1) * (gearRadius2 * 0.95);
-      const g2EdgeY = centerY + Math.sin(-0.1) * (gearRadius2 * 0.95);
+      const g2EdgeY = centerY - Math.sin(-0.1) * (gearRadius2 * 0.95);
       const g3EdgeX = gear3X - Math.cos(-0.1) * (gearRadius3 * 0.95);
       const g3EdgeY = centerY - Math.sin(-0.1) * (gearRadius3 * 0.95);
       
-      this.drawLightning(g2EdgeX, g2EdgeY, g3EdgeX, g3EdgeY, 20, 0.35, '#ffd700');
+      this.drawLightning(g2EdgeX, g2EdgeY, g3EdgeX, g3EdgeY, 22, 0.4, '#ffd700', pScale);
       this.emitSparks(contact2X, contact2Y, 1);
     }
 
-    // High-voltage lightning flash bridging all 3 gears occasionally
-    if (this.time % 45 < 4) {
-      this.drawLightning(gear1X, centerY - 15, gear3X, centerY - 15, 38, 0.5, '#38bdf8');
+    // High-voltage lightning storm bridging all 3 gears during peak energy
+    if (pScale > 0.65 && (this.time % 20 < 4)) {
+      this.drawLightning(gear1X, centerY - 18, gear3X, centerY - 18, 42, 0.6, '#38bdf8', pScale * 1.15);
+      this.drawLightning(gear1X, centerY + 18, gear3X, centerY + 18, 40, 0.55, '#00f3ff', pScale * 1.05);
     }
 
-    // 4. Update and render bursting sparks
+    // 5. Update and render bursting sparks
     this.updateSparks();
 
     requestAnimationFrame(() => this.animate());
