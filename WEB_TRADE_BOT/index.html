@@ -125,64 +125,45 @@
           <span class="text-amber-400">↓</span>
         </a>
       </div>
-
-      <!-- Big Cinematic 3D Mechanical Gear Engine (3 Bánh Răng Ăn Khớp Điện Ảnh Sét Thật & Ma Trận Dark) -->
-      <div class="my-14 relative flex flex-col items-center justify-center group">
+      <!-- 3D Kinetic Mechanical Gear Transmission Engine (100% Transparent, No Background, Real Lightning & Matrix Drift) -->
+      <div class="my-10 relative flex flex-col items-center justify-center group select-none">
         
-        <!-- Ambient Glowing Aura -->
-        <div class="absolute w-[340px] sm:w-[540px] h-[340px] sm:h-[540px] rounded-full bg-gradient-to-tr from-cyan-500/20 via-amber-500/25 to-blue-600/20 blur-3xl pointer-events-none -z-10 animate-gear-glow"></div>
+        <!-- Ambient Glowing Aura in background (Soft and transparent) -->
+        <div class="absolute w-[360px] sm:w-[600px] h-[240px] sm:h-[320px] rounded-full bg-gradient-to-r from-cyan-500/15 via-blue-500/10 to-amber-500/15 blur-3xl pointer-events-none -z-10 animate-gear-glow"></div>
 
-        <!-- Outer Tech HUD Compass Ring -->
-        <svg class="absolute w-[380px] sm:w-[580px] h-[380px] sm:h-[580px] pointer-events-none opacity-20 -z-0" viewBox="0 0 500 500">
-          <circle cx="250" cy="250" r="230" fill="none" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="6 8"/>
-          <circle cx="250" cy="250" r="242" fill="none" stroke="#00f3ff" stroke-width="0.8" stroke-dasharray="3 14"/>
-        </svg>
-
-        <!-- Main Cinematic Dark Frame with Real Lightning & Matrix Transmission -->
-        <div class="cinematic-gear-frame relative w-80 sm:w-[520px] md:w-[640px] max-w-full p-2.5 sm:p-4 backdrop-blur-2xl">
+        <!-- Master Gear Transmission Stage (Completely transparent, NO boxes, NO borders) -->
+        <div class="relative w-full max-w-2xl sm:max-w-3xl h-[260px] sm:h-[340px] md:h-[380px] flex items-center justify-center overflow-visible">
           
-          <!-- Realistic Lightning Arc Pulsing Overlay -->
-          <div class="absolute inset-0 pointer-events-none z-10 animate-lightning-pulse bg-gradient-to-tr from-cyan-400/10 via-transparent to-amber-400/10"></div>
+          <!-- Live Canvas: Continuous Electric Lightning, Sparks & Gliding Matrix Streams -->
+          <canvas id="gearEngineCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-20"></canvas>
 
-          <!-- Top Header Bar of Engine Frame -->
-          <div class="flex items-center justify-between px-3 py-1.5 mb-2 border-b border-white/10 text-[10px] mono-font text-gray-400">
-            <div class="flex items-center space-x-1.5">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              <span class="text-white font-bold">TRADEMATRIX QUANTUM ENGINE</span>
-            </div>
-            <span class="text-amber-400 font-semibold tracking-wider">3-GEAR CYBERNETIC INTERLOCK</span>
-          </div>
-
-          <!-- The Masterpiece Cinematic Image -->
-          <div class="relative rounded-2xl overflow-hidden border border-white/10 bg-black/80 shadow-2xl">
-            <img src="assets/img/gear-matrix-lightning-cinematic.jpg" 
-                 class="w-full h-auto object-cover object-center select-none group-hover:scale-105 transition-transform duration-700 filter contrast-110 drop-shadow-[0_20px_45px_rgba(0,0,0,0.95)]" 
-                alt="TradeMatrix Cinematic Dark Mechanical Gears with Real Lightning">
+          <!-- The 3 Kinetic Intermeshing 3D Gears -->
+          <div class="relative w-full h-full flex items-center justify-center">
             
-            <!-- Subtle Cyber Grid Vignette -->
-            <div class="absolute inset-0 bg-gradient-to-t from-[#07080d]/80 via-transparent to-transparent pointer-events-none"></div>
-          </div>
+            <!-- GEAR 1 (Left: Brushed Stainless Steel, CW Spin) -->
+            <div class="absolute left-[8%] sm:left-[12%] md:left-[15%] w-36 sm:w-56 md:w-64 h-36 sm:h-56 md:h-64 pointer-events-none z-10 transition-transform duration-500 group-hover:scale-105">
+              <img src="assets/img/gear-ortho-3d.png" 
+                   class="w-full h-full object-contain animate-spin-cw drop-shadow-[0_15px_35px_rgba(0,0,0,0.85)] filter contrast-110 brightness-105" 
+                   alt="Steel 3D Gear (CW)">
+            </div>
 
-          <!-- Bottom Status Bar -->
-          <div class="flex items-center justify-between px-3 py-2 mt-2 text-[10px] mono-font text-gray-400">
-            <span class="text-cyan-300">⚡ Plasma Arc Voltage: 100% Sét Thật Điện Ảnh</span>
-            <span class="text-emerald-400">● 3 Bánh Răng Ăn Khớp Vận Hành Liên Tục</span>
-          </div>
+            <!-- GEAR 2 (Center: Dark Cyber Titanium, CCW Spin - Interlocking with Left & Right) -->
+            <div class="absolute left-1/2 -translate-x-1/2 w-32 sm:w-48 md:w-52 h-32 sm:h-48 md:h-52 pointer-events-none z-15 transition-transform duration-500 group-hover:scale-105">
+              <img src="assets/img/gear-titanium-3d.png" 
+                   class="w-full h-full object-contain animate-spin-ccw drop-shadow-[0_20px_40px_rgba(0,0,0,0.9)] filter contrast-120 drop-shadow-[0_0_15px_rgba(0,243,255,0.35)]" 
+                   alt="Titanium 3D Gear (CCW)">
+            </div>
 
-          <!-- Live Spinning Accent Cogs for kinetic interactive depth -->
-          <div class="absolute -top-4 -right-4 w-16 sm:w-20 h-16 sm:h-20 pointer-events-none drop-shadow-[0_0_15px_rgba(245,158,11,0.6)]">
-            <img src="assets/img/gear-gold-3d.png" class="w-full h-full object-contain animate-spin-cw" alt="Live Spinning Cog">
-          </div>
-          <div class="absolute -bottom-4 -left-4 w-14 sm:w-16 h-14 sm:h-16 pointer-events-none drop-shadow-[0_0_15px_rgba(6,182,212,0.6)]">
-            <img src="assets/img/gear-ortho-3d.png" class="w-full h-full object-contain animate-spin-ccw" alt="Live Spinning Cog">
+            <!-- GEAR 3 (Right: Brushed Gold, CW Spin) -->
+            <div class="absolute right-[8%] sm:right-[12%] md:right-[15%] w-36 sm:w-56 md:w-64 h-36 sm:h-56 md:h-64 pointer-events-none z-10 transition-transform duration-500 group-hover:scale-105">
+              <img src="assets/img/gear-gold-3d.png" 
+                   class="w-full h-full object-contain animate-spin-cw drop-shadow-[0_15px_35px_rgba(0,0,0,0.85)] filter contrast-110 drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]" 
+                   alt="Gold 3D Gear (CW)">
+            </div>
+
           </div>
         </div>
 
-        <!-- Engine Status Caption Badge -->
-        <div class="inline-flex items-center space-x-2.5 px-5 py-2 rounded-full bg-white/[0.04] border border-amber-400/30 text-gray-200 text-xs mono-font backdrop-blur-md shadow-xl shadow-black/80 mt-6">
-          <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
-          <span class="text-white font-extrabold tracking-wider">HỆ THỐNG TRUYỀN ĐỘNG CƠ KHÍ & MA TRẬN ĐIỆN ẢNH THỰC CHIẾN</span>
-        </div>
       </div>
 
       <!-- Intro Cards (Mục đích sử dụng & Bảo mật Zero-Custody) -->
@@ -769,6 +750,7 @@
   <script src="js/pointer-trail.js"></script>
   <script src="js/matrix-rain.js"></script>
   <script src="js/scroll-effects.js"></script>
+  <script src="js/gear-engine-canvas.js"></script>
 
   <!-- Firebase & App Script -->
   <script type="module" src="js/auth.js"></script>
