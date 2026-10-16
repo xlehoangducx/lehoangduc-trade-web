@@ -794,94 +794,255 @@ function listenToBotTelemetry(userId, isAdmin) {
 
 
 
-      // Render Positions Table
+      // Render Positions Table & Mobile Cards with Bulletproof Calculation Fallbacks
+      const positionsMobileList = document.getElementById("positionsMobileList");
 
-      if (positionsTbody) {
+      if (positionsTbody || positionsMobileList) {
 
-        const positions = data.positions || [];
+        const rawPositions = data.positions || [];
 
-        if (positions.length === 0) {
+        if (rawPositions.length === 0) {
 
-          positionsTbody.innerHTML = `
+          if (positionsTbody) {
+            positionsTbody.innerHTML = `
+              <tr>
+                <td colspan="9" class="text-center py-8 text-gray-500">
+                  <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+                  <span>Hiện tại không có vị thế mở. Bot đang quét tìm cơ hội đẹp...</span>
+                </td>
+              </tr>
+            `;
+          }
 
-            <tr>
-
-              <td colspan="8" class="text-center py-8 text-gray-500">
-
+          if (positionsMobileList) {
+            positionsMobileList.innerHTML = `
+              <div class="text-center py-8 text-gray-500 bg-white/[0.015] rounded-xl border border-white/5">
                 <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+                <span class="text-xs">Hiện tại không có vị thế mở. Bot đang quét tìm cơ hội đẹp...</span>
+              </div>
+            `;
+          }
 
-                <span>Hiện tại không có vị thế mở. Bot đang quét tìm cơ hội đẹp...</span>
-
-              </td>
-
-            </tr>
-
-          `;
+          if (window._binanceTickerInterval) {
+            clearInterval(window._binanceTickerInterval);
+            window._binanceTickerInterval = null;
+          }
 
         } else {
 
-          let posHtml = "";
-
-          positions.forEach(p => {
-
+          // Normalize and enrich positions
+          const positions = rawPositions.map(p => {
+            const symbol = p.symbol || "";
             const isLong = (p.side || "").toUpperCase() === "LONG" || (p.side || "").toUpperCase() === "BUY";
+            const side = isLong ? "LONG" : "SHORT";
+            const entryPrice = Number(p.entry_price || 0);
+            let markPrice = Number(p.mark_price || entryPrice);
+            const leverage = Math.max(1, Number(p.leverage || p.exchange_leverage || 5));
+            const amount = Math.abs(Number(p.amount || 0));
 
-            const upnl = Number(p.unrealized_pnl || 0);
+            // Margin fallback
+            let margin = Number(p.margin || p.exchange_initial_margin || p.cost || 0);
+            if (margin <= 0 && entryPrice > 0) {
+              if (amount > 0) {
+                margin = (entryPrice * amount) / leverage;
+              } else {
+                margin = 2.70;
+              }
+            }
 
-            posHtml += `
+            // Unrealized PnL fallback
+            let upnl = (p.unrealized_pnl !== undefined && p.unrealized_pnl !== null) ? Number(p.unrealized_pnl) : Number(p.unrealized_pnl_mark || 0);
+            if (upnl === 0 && entryPrice > 0 && markPrice > 0 && Math.abs(entryPrice - markPrice) > 1e-8) {
+              if (amount > 0) {
+                upnl = isLong ? (markPrice - entryPrice) * amount : (entryPrice - markPrice) * amount;
+              } else if (margin > 0) {
+                const priceDiffPct = isLong ? (markPrice - entryPrice) / entryPrice : (entryPrice - markPrice) / entryPrice;
+                upnl = priceDiffPct * margin * leverage;
+              }
+            }
 
-              <tr>
+            // PnL % calculation
+            let pnlPct = Number(p.pnl_pct || 0);
+            if (pnlPct === 0 && margin > 0 && upnl !== 0) {
+              pnlPct = (upnl / margin) * 100;
+            } else if (pnlPct === 0 && entryPrice > 0 && markPrice > 0 && Math.abs(entryPrice - markPrice) > 1e-8) {
+              const priceDiffPct = isLong ? (markPrice - entryPrice) / entryPrice : (entryPrice - markPrice) / entryPrice;
+              pnlPct = priceDiffPct * 100 * leverage;
+            }
 
-                <td><span class="font-bold text-white mono-font text-xs">${p.symbol}</span></td>
+            const stopLoss = Number(p.stop_loss || 0);
+            const takeProfit = Number(p.take_profit || 0);
+            const trailingStatus = p.trailing_status || (p.time_sl_compressed ? "Đã siết SL 15m" : (p.trailing_active ? "Đang Trailing" : "Bảo vệ vốn"));
 
-                <td>
-
-                  <span class="px-2.5 py-0.5 rounded-full text-xs font-bold mono-font ${isLong ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'}">
-
-                    ${isLong ? 'LONG / MUA' : 'SHORT / BÁN'}
-
-                  </span>
-
-                </td>
-
-                <td><span class="px-2.5 py-0.5 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/30 font-bold mono-font text-xs">${p.leverage || 5}x</span></td>
-
-                <td class="text-gray-300 mono-font text-xs">${Number(p.entry_price || 0).toFixed(4)}</td>
-
-                <td class="text-white font-semibold mono-font text-xs">${Number(p.mark_price || 0).toFixed(4)}</td>
-
-                <td class="text-gray-300 mono-font text-xs">${Number(p.margin || 0).toFixed(2)}$</td>
-
-                <td>
-
-                  <span class="px-2.5 py-0.5 rounded-full mono-font font-bold text-xs ${upnl >= 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
-
-                    ${upnl >= 0 ? '+' : ''}${upnl.toFixed(4)}$
-
-                  </span>
-
-                </td>
-
-                <td class="text-right">
-
-                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}' })" class="px-3.5 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition">
-
-                    Đóng
-
-                  </button>
-
-                </td>
-
-              </tr>
-
-            `;
-
+            return {
+              ...p,
+              symbol,
+              isLong,
+              side,
+              entryPrice,
+              markPrice,
+              leverage,
+              amount,
+              margin,
+              upnl,
+              pnlPct,
+              stopLoss,
+              takeProfit,
+              trailingStatus
+            };
           });
 
-          positionsTbody.innerHTML = posHtml;
+          let tableHtml = "";
+          let mobileHtml = "";
 
+          positions.forEach(p => {
+            const cleanSym = p.symbol.replace('/', '').replace(':USDT', '');
+            const upnlSign = p.upnl >= 0 ? '+' : '';
+            const pnlSign = p.pnlPct >= 0 ? '+' : '';
+            const pnlBadgeClass = p.upnl >= 0
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+              : 'bg-rose-500/10 text-rose-400 border border-rose-500/30';
+            const sideBadgeClass = p.isLong
+              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+              : 'bg-rose-500/10 text-rose-400 border border-rose-500/30';
+
+            // Desktop Row (9 columns)
+            tableHtml += `
+              <tr class="hover:bg-white/[0.02] transition">
+                <td>
+                  <div class="font-bold text-white mono-font text-xs flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full ${p.isLong ? 'bg-emerald-400' : 'bg-rose-400'}"></span>
+                    <span>${p.symbol}</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="px-2.5 py-0.5 rounded-full text-xs font-bold mono-font ${sideBadgeClass}">
+                    ${p.isLong ? 'LONG / MUA' : 'SHORT / BÁN'}
+                  </span>
+                </td>
+                <td>
+                  <span class="px-2.5 py-0.5 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/30 font-bold mono-font text-xs">
+                    ${p.leverage}x
+                  </span>
+                </td>
+                <td class="text-gray-300 mono-font text-xs">${p.entryPrice.toFixed(4)}</td>
+                <td class="text-white font-semibold mono-font text-xs" id="mark-${cleanSym}">${p.markPrice.toFixed(4)}</td>
+                <td class="text-amber-400 font-semibold mono-font text-xs">${p.margin.toFixed(2)}$</td>
+                <td>
+                  <span class="px-2.5 py-1 rounded-full mono-font font-bold text-xs inline-flex items-center gap-1 ${pnlBadgeClass}" id="pnl-${cleanSym}">
+                    ${upnlSign}${p.upnl.toFixed(4)}$ (${pnlSign}${p.pnlPct.toFixed(2)}%)
+                  </span>
+                </td>
+                <td class="mono-font">
+                  <div class="text-[11px] text-gray-300">SL: ${p.stopLoss > 0 ? p.stopLoss.toFixed(4) : '--'}</div>
+                  <div class="text-[10px] text-amber-400/80">${p.trailingStatus}</div>
+                </td>
+                <td class="text-right">
+                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}' })" class="px-3.5 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1 ml-auto">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    Đóng
+                  </button>
+                </td>
+              </tr>
+            `;
+
+            // Mobile High-Tech Card (< 768px)
+            mobileHtml += `
+              <div class="p-4 rounded-2xl bg-[#0b101b] border border-white/10 hover:border-amber-400/30 transition shadow-xl space-y-3">
+                <div class="flex items-center justify-between pb-2.5 border-b border-white/5">
+                  <div class="flex items-center gap-2">
+                    <span class="font-extrabold text-white mono-font text-sm tracking-wide">${p.symbol}</span>
+                    <span class="px-2 py-0.5 rounded-full text-xs font-bold mono-font ${sideBadgeClass}">
+                      ${p.side} ${p.leverage}x
+                    </span>
+                  </div>
+                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}' })" class="px-3 py-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                    <i data-lucide="x" class="w-3 h-3"></i>
+                    Đóng
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                  <div class="bg-black/40 p-2.5 rounded-xl border border-white/5">
+                    <span class="text-gray-400 block text-[10px] uppercase mono-font tracking-wider mb-0.5">Giá Vào (Entry)</span>
+                    <span class="text-gray-200 mono-font font-semibold text-xs">${p.entryPrice.toFixed(4)}</span>
+                  </div>
+                  <div class="bg-black/40 p-2.5 rounded-xl border border-white/5">
+                    <span class="text-gray-400 block text-[10px] uppercase mono-font tracking-wider mb-0.5">Giá Hiện Tại (Mark)</span>
+                    <span class="text-white mono-font font-bold text-xs" id="mob-mark-${cleanSym}">${p.markPrice.toFixed(4)}</span>
+                  </div>
+                  <div class="bg-black/40 p-2.5 rounded-xl border border-white/5">
+                    <span class="text-gray-400 block text-[10px] uppercase mono-font tracking-wider mb-0.5">Ký Quỹ (Margin)</span>
+                    <span class="text-amber-400 mono-font font-bold text-xs">${p.margin.toFixed(2)}$</span>
+                  </div>
+                  <div class="bg-black/40 p-2.5 rounded-xl border ${p.upnl >= 0 ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-rose-500/30 bg-rose-500/5'}">
+                    <span class="text-gray-400 block text-[10px] uppercase mono-font tracking-wider mb-0.5">PnL Ước Tính</span>
+                    <span class="mono-font font-black text-xs ${p.upnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}" id="mob-pnl-${cleanSym}">
+                      ${upnlSign}${p.upnl.toFixed(4)}$ (${pnlSign}${p.pnlPct.toFixed(2)}%)
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between text-[11px] text-gray-400 pt-2 border-t border-white/5 mono-font">
+                  <div>
+                    <span>SL: </span><span class="text-gray-200 font-semibold">${p.stopLoss > 0 ? p.stopLoss.toFixed(4) : '--'}</span>
+                    <span class="mx-1 text-gray-600">|</span>
+                    <span>TP: </span><span class="text-gray-200 font-semibold">${p.takeProfit > 0 ? p.takeProfit.toFixed(4) : '--'}</span>
+                  </div>
+                  <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] text-amber-300 font-semibold border border-white/10">
+                    ${p.trailingStatus}
+                  </span>
+                </div>
+              </div>
+            `;
+          });
+
+          if (positionsTbody) positionsTbody.innerHTML = tableHtml;
+          if (positionsMobileList) positionsMobileList.innerHTML = mobileHtml;
+
+          // Real-time live Binance price updater directly in browser every 2.5s
+          if (window._binanceTickerInterval) clearInterval(window._binanceTickerInterval);
+          window._binanceTickerInterval = setInterval(() => {
+            positions.forEach(async pos => {
+              const sym = pos.symbol.replace('/', '').replace(':USDT', '');
+              if (!sym) return;
+              try {
+                const res = await fetch(`https://fapi.binance.com/fapi/v1/ticker/price?symbol=${sym}`);
+                if (!res.ok) return;
+                const ticker = await res.json();
+                const curPrice = parseFloat(ticker.price);
+                if (curPrice > 0) {
+                  const markEl = document.getElementById(`mark-${sym}`);
+                  const mobMarkEl = document.getElementById(`mob-mark-${sym}`);
+                  if (markEl) markEl.textContent = curPrice.toFixed(4);
+                  if (mobMarkEl) mobMarkEl.textContent = curPrice.toFixed(4);
+
+                  // Recalculate live PnL & %
+                  let liveUpnl = pos.isLong ? (curPrice - pos.entryPrice) * pos.amount : (pos.entryPrice - curPrice) * pos.amount;
+                  if (pos.amount <= 0 && pos.margin > 0) {
+                    const diffPct = pos.isLong ? (curPrice - pos.entryPrice) / pos.entryPrice : (pos.entryPrice - curPrice) / pos.entryPrice;
+                    liveUpnl = diffPct * pos.margin * pos.leverage;
+                  }
+                  const livePct = pos.margin > 0 ? (liveUpnl / pos.margin) * 100 : 0;
+                  const sign = liveUpnl >= 0 ? '+' : '';
+                  const pctSign = livePct >= 0 ? '+' : '';
+                  const pnlText = `${sign}${liveUpnl.toFixed(4)}$ (${pctSign}${livePct.toFixed(2)}%)`;
+
+                  const pnlEl = document.getElementById(`pnl-${sym}`);
+                  const mobPnlEl = document.getElementById(`mob-pnl-${sym}`);
+                  if (pnlEl) {
+                    pnlEl.textContent = pnlText;
+                    pnlEl.className = `px-2.5 py-1 rounded-full mono-font font-bold text-xs inline-flex items-center gap-1 ${liveUpnl >= 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-400 border border-rose-500/30'}`;
+                  }
+                  if (mobPnlEl) {
+                    mobPnlEl.textContent = pnlText;
+                    mobPnlEl.className = `mono-font font-black text-xs ${liveUpnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+                  }
+                }
+              } catch (_) {}
+            });
+          }, 2500);
         }
-
       }
 
     } else {

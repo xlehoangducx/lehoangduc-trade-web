@@ -351,7 +351,16 @@
             <span class="text-xs text-gray-400 mono-font">Đồng bộ tự động từ sàn</span>
           </div>
 
-          <div class="overflow-x-auto">
+          <!-- Mobile View (< 768px): High-Tech Responsive Cards -->
+          <div class="block md:hidden space-y-3" id="positionsMobileList">
+            <div class="text-center py-8 text-gray-500 bg-white/[0.015] rounded-xl border border-white/5">
+              <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+              <span class="text-xs">Hiện tại không có vị thế mở. Bot đang quét tìm cơ hội đẹp...</span>
+            </div>
+          </div>
+
+          <!-- Desktop / Tablet View (>= 768px): Full Data Terminal Table -->
+          <div class="hidden md:block overflow-x-auto">
             <table class="terminal-table">
               <thead>
                 <tr>
@@ -362,12 +371,13 @@
                   <th>Giá Hiện Tại</th>
                   <th>Ký Quỹ</th>
                   <th>PnL Ước Tính</th>
+                  <th>Bảo Vệ / SL</th>
                   <th class="text-right">Thao Tác</th>
                 </tr>
               </thead>
               <tbody id="positionsTableBody">
                 <tr>
-                  <td colspan="8" class="text-center py-8 text-gray-500">
+                  <td colspan="9" class="text-center py-8 text-gray-500">
                     <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
                     <span>Hiện tại không có vị thế mở. Bot đang quét tìm cơ hội đẹp...</span>
                   </td>
