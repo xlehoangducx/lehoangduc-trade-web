@@ -20,7 +20,7 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Custom Cyber Styles -->
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=20261016_1925">
 </head>
 <body class="bg-[#07080d] text-gray-100 min-h-screen flex flex-col justify-between selection:bg-amber-400 selection:text-black overflow-x-hidden relative font-['Be_Vietnam_Pro',sans-serif]">
 
@@ -138,10 +138,31 @@
           <circle cx="200" cy="200" r="192" fill="none" stroke="#06b6d4" stroke-width="0.8" stroke-dasharray="3 14"/>
         </svg>
 
-        <!-- 3D Realistic Gear Assembly & Live Spinning Mechanism -->
+        <!-- 3D Realistic Gear Assembly & Live Spinning Mechanism with Electric Lightning -->
         <div class="relative w-80 sm:w-[420px] max-w-full flex items-center justify-center">
-          <!-- Main 3D Interlocking Mechanical Gear Assembly (Ảnh Cơ Khí 3D Chuẩn Pngtree) -->
-          <img src="assets/img/gear-assembly-3d.png" class="w-full h-auto object-contain drop-shadow-[0_20px_45px_rgba(0,0,0,0.9)] filter contrast-105 group-hover:scale-105 transition-transform duration-500 select-none pointer-events-none" alt="TradeMatrix 3D Mechanical Gears">
+          
+          <!-- Electric Field Halo (Dòng điện vây quanh phát sáng) -->
+          <div class="absolute inset-[-12px] sm:inset-[-20px] rounded-full border border-cyan-400/40 pointer-events-none animate-electric-field -z-0"></div>
+
+          <!-- Lightning Electric Arcs SVG Overlay (Tia sét giật vây quanh bánh răng) -->
+          <svg class="absolute inset-[-35px] sm:inset-[-50px] w-[calc(100%+70px)] sm:w-[calc(100%+100px)] h-[calc(100%+70px)] sm:h-[calc(100%+100px)] pointer-events-none z-10 animate-lightning overflow-visible" viewBox="0 0 500 500">
+            <!-- Lightning Arc 1 (Góc trên trái qua đỉnh bánh răng) -->
+            <path d="M 120 180 L 165 160 L 155 195 L 210 145 L 235 170 L 280 120 L 295 145 L 350 110" stroke="#00f3ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M 210 145 L 190 120 L 215 105" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            <!-- Lightning Arc 2 (Vây quanh sườn phải và răng cưa) -->
+            <path d="M 370 160 L 395 210 L 375 230 L 420 270 L 390 295 L 415 340" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <!-- Lightning Arc 3 (Vây quanh đáy bánh răng) -->
+            <path d="M 380 370 L 340 395 L 355 420 L 290 410 L 270 440 L 220 415 L 180 435" stroke="#00f3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+
+          <!-- Second Lightning Bolt Branch (Tia sét phụ giật lệch nhịp) -->
+          <svg class="absolute inset-[-35px] sm:inset-[-50px] w-[calc(100%+70px)] sm:w-[calc(100%+100px)] h-[calc(100%+70px)] sm:h-[calc(100%+100px)] pointer-events-none z-10 animate-lightning-delayed overflow-visible" viewBox="0 0 500 500">
+            <path d="M 90 260 L 140 250 L 125 285 L 170 295 L 160 330 L 210 350" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+            <path d="M 260 90 L 275 130 L 295 115 L 320 155" stroke="#ffd700" stroke-width="2" stroke-linecap="round" fill="none"/>
+          </svg>
+
+          <!-- Main 3D Interlocking Mechanical Gear Assembly (Bánh răng to xoay cử động chuyển động) -->
+          <img src="assets/img/gear-assembly-3d.png" class="w-full h-auto object-contain drop-shadow-[0_20px_45px_rgba(0,0,0,0.9)] filter contrast-105 group-hover:scale-105 transition-transform duration-500 select-none pointer-events-none animate-spin-main-gear" alt="TradeMatrix 3D Mechanical Gears">
           
           <!-- Live Rotating 3D Gold Cog (Góc trên phải, xoay thuận chiều kim đồng hồ) -->
           <div class="absolute -top-6 -right-6 w-24 sm:w-32 h-24 sm:h-32 pointer-events-none drop-shadow-[0_0_20px_rgba(245,158,11,0.55)]">
@@ -157,7 +178,7 @@
         <!-- Engine Status Caption Badge -->
         <div class="inline-flex items-center space-x-2.5 px-4 py-1.5 rounded-full bg-white/[0.03] border border-amber-400/25 text-gray-300 text-xs mono-font backdrop-blur-md shadow-lg shadow-black/50 mt-6">
           <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-          <span class="text-white font-bold">ĐỘNG CƠ ĐỊNH LƯỢNG 3D TRADEMATRIX</span>
+          <span class="text-white font-bold">TRADEMATRIX</span>
         </div>
       </div>
 

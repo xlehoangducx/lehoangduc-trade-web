@@ -374,6 +374,8 @@ async function sendBotCommand(command, extraData = {}, btnEl = null) {
     else if (command === 'emergency_close') label = "ĐÓNG TOÀN BỘ VỊ THẾ";
     else if (command === 'start') label = "BẬT BOT";
     else if (command === 'stop') label = "TẠM DỪNG BOT";
+    else if (command === 'toggle_tradfi') label = extraData.only_tradfi ? 'CHỈ CỔ PHIẾU' : (extraData.enabled ? 'CẢ HAI (CRYPTO + CỔ PHIẾU)' : 'TẮT CỔ PHIẾU');
+    else if (command === 'update_config') label = `ĐÒN BẨY ${extraData.max_leverage || ''}X & ${extraData.max_open_trades || ''} LỆNH`;
 
     showToast(`⚡ Đã gửi lệnh [${label}]! Máy treo PC2 đang xử lý...`, "success");
   } catch (err) {
@@ -413,20 +415,26 @@ document.getElementById("btnEmergencyClose")?.addEventListener("click", () => {
 
 
 
-document.getElementById("btnSaveConfig")?.addEventListener("click", () => {
-
+document.getElementById("btnSaveConfig")?.addEventListener("click", (e) => {
   const lev = parseInt(inputLeverage.value) || 10;
-
   const trades = parseInt(inputMaxTrades.value) || 2;
-
   sendBotCommand("update_config", {
-
     max_leverage: lev,
-
     max_open_trades: trades
+  }, e.currentTarget);
+});
 
-  });
+// TradFi US Stocks Mode Toggle Buttons
+document.getElementById("btnTradfiOff")?.addEventListener("click", (e) => {
+  sendBotCommand("toggle_tradfi", { enabled: false, only_tradfi: false }, e.currentTarget);
+});
 
+document.getElementById("btnTradfiBoth")?.addEventListener("click", (e) => {
+  sendBotCommand("toggle_tradfi", { enabled: true, only_tradfi: false }, e.currentTarget);
+});
+
+document.getElementById("btnTradfiOnly")?.addEventListener("click", (e) => {
+  sendBotCommand("toggle_tradfi", { enabled: true, only_tradfi: true }, e.currentTarget);
 });
 
 
@@ -876,6 +884,55 @@ function listenToBotTelemetry(userId, isAdmin) {
       if (specTrades) specTrades.textContent = `${maxTrades} lệnh`;
       const botModeBadge = document.getElementById("botModeBadge");
       if (botModeBadge) botModeBadge.textContent = mode === "LIVE" ? "● LIVE (TIỀN THẬT)" : "○ DEMO THỬ NGHIỆM";
+
+      // TradFi Stock Perps Status & Toggle Buttons Sync
+      const tradfiEnabled = Boolean(data.tradfi_enabled);
+      const onlyTradfi = Boolean(data.only_tradfi);
+      const tradfiMarketOpen = Boolean(data.tradfi_market_open);
+
+      const specTradfiVal = document.getElementById("specTradfiVal");
+      if (specTradfiVal) {
+        if (onlyTradfi) {
+          specTradfiVal.textContent = "CHỈ CỔ PHIẾU";
+          specTradfiVal.className = "text-amber-400 font-bold";
+        } else if (tradfiEnabled) {
+          specTradfiVal.textContent = "CẢ HAI";
+          specTradfiVal.className = "text-cyan-400 font-bold";
+        } else {
+          specTradfiVal.textContent = "TẮT";
+          specTradfiVal.className = "text-gray-400 font-bold";
+        }
+      }
+
+      const tradfiMarketBadge = document.getElementById("tradfiMarketBadge");
+      if (tradfiMarketBadge) {
+        if (tradfiMarketOpen) {
+          tradfiMarketBadge.textContent = "🟢 Phiên Mỹ MỞ (09:30-16:00 EST)";
+          tradfiMarketBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold mono-font bg-emerald-500/10 text-emerald-400 border border-emerald-500/25";
+        } else {
+          tradfiMarketBadge.textContent = "🟡 Phiên Mỹ ĐÓNG";
+          tradfiMarketBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold mono-font bg-amber-500/10 text-amber-400 border border-amber-500/25";
+        }
+      }
+
+      const btnTradfiOff = document.getElementById("btnTradfiOff");
+      const btnTradfiBoth = document.getElementById("btnTradfiBoth");
+      const btnTradfiOnly = document.getElementById("btnTradfiOnly");
+
+      if (btnTradfiOff && btnTradfiBoth && btnTradfiOnly) {
+        // Reset all classes
+        [btnTradfiOff, btnTradfiBoth, btnTradfiOnly].forEach(b => {
+          b.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition text-gray-400 hover:text-white border border-transparent";
+        });
+
+        if (onlyTradfi) {
+          btnTradfiOnly.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition tradfi-btn-active-gold border border-amber-400/40";
+        } else if (tradfiEnabled) {
+          btnTradfiBoth.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition tradfi-btn-active border border-cyan-400/40";
+        } else {
+          btnTradfiOff.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition bg-white/10 text-white border border-white/20";
+        }
+      }
 
       // Input sync if user not actively typing
       if (inputLeverage && document.activeElement !== inputLeverage) inputLeverage.value = maxLev;
