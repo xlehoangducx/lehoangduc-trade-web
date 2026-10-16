@@ -758,55 +758,109 @@ function listenToBotTelemetry(userId, isAdmin) {
 
       const data = docSnap.data();
 
-      document.getElementById("statBalance").textContent = Number(data.balance || 0).toFixed(2);
+      const equity = Number(data.equity !== undefined ? data.equity : (data.balance || 0));
+      const balance = Number(data.available_balance !== undefined ? data.available_balance : (data.balance || 0));
+      const usedMargin = Number(data.used_margin !== undefined ? data.used_margin : 0);
+      const todayPnl = Number(data.today_pnl !== undefined ? data.today_pnl : (data.daily_pnl || 0));
+      const totalPnl = Number(data.total_pnl !== undefined ? data.total_pnl : 0);
+      const totalFees = Number(data.total_fees !== undefined ? data.total_fees : 0);
+      const totalTrades = Number(data.total_trades || 0);
+      const winRate = Number(data.win_rate !== undefined ? data.win_rate : 0);
+      const unrealizedPnl = Number(data.unrealized_pnl !== undefined ? data.unrealized_pnl : 0);
+      const maxLev = Number(data.max_leverage || 8);
+      const maxTrades = Number(data.max_open_trades || 2);
+      const mode = (data.mode || "LIVE").toUpperCase();
 
-      document.getElementById("statBalanceSub").textContent = "Đồng bộ từ PC lúc: " + (data.updated_at || "Vừa xong");
+      window._lastTelemetryBalance = balance;
+      window._lastTelemetryEquity = equity;
+      window._lastUsedMargin = usedMargin;
 
-      
+      // 1. Equity Futures
+      const statEquity = document.getElementById("statEquity");
+      if (statEquity) statEquity.textContent = equity.toFixed(2);
+      const statEquitySub = document.getElementById("statEquitySub");
+      if (statEquitySub) statEquitySub.textContent = `Khả dụng: $${balance.toFixed(2)}`;
 
-      const pnl = Number(data.daily_pnl || 0);
+      // 2. Số Dư Khả Dụng & Ký Quỹ
+      const statBalance = document.getElementById("statBalance");
+      if (statBalance) statBalance.textContent = balance.toFixed(2);
+      const statUsedMarginSub = document.getElementById("statUsedMarginSub");
+      if (statUsedMarginSub) statUsedMarginSub.textContent = `Ký quỹ: $${usedMargin.toFixed(2)}`;
 
-      document.getElementById("statDailyPnl").textContent = (pnl >= 0 ? '+' : '') + pnl.toFixed(4);
-
-      
-
-      document.getElementById("statWinRate").textContent = (data.win_rate || "0.0") + "%";
-
-      document.getElementById("statOpenPositions").textContent = (data.open_positions_count || 0) + " / " + (data.max_open_trades || 2);
-
-
-
-      // Heartbeat Status
-
-      if (badgeText) {
-
-        if (data.is_running === false) {
-
-          badgeText.textContent = "PAUSED (TẠM DỪNG)";
-
-        } else {
-
-          badgeText.textContent = "ONLINE (SYNC REALTIME)";
-
-        }
-
+      // 3. PnL Đang Chạy (Floating Live)
+      const statUnrealized = document.getElementById("statUnrealizedPnl");
+      if (statUnrealized) {
+        statUnrealized.textContent = (unrealizedPnl >= 0 ? '+' : '') + unrealizedPnl.toFixed(4);
+        statUnrealized.className = `text-lg sm:text-xl font-black mono-font ${unrealizedPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+      }
+      const statUnrealizedPct = document.getElementById("statUnrealizedPct");
+      if (statUnrealizedPct) {
+        statUnrealizedPct.textContent = usedMargin > 0 ? `${((unrealizedPnl / usedMargin) * 100).toFixed(2)}% ROI` : 'Mark Price sàn';
       }
 
+      // 4. Lãi Đã Chốt Hôm Nay (Ổn định tuyệt đối, không nháy!)
+      const statDaily = document.getElementById("statDailyPnl");
+      if (statDaily) {
+        statDaily.textContent = (todayPnl >= 0 ? '+' : '') + todayPnl.toFixed(4);
+        statDaily.className = `text-lg sm:text-xl font-black mono-font ${todayPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+      }
+      const statTodaySub = document.getElementById("statTodaySub");
+      if (statTodaySub) statTodaySub.textContent = `Quyết toán Binance (${data.updated_at || 'Vừa xong'})`;
 
+      // 5. Tổng PnL Lịch Sử
+      const statTotal = document.getElementById("statTotalPnl");
+      if (statTotal) {
+        statTotal.textContent = (totalPnl >= 0 ? '+' : '') + totalPnl.toFixed(4);
+        statTotal.className = `text-lg sm:text-xl font-black mono-font ${totalPnl >= 0 ? 'text-purple-400' : 'text-rose-400'}`;
+      }
+      const statTotalTrades = document.getElementById("statTotalTrades");
+      if (statTotalTrades) statTotalTrades.textContent = `${totalTrades} lệnh lịch sử`;
+
+      // 6. Win Rate & Phí Sàn
+      const statWinRate = document.getElementById("statWinRate");
+      if (statWinRate) statWinRate.textContent = `${winRate.toFixed(1)}%`;
+      const statFeesSub = document.getElementById("statFeesSub");
+      if (statFeesSub) statFeesSub.textContent = `Phí: $${totalFees.toFixed(2)} USDT`;
+
+      // Specs Strip
+      const specLev = document.getElementById("specLeverage");
+      if (specLev) specLev.textContent = `${maxLev}x`;
+      const specTrades = document.getElementById("specMaxTrades");
+      if (specTrades) specTrades.textContent = `${maxTrades} lệnh`;
+      const botModeBadge = document.getElementById("botModeBadge");
+      if (botModeBadge) botModeBadge.textContent = mode === "LIVE" ? "● LIVE (TIỀN THẬT)" : "○ DEMO THỬ NGHIỆM";
+
+      // Input sync if user not actively typing
+      if (inputLeverage && document.activeElement !== inputLeverage) inputLeverage.value = maxLev;
+      if (inputMaxTrades && document.activeElement !== inputMaxTrades) inputMaxTrades.value = maxTrades;
+
+      // Heartbeat Status
+      if (badgeText) {
+        if (data.is_running === false) {
+          badgeText.textContent = "PAUSED (TẠM DỪNG)";
+        } else {
+          badgeText.textContent = "ONLINE (SYNC REALTIME)";
+        }
+      }
 
       // Render Positions Table & Mobile Cards with Bulletproof Calculation Fallbacks
       const positionsMobileList = document.getElementById("positionsMobileList");
+      const posCountBadge = document.getElementById("posCountBadge");
 
       if (positionsTbody || positionsMobileList) {
 
         const rawPositions = data.positions || [];
+
+        if (posCountBadge) {
+          posCountBadge.textContent = `(${rawPositions.length})`;
+        }
 
         if (rawPositions.length === 0) {
 
           if (positionsTbody) {
             positionsTbody.innerHTML = `
               <tr>
-                <td colspan="9" class="text-center py-8 text-gray-500">
+                <td colspan="9" class="text-center py-8 text-gray-500 mono-font text-xs">
                   <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
                   <span>Hiện tại không có vị thế mở. Bot đang quét tìm cơ hội đẹp...</span>
                 </td>
@@ -816,9 +870,9 @@ function listenToBotTelemetry(userId, isAdmin) {
 
           if (positionsMobileList) {
             positionsMobileList.innerHTML = `
-              <div class="text-center py-8 text-gray-500 bg-white/[0.015] rounded-xl border border-white/5">
-                <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
-                <span class="text-xs">Hiện tại không có vị thế mở. Bot đang quét tìm cơ hội đẹp...</span>
+              <div class="text-center py-6 text-gray-500 bg-white/[0.015] rounded-xl border border-white/5">
+                <i data-lucide="inbox" class="w-7 h-7 mx-auto mb-1.5 opacity-40"></i>
+                <span class="text-xs mono-font">Không có vị thế mở. Bot đang quét tìm cơ hội...</span>
               </div>
             `;
           }
@@ -938,7 +992,7 @@ function listenToBotTelemetry(userId, isAdmin) {
                   <div class="text-[10px] text-amber-400/80">${p.trailingStatus}</div>
                 </td>
                 <td class="text-right">
-                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}' })" class="px-3.5 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1 ml-auto">
+                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}' })" class="px-3.5 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1 ml-auto active:scale-95">
                     <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     Đóng
                   </button>
@@ -946,50 +1000,50 @@ function listenToBotTelemetry(userId, isAdmin) {
               </tr>
             `;
 
-            // Mobile High-Tech Card (< 768px)
+            // Mobile High-Tech Card (< 768px): Sleek, Compact, Zero Bloat
             mobileHtml += `
-              <div class="p-4 rounded-2xl bg-[#0b101b] border border-white/10 hover:border-amber-400/30 transition shadow-xl space-y-3">
-                <div class="flex items-center justify-between pb-2.5 border-b border-white/5">
+              <div class="p-3.5 rounded-2xl bg-[#0b101b] border ${p.upnl >= 0 ? 'border-emerald-500/20' : 'border-rose-500/20'} transition shadow-lg space-y-2.5">
+                <div class="flex items-center justify-between pb-2 border-b border-white/5">
                   <div class="flex items-center gap-2">
-                    <span class="font-extrabold text-white mono-font text-sm tracking-wide">${p.symbol}</span>
-                    <span class="px-2 py-0.5 rounded-full text-xs font-bold mono-font ${sideBadgeClass}">
+                    <span class="font-black text-white mono-font text-sm tracking-wide">${p.symbol}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[11px] font-bold mono-font ${sideBadgeClass}">
                       ${p.side} ${p.leverage}x
                     </span>
                   </div>
-                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}' })" class="px-3 py-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1">
-                    <i data-lucide="x" class="w-3 h-3"></i>
+                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}' })" class="px-2.5 py-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1 active:scale-95">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     Đóng
                   </button>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2 text-xs">
-                  <div class="bg-black/40 p-2.5 rounded-xl border border-white/5">
-                    <span class="text-gray-400 block text-[10px] uppercase mono-font tracking-wider mb-0.5">Giá Vào (Entry)</span>
+                  <div class="bg-black/40 p-2 rounded-xl border border-white/5">
+                    <span class="text-gray-400 block text-[9px] uppercase mono-font tracking-wider mb-0.5">Giá Vào (Entry)</span>
                     <span class="text-gray-200 mono-font font-semibold text-xs">${p.entryPrice.toFixed(4)}</span>
                   </div>
-                  <div class="bg-black/40 p-2.5 rounded-xl border border-white/5">
-                    <span class="text-gray-400 block text-[10px] uppercase mono-font tracking-wider mb-0.5">Giá Hiện Tại (Mark)</span>
+                  <div class="bg-black/40 p-2 rounded-xl border border-white/5">
+                    <span class="text-gray-400 block text-[9px] uppercase mono-font tracking-wider mb-0.5">Giá Hiện Tại (Mark)</span>
                     <span class="text-white mono-font font-bold text-xs" id="mob-mark-${cleanSym}">${p.markPrice.toFixed(4)}</span>
                   </div>
-                  <div class="bg-black/40 p-2.5 rounded-xl border border-white/5">
-                    <span class="text-gray-400 block text-[10px] uppercase mono-font tracking-wider mb-0.5">Ký Quỹ (Margin)</span>
+                  <div class="bg-black/40 p-2 rounded-xl border border-white/5">
+                    <span class="text-gray-400 block text-[9px] uppercase mono-font tracking-wider mb-0.5">Ký Quỹ (Margin)</span>
                     <span class="text-amber-400 mono-font font-bold text-xs">${p.margin.toFixed(2)}$</span>
                   </div>
-                  <div class="bg-black/40 p-2.5 rounded-xl border ${p.upnl >= 0 ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-rose-500/30 bg-rose-500/5'}">
-                    <span class="text-gray-400 block text-[10px] uppercase mono-font tracking-wider mb-0.5">PnL Ước Tính</span>
+                  <div class="bg-black/40 p-2 rounded-xl border ${p.upnl >= 0 ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-rose-500/30 bg-rose-500/5'}">
+                    <span class="text-gray-400 block text-[9px] uppercase mono-font tracking-wider mb-0.5">PnL Ước Tính (ROI)</span>
                     <span class="mono-font font-black text-xs ${p.upnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}" id="mob-pnl-${cleanSym}">
                       ${upnlSign}${p.upnl.toFixed(4)}$ (${pnlSign}${p.pnlPct.toFixed(2)}%)
                     </span>
                   </div>
                 </div>
 
-                <div class="flex items-center justify-between text-[11px] text-gray-400 pt-2 border-t border-white/5 mono-font">
+                <div class="flex items-center justify-between text-[11px] text-gray-400 pt-1.5 border-t border-white/5 mono-font">
                   <div>
                     <span>SL: </span><span class="text-gray-200 font-semibold">${p.stopLoss > 0 ? p.stopLoss.toFixed(4) : '--'}</span>
                     <span class="mx-1 text-gray-600">|</span>
                     <span>TP: </span><span class="text-gray-200 font-semibold">${p.takeProfit > 0 ? p.takeProfit.toFixed(4) : '--'}</span>
                   </div>
-                  <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] text-amber-300 font-semibold border border-white/10">
+                  <span class="px-2 py-0.5 rounded-md bg-amber-400/10 text-[10px] text-amber-300 font-bold border border-amber-400/20">
                     ${p.trailingStatus}
                   </span>
                 </div>
@@ -999,10 +1053,14 @@ function listenToBotTelemetry(userId, isAdmin) {
 
           if (positionsTbody) positionsTbody.innerHTML = tableHtml;
           if (positionsMobileList) positionsMobileList.innerHTML = mobileHtml;
+          if (window.lucide) lucide.createIcons();
 
           // Real-time live Binance price updater directly in browser every 2.5s
           if (window._binanceTickerInterval) clearInterval(window._binanceTickerInterval);
           window._binanceTickerInterval = setInterval(() => {
+            let totalLiveUpnl = 0;
+            let countUpdated = 0;
+
             positions.forEach(async pos => {
               const sym = pos.symbol.replace('/', '').replace(':USDT', '');
               if (!sym) return;
@@ -1023,6 +1081,9 @@ function listenToBotTelemetry(userId, isAdmin) {
                     const diffPct = pos.isLong ? (curPrice - pos.entryPrice) / pos.entryPrice : (pos.entryPrice - curPrice) / pos.entryPrice;
                     liveUpnl = diffPct * pos.margin * pos.leverage;
                   }
+                  totalLiveUpnl += liveUpnl;
+                  countUpdated++;
+
                   const livePct = pos.margin > 0 ? (liveUpnl / pos.margin) * 100 : 0;
                   const sign = liveUpnl >= 0 ? '+' : '';
                   const pctSign = livePct >= 0 ? '+' : '';
@@ -1037,6 +1098,21 @@ function listenToBotTelemetry(userId, isAdmin) {
                   if (mobPnlEl) {
                     mobPnlEl.textContent = pnlText;
                     mobPnlEl.className = `mono-font font-black text-xs ${liveUpnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+                  }
+
+                  // Update global floating PnL card & live equity
+                  if (countUpdated === positions.length) {
+                    const statUnrealized = document.getElementById("statUnrealizedPnl");
+                    if (statUnrealized) {
+                      const uSign = totalLiveUpnl >= 0 ? '+' : '';
+                      statUnrealized.textContent = `${uSign}${totalLiveUpnl.toFixed(4)}`;
+                      statUnrealized.className = `text-lg sm:text-xl font-black mono-font ${totalLiveUpnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+                    }
+                    const statEq = document.getElementById("statEquity");
+                    if (statEq && window._lastTelemetryBalance) {
+                      const liveEq = window._lastTelemetryBalance + window._lastUsedMargin + totalLiveUpnl;
+                      statEq.textContent = liveEq.toFixed(2);
+                    }
                   }
                 }
               } catch (_) {}
