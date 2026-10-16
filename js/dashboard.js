@@ -316,39 +316,80 @@ presetButtons.forEach(btn => {
 
 
 
-// Send Remote Commands to Bot via Firestore
+// Sleek Floating Toast Notification (Non-blocking)
+function showToast(message, type = "success") {
+  let container = document.getElementById("toastContainer");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toastContainer";
+    container.className = "fixed top-5 right-5 z-[9999] flex flex-col gap-2 pointer-events-none max-w-sm w-full px-4 sm:px-0";
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement("div");
+  const isError = type === "error";
+  const bgClass = isError ? "bg-[#18080c]/95 border-rose-500/50 text-rose-200" : "bg-[#081812]/95 border-emerald-500/50 text-emerald-200";
+  const icon = isError ? "alert-circle" : "check-circle-2";
+  toast.className = `flex items-center gap-2.5 p-3.5 rounded-2xl border backdrop-blur-xl shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto ${bgClass}`;
+  toast.innerHTML = `
+    <i data-lucide="${icon}" class="w-4 h-4 shrink-0 text-${isError ? 'rose' : 'emerald'}-400"></i>
+    <span class="text-xs font-semibold flex-1 leading-snug">${message}</span>
+  `;
+  container.appendChild(toast);
+  if (window.lucide) lucide.createIcons({ root: toast });
+  requestAnimationFrame(() => {
+    toast.classList.remove("translate-y-2", "opacity-0");
+  });
+  setTimeout(() => {
+    toast.classList.add("opacity-0", "translate-y-2");
+    setTimeout(() => toast.remove(), 350);
+  }, 4000);
+}
 
-async function sendBotCommand(command, extraData = {}) {
-
-  if (!currentUser) return;
-
-  try {
-
-    const cmdRef = doc(db, "bot_commands", currentUser.uid);
-
-    await setDoc(cmdRef, {
-
-      command: command,
-
-      ...extraData,
-
-      status: "pending",
-
-      updatedAt: serverTimestamp()
-
-    }, { merge: true });
-
-    alert(`Đã gửi lệnh [${command.toUpperCase()}] thành công! Bot sẽ nhận trong 5-10 giây.`);
-
-  } catch (err) {
-
-    console.error("Command error:", err);
-
-    alert("Gửi lệnh thất bại: " + err.message);
-
+// Send Remote Commands to Bot via Firestore (Non-blocking & Instant Feedback)
+async function sendBotCommand(command, extraData = {}, btnEl = null) {
+  if (!currentUser) {
+    showToast("Bạn cần đăng nhập để điều khiển bot!", "error");
+    return;
   }
 
+  let originalHtml = "";
+  if (btnEl) {
+    originalHtml = btnEl.innerHTML;
+    btnEl.disabled = true;
+    btnEl.style.opacity = "0.7";
+    btnEl.innerHTML = `<span class="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Đang gửi...`;
+  }
+
+  try {
+    const cmdRef = doc(db, "bot_commands", currentUser.uid);
+    await setDoc(cmdRef, {
+      command: command,
+      ...extraData,
+      status: "pending",
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    let label = command.toUpperCase();
+    if (command === 'close_position') label = `Đóng ${extraData.symbol || 'vị thế'}`;
+    else if (command === 'emergency_close') label = "ĐÓNG TOÀN BỘ VỊ THẾ";
+    else if (command === 'start') label = "BẬT BOT";
+    else if (command === 'stop') label = "TẠM DỪNG BOT";
+
+    showToast(`⚡ Đã gửi lệnh [${label}]! Máy treo PC2 đang xử lý...`, "success");
+  } catch (err) {
+    console.error("Command error:", err);
+    showToast("Gửi lệnh thất bại: " + err.message, "error");
+  } finally {
+    if (btnEl) {
+      setTimeout(() => {
+        btnEl.innerHTML = originalHtml;
+        btnEl.disabled = false;
+        btnEl.style.opacity = "1";
+      }, 2500);
+    }
+  }
 }
+window.sendBotCommand = sendBotCommand;
 
 
 
@@ -781,11 +822,17 @@ function listenToBotTelemetry(userId, isAdmin) {
       const statEquitySub = document.getElementById("statEquitySub");
       if (statEquitySub) statEquitySub.textContent = `Khả dụng: $${balance.toFixed(2)}`;
 
-      // 2. Số Dư Khả Dụng & Ký Quỹ
+      // 2. Ký Quỹ Đang Dùng (Chỉ hiển thị tiền ký quỹ thực tế & Tỷ lệ sử dụng vốn, không lặp lại tổng tiền)
       const statBalance = document.getElementById("statBalance");
-      if (statBalance) statBalance.textContent = balance.toFixed(2);
+      if (statBalance) {
+        statBalance.textContent = usedMargin.toFixed(2);
+        statBalance.className = `text-lg sm:text-xl font-black mono-font ${usedMargin > 0 ? 'text-amber-400' : 'text-gray-300'}`;
+      }
       const statUsedMarginSub = document.getElementById("statUsedMarginSub");
-      if (statUsedMarginSub) statUsedMarginSub.textContent = `Ký quỹ: $${usedMargin.toFixed(2)}`;
+      if (statUsedMarginSub) {
+        const marginRatio = equity > 0 ? ((usedMargin / equity) * 100).toFixed(1) : "0.0";
+        statUsedMarginSub.textContent = `Tỷ lệ: ${marginRatio}% vốn`;
+      }
 
       // 3. PnL Đang Chạy (Floating Live)
       const statUnrealized = document.getElementById("statUnrealizedPnl");
@@ -992,7 +1039,7 @@ function listenToBotTelemetry(userId, isAdmin) {
                   <div class="text-[10px] text-amber-400/80">${p.trailingStatus}</div>
                 </td>
                 <td class="text-right">
-                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}' })" class="px-3.5 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1 ml-auto active:scale-95">
+                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}' }, this)" class="px-3.5 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1 ml-auto active:scale-95">
                     <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     Đóng
                   </button>
@@ -1010,7 +1057,7 @@ function listenToBotTelemetry(userId, isAdmin) {
                       ${p.side} ${p.leverage}x
                     </span>
                   </div>
-                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}' })" class="px-2.5 py-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1 active:scale-95">
+                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}' }, this)" class="px-2.5 py-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1 active:scale-95">
                     <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     Đóng
                   </button>
