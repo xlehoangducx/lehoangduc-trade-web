@@ -342,4 +342,153 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 0 12px rgba(245, 158, 11, 0.3) !important;
 }
 
+/* ==========================================================================
+   Cinematic Dark Lightning Gear Engine
+   ========================================================================== */
+.cinematic-gear-frame {
+  position: relative;
+  background: radial-gradient(circle at center, rgba(13, 19, 33, 0.95) 0%, rgba(7, 8, 13, 0.98) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 2rem;
+  box-shadow: 0 0 50px -10px rgba(0, 243, 255, 0.3), 0 25px 50px -20px rgba(0, 0, 0, 0.9);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.cinematic-gear-frame:hover {
+  border-color: rgba(0, 243, 255, 0.7);
+  box-shadow: 0 0 70px -5px rgba(245, 158, 11, 0.5), 0 0 35px rgba(0, 243, 255, 0.45);
+  transform: translateY(-4px) scale(1.008);
+}
+
+@keyframes lightning-flash-pulse {
+  0%, 75% {
+    opacity: 0;
+  }
+  76% {
+    opacity: 0.8;
+    filter: drop-shadow(0 0 15px #00f3ff) drop-shadow(0 0 30px #38bdf8);
+  }
+  77.5% {
+    opacity: 0.15;
+  }
+  79% {
+    opacity: 1;
+    filter: drop-shadow(0 0 25px #00f3ff) drop-shadow(0 0 45px #ffd700);
+  }
+  80.5% {
+    opacity: 0.1;
+  }
+  82% {
+    opacity: 0.85;
+    filter: drop-shadow(0 0 18px #00f3ff);
+  }
+  85%, 100% {
+    opacity: 0;
+  }
+}
+
+.animate-lightning-pulse {
+  animation: lightning-flash-pulse 5.5s ease-in-out infinite;
+}
+
+/* ==========================================================================
+   5-Stage Quantitative Defense Pipeline Cards
+   ========================================================================== */
+.pipeline-card {
+  background: rgba(11, 14, 23, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.pipeline-card:hover {
+  transform: translateY(-3px);
+}
+
+.pipeline-card-tier1:hover {
+  border-color: rgba(6, 182, 212, 0.5);
+  box-shadow: 0 12px 30px -10px rgba(6, 182, 212, 0.25);
+}
+
+.pipeline-card-tier2:hover {
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 12px 30px -10px rgba(245, 158, 11, 0.25);
+}
+
+.pipeline-card-tier3:hover {
+  border-color: rgba(244, 63, 94, 0.5);
+  box-shadow: 0 12px 30px -10px rgba(244, 63, 94, 0.25);
+}
+
+.pipeline-card-tier4:hover {
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow: 0 12px 30px -10px rgba(168, 85, 247, 0.25);
+}
+
+.pipeline-card-tier5:hover {
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 12px 30px -10px rgba(16, 185, 129, 0.25);
+}
+
+/* ==========================================================================
+   Distinct Scroll Reveal Animations (Mỗi phần trình chiếu khác nhau)
+   ========================================================================== */
+.scroll-item {
+  opacity: 0;
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.85s ease;
+  will-change: opacity, transform;
+}
+
+/* Kiểu 1: Laser Scan trượt từ trái sang (Cyan Laser) */
+.reveal-laser-left {
+  transform: translateX(-50px);
+}
+.reveal-laser-left.is-revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Kiểu 2: Điện giật trượt từ phải sang (Electric Gold) */
+.reveal-laser-right {
+  transform: translateX(50px);
+}
+.reveal-laser-right.is-revealed {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Kiểu 3: 3D Flip Rise (Nổi lên từ đáy với góc nghiêng) */
+.reveal-flip-up {
+  transform: perspective(1000px) rotateX(12deg) translateY(45px);
+}
+.reveal-flip-up.is-revealed {
+  opacity: 1;
+  transform: perspective(1000px) rotateX(0deg) translateY(0);
+}
+
+/* Kiểu 4: Hologram Zoom (Phóng to từ trung tâm) */
+.reveal-hologram-zoom {
+  transform: scale(0.9) translateY(35px);
+}
+.reveal-hologram-zoom.is-revealed {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+/* Kiểu 5: Pulse Wave (Sóng năng lượng bừng sáng) */
+.reveal-golden-pulse {
+  transform: translateY(35px);
+}
+.reveal-golden-pulse.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+  box-shadow: 0 15px 40px -10px rgba(245, 158, 11, 0.25);
+}
+
+
 

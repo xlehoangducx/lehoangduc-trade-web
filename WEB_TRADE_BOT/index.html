@@ -56,12 +56,12 @@
 
       <!-- Quick Nav Links -->
       <nav class="hidden md:flex items-center space-x-6 text-sm font-medium text-gray-400">
-        <a href="#about" class="hover:text-amber-400 transition">Kiến Trúc</a>
-        <a href="#matrix-section" class="hover:text-amber-400 transition">Gợi Ý Quản Trị Vốn</a>
         <a href="#author" class="hover:text-amber-400 transition flex items-center gap-1.5 text-amber-400/90">
           <img src="assets/img/gear-gold-3d.png" class="w-3.5 h-3.5 object-contain animate-spin-cw" alt="Gear">
-          <span>Tác Giả & Liên Hệ</span>
+          <span>Tác Giả & Sáng Lập</span>
         </a>
+        <a href="#how-it-works" class="hover:text-amber-400 transition">5 Tầng Phòng Vệ</a>
+        <a href="#features" class="hover:text-amber-400 transition">Tính Năng Độc Quyền</a>
       </nav>
 
       <!-- Auth Action Button -->
@@ -120,65 +120,68 @@
           <span class="text-lg font-bold group-hover:translate-x-1 transition-transform">›</span>
         </button>
         
-        <a href="#matrix-section" class="w-full sm:w-auto flex items-center justify-center space-x-2 bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 px-8 py-4 rounded-full text-white font-medium transition-all text-sm backdrop-blur-md">
-          <span>Xem Bảng Tra Cứu Vốn</span>
-          <span class="text-gray-400">↓</span>
+        <a href="#how-it-works" class="w-full sm:w-auto flex items-center justify-center space-x-2 bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 px-8 py-4 rounded-full text-white font-medium transition-all text-sm backdrop-blur-md">
+          <span>Khám Phá Cách Thức Hoạt Động</span>
+          <span class="text-amber-400">↓</span>
         </a>
       </div>
 
-      <!-- Big 3D Mechanical Gear Engine (Đúng Chuẩn Cơ Khí 3D Thép Như Hình Mẫu) -->
-      <div class="my-14 relative flex flex-col items-center justify-center animate-gear-engine group">
+      <!-- Big Cinematic 3D Mechanical Gear Engine (3 Bánh Răng Ăn Khớp Điện Ảnh Sét Thật & Ma Trận Dark) -->
+      <div class="my-14 relative flex flex-col items-center justify-center group">
         
         <!-- Ambient Glowing Aura -->
-        <div class="absolute w-80 sm:w-96 h-80 sm:h-96 rounded-full bg-gradient-to-tr from-amber-500/25 via-cyan-500/20 to-emerald-500/15 blur-3xl pointer-events-none -z-10 animate-gear-glow"></div>
+        <div class="absolute w-[340px] sm:w-[540px] h-[340px] sm:h-[540px] rounded-full bg-gradient-to-tr from-cyan-500/20 via-amber-500/25 to-blue-600/20 blur-3xl pointer-events-none -z-10 animate-gear-glow"></div>
 
-        <!-- Outer Tech HUD Radial Compass -->
-        <svg class="absolute w-[360px] sm:w-[460px] h-[360px] sm:h-[460px] pointer-events-none opacity-25 -z-0" viewBox="0 0 400 400">
-          <circle cx="200" cy="200" r="180" fill="none" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="6 8"/>
-          <circle cx="200" cy="200" r="192" fill="none" stroke="#06b6d4" stroke-width="0.8" stroke-dasharray="3 14"/>
+        <!-- Outer Tech HUD Compass Ring -->
+        <svg class="absolute w-[380px] sm:w-[580px] h-[380px] sm:h-[580px] pointer-events-none opacity-20 -z-0" viewBox="0 0 500 500">
+          <circle cx="250" cy="250" r="230" fill="none" stroke="#f59e0b" stroke-width="1.2" stroke-dasharray="6 8"/>
+          <circle cx="250" cy="250" r="242" fill="none" stroke="#00f3ff" stroke-width="0.8" stroke-dasharray="3 14"/>
         </svg>
 
-        <!-- 3D Realistic Gear Assembly & Live Spinning Mechanism with Electric Lightning -->
-        <div class="relative w-80 sm:w-[420px] max-w-full flex items-center justify-center">
+        <!-- Main Cinematic Dark Frame with Real Lightning & Matrix Transmission -->
+        <div class="cinematic-gear-frame relative w-80 sm:w-[520px] md:w-[640px] max-w-full p-2.5 sm:p-4 backdrop-blur-2xl">
           
-          <!-- Electric Field Halo (Dòng điện vây quanh phát sáng) -->
-          <div class="absolute inset-[-12px] sm:inset-[-20px] rounded-full border border-cyan-400/40 pointer-events-none animate-electric-field -z-0"></div>
+          <!-- Realistic Lightning Arc Pulsing Overlay -->
+          <div class="absolute inset-0 pointer-events-none z-10 animate-lightning-pulse bg-gradient-to-tr from-cyan-400/10 via-transparent to-amber-400/10"></div>
 
-          <!-- Lightning Electric Arcs SVG Overlay (Tia sét giật vây quanh bánh răng) -->
-          <svg class="absolute inset-[-35px] sm:inset-[-50px] w-[calc(100%+70px)] sm:w-[calc(100%+100px)] h-[calc(100%+70px)] sm:h-[calc(100%+100px)] pointer-events-none z-10 animate-lightning overflow-visible" viewBox="0 0 500 500">
-            <!-- Lightning Arc 1 (Góc trên trái qua đỉnh bánh răng) -->
-            <path d="M 120 180 L 165 160 L 155 195 L 210 145 L 235 170 L 280 120 L 295 145 L 350 110" stroke="#00f3ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <path d="M 210 145 L 190 120 L 215 105" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-            <!-- Lightning Arc 2 (Vây quanh sườn phải và răng cưa) -->
-            <path d="M 370 160 L 395 210 L 375 230 L 420 270 L 390 295 L 415 340" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <!-- Lightning Arc 3 (Vây quanh đáy bánh răng) -->
-            <path d="M 380 370 L 340 395 L 355 420 L 290 410 L 270 440 L 220 415 L 180 435" stroke="#00f3ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          </svg>
-
-          <!-- Second Lightning Bolt Branch (Tia sét phụ giật lệch nhịp) -->
-          <svg class="absolute inset-[-35px] sm:inset-[-50px] w-[calc(100%+70px)] sm:w-[calc(100%+100px)] h-[calc(100%+70px)] sm:h-[calc(100%+100px)] pointer-events-none z-10 animate-lightning-delayed overflow-visible" viewBox="0 0 500 500">
-            <path d="M 90 260 L 140 250 L 125 285 L 170 295 L 160 330 L 210 350" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            <path d="M 260 90 L 275 130 L 295 115 L 320 155" stroke="#ffd700" stroke-width="2" stroke-linecap="round" fill="none"/>
-          </svg>
-
-          <!-- Main 3D Interlocking Mechanical Gear Assembly (Bánh răng to xoay cử động chuyển động) -->
-          <img src="assets/img/gear-assembly-3d.png" class="w-full h-auto object-contain drop-shadow-[0_20px_45px_rgba(0,0,0,0.9)] filter contrast-105 group-hover:scale-105 transition-transform duration-500 select-none pointer-events-none animate-spin-main-gear" alt="TradeMatrix 3D Mechanical Gears">
-          
-          <!-- Live Rotating 3D Gold Cog (Góc trên phải, xoay thuận chiều kim đồng hồ) -->
-          <div class="absolute -top-6 -right-6 w-24 sm:w-32 h-24 sm:h-32 pointer-events-none drop-shadow-[0_0_20px_rgba(245,158,11,0.55)]">
-            <img src="assets/img/gear-gold-3d.png" class="w-full h-full object-contain animate-spin-cw" alt="Spinning 3D Gold Gear">
+          <!-- Top Header Bar of Engine Frame -->
+          <div class="flex items-center justify-between px-3 py-1.5 mb-2 border-b border-white/10 text-[10px] mono-font text-gray-400">
+            <div class="flex items-center space-x-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="text-white font-bold">TRADEMATRIX QUANTUM ENGINE</span>
+            </div>
+            <span class="text-amber-400 font-semibold tracking-wider">3-GEAR CYBERNETIC INTERLOCK</span>
           </div>
 
-          <!-- Live Rotating 3D Steel Cog (Góc dưới trái, xoay nghịch chiều ăn khớp) -->
-          <div class="absolute -bottom-6 -left-6 w-20 sm:w-28 h-20 sm:h-28 pointer-events-none drop-shadow-[0_0_20px_rgba(6,182,212,0.55)]">
-            <img src="assets/img/gear-ortho-3d.png" class="w-full h-full object-contain animate-spin-ccw" alt="Spinning 3D Steel Gear">
+          <!-- The Masterpiece Cinematic Image -->
+          <div class="relative rounded-2xl overflow-hidden border border-white/10 bg-black/80 shadow-2xl">
+            <img src="assets/img/gear-matrix-lightning-cinematic.jpg" 
+                 class="w-full h-auto object-cover object-center select-none group-hover:scale-105 transition-transform duration-700 filter contrast-110 drop-shadow-[0_20px_45px_rgba(0,0,0,0.95)]" 
+                alt="TradeMatrix Cinematic Dark Mechanical Gears with Real Lightning">
+            
+            <!-- Subtle Cyber Grid Vignette -->
+            <div class="absolute inset-0 bg-gradient-to-t from-[#07080d]/80 via-transparent to-transparent pointer-events-none"></div>
+          </div>
+
+          <!-- Bottom Status Bar -->
+          <div class="flex items-center justify-between px-3 py-2 mt-2 text-[10px] mono-font text-gray-400">
+            <span class="text-cyan-300">⚡ Plasma Arc Voltage: 100% Sét Thật Điện Ảnh</span>
+            <span class="text-emerald-400">● 3 Bánh Răng Ăn Khớp Vận Hành Liên Tục</span>
+          </div>
+
+          <!-- Live Spinning Accent Cogs for kinetic interactive depth -->
+          <div class="absolute -top-4 -right-4 w-16 sm:w-20 h-16 sm:h-20 pointer-events-none drop-shadow-[0_0_15px_rgba(245,158,11,0.6)]">
+            <img src="assets/img/gear-gold-3d.png" class="w-full h-full object-contain animate-spin-cw" alt="Live Spinning Cog">
+          </div>
+          <div class="absolute -bottom-4 -left-4 w-14 sm:w-16 h-14 sm:h-16 pointer-events-none drop-shadow-[0_0_15px_rgba(6,182,212,0.6)]">
+            <img src="assets/img/gear-ortho-3d.png" class="w-full h-full object-contain animate-spin-ccw" alt="Live Spinning Cog">
           </div>
         </div>
 
         <!-- Engine Status Caption Badge -->
-        <div class="inline-flex items-center space-x-2.5 px-4 py-1.5 rounded-full bg-white/[0.03] border border-amber-400/25 text-gray-300 text-xs mono-font backdrop-blur-md shadow-lg shadow-black/50 mt-6">
-          <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-          <span class="text-white font-bold">TRADEMATRIX</span>
+        <div class="inline-flex items-center space-x-2.5 px-5 py-2 rounded-full bg-white/[0.04] border border-amber-400/30 text-gray-200 text-xs mono-font backdrop-blur-md shadow-xl shadow-black/80 mt-6">
+          <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+          <span class="text-white font-extrabold tracking-wider">HỆ THỐNG TRUYỀN ĐỘNG CƠ KHÍ & MA TRẬN ĐIỆN ẢNH THỰC CHIẾN</span>
         </div>
       </div>
 
@@ -215,228 +218,14 @@
         </div>
       </div>
 
-      <!-- Matrix Preview Section -->
-      <div id="matrix-section" class="kenzo-card p-6 sm:p-10 mb-16 text-left border-amber-400/20 shadow-2xl shadow-amber-500/5">
-        <div class="flex flex-col md:flex-row md:items-center justify-between pb-6 border-b border-white/10 mb-6 gap-4">
-          <div>
-            <div class="flex items-center space-x-3 mb-1">
-              <div class="w-8 h-8 rounded-xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400">
-                <i data-lucide="layers" class="w-4 h-4"></i>
-              </div>
-              <h2 class="text-xl sm:text-2xl font-black text-white tracking-wide">
-                Bảng Gợi Ý Quản Trị Vốn & Đòn Bẩy Định Lượng
-              </h2>
-            </div>
-            <p class="text-xs text-gray-400 ml-11">
-              Gợi ý phân bổ vốn và kiểm soát rủi ro tham khảo cho từng mốc tài khoản từ 40$ đến 10,000$.
-            </p>
-          </div>
-          <div>
-            <span class="pill-badge-gold">GỢI Ý AN TOÀN THAM KHẢO</span>
-          </div>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="terminal-table">
-            <thead>
-              <tr>
-                <th>Cột Mốc Vốn</th>
-                <th>Đòn Bẩy Trần</th>
-                <th>Số Lệnh Mở</th>
-                <th>Ký Quỹ / Lệnh</th>
-                <th>Khoảng Cách Cháy</th>
-                <th>Đệm An Toàn SL</th>
-                <th>Mức Lỗ SL / 1 Lệnh</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  <span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-white font-bold mono-font text-xs">
-                    40$ – 50$
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/30 font-bold mono-font text-xs">
-                    8x – 10x
-                  </span>
-                </td>
-                <td class="text-gray-300 mono-font text-xs">2 lệnh</td>
-                <td class="text-gray-400 mono-font text-xs">~1.2$ – 1.6$</td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold mono-font text-xs">
-                    -10.0%
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-bold mono-font text-xs">
-                    Gấp 3.0x SL
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-bold mono-font text-xs">
-                    0.65$ (1.5%)
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-white font-bold mono-font text-xs">
-                    100$
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/30 font-bold mono-font text-xs">
-                    7x – 10x
-                  </span>
-                </td>
-                <td class="text-gray-300 mono-font text-xs">2 – 3 lệnh</td>
-                <td class="text-gray-400 mono-font text-xs">~2.5$ – 3.0$</td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold mono-font text-xs">
-                    -11.5%
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-bold mono-font text-xs">
-                    Gấp 3.5x SL
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-bold mono-font text-xs">
-                    1.50$ (1.5%)
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-white font-bold mono-font text-xs">
-                    300$
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/30 font-bold mono-font text-xs">
-                    7x – 8x
-                  </span>
-                </td>
-                <td class="text-gray-300 mono-font text-xs">3 – 4 lệnh</td>
-                <td class="text-gray-400 mono-font text-xs">~6.0$ – 7.5$</td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold mono-font text-xs">
-                    -13.0%
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-bold mono-font text-xs">
-                    Gấp 4.0x SL
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-bold mono-font text-xs">
-                    4.50$ (1.5%)
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-white font-bold mono-font text-xs">
-                    500$
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/30 font-bold mono-font text-xs">
-                    5x – 7x
-                  </span>
-                </td>
-                <td class="text-gray-300 mono-font text-xs">4 lệnh</td>
-                <td class="text-gray-400 mono-font text-xs">~10.0$ – 12.0$</td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold mono-font text-xs">
-                    -16.0%
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-bold mono-font text-xs">
-                    Gấp 4.8x SL
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-bold mono-font text-xs">
-                    7.50$ (1.5%)
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <span class="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/10 text-white font-bold mono-font text-xs">
-                    1,000$
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/30 font-bold mono-font text-xs">
-                    5x – 6x
-                  </span>
-                </td>
-                <td class="text-gray-300 mono-font text-xs">4 – 5 lệnh</td>
-                <td class="text-gray-400 mono-font text-xs">~20.0$ – 25.0$</td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold mono-font text-xs">
-                    -18.0%
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-bold mono-font text-xs">
-                    Gấp 5.5x SL
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 font-bold mono-font text-xs">
-                    12.0$ (1.2%)
-                  </span>
-                </td>
-              </tr>
-              <tr class="bg-amber-400/[0.04] border-amber-400/30">
-                <td>
-                  <span class="px-3 py-1 rounded-lg bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black mono-font text-xs shadow-md shadow-amber-400/20">
-                    10,000$
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 font-black mono-font text-xs">
-                    3x – 4x
-                  </span>
-                </td>
-                <td class="text-white font-bold mono-font text-xs">5 – 6 lệnh</td>
-                <td class="text-white font-semibold mono-font text-xs">~150$ – 180$</td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold mono-font text-xs">
-                    -28% – -32%
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-200 border border-cyan-500/30 font-bold mono-font text-xs">
-                    Gấp 10.0x SL
-                  </span>
-                </td>
-                <td>
-                  <span class="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-200 border border-rose-500/30 font-bold mono-font text-xs">
-                    80.0$ (0.8%)
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- ================= AUTHOR PROFILE & MATRIX CYBER SECTION ================= -->
-      <section id="author" class="relative my-20 pt-6">
+      <!-- ================= 1. AUTHOR PROFILE & FOUNDER SECTION ================= -->
+      <section id="author" class="relative my-20 pt-4 scroll-item reveal-golden-pulse">
         
         <!-- Glowing Matrix Glass Container -->
         <div class="kenzo-card p-6 sm:p-10 lg:p-12 relative overflow-hidden border-amber-400/30 matrix-border-glow shadow-2xl shadow-black/80">
           
           <!-- Matrix Rain Canvas Background -->
-          <canvas id="authorMatrixCanvas" class="absolute inset-0 w-full h-full pointer-events-none opacity-30 -z-0"></canvas>
+          <canvas id="authorMatrixCanvas" class="absolute inset-0 w-full h-full pointer-events-none opacity-25 -z-0"></canvas>
           
           <div class="relative z-10">
             <!-- Header Tag -->
@@ -458,7 +247,7 @@
                 </div>
               </div>
               <div class="flex items-center space-x-2">
-                <span class="pill-badge-gold">TÁC GIẢ</span>
+                <span class="pill-badge-gold">TÁC GIẢ SÁNG LẬP</span>
                 <span class="pill-badge">LÊ HOÀNG ĐỨC</span>
               </div>
             </div>
@@ -466,7 +255,7 @@
             <!-- Bento Content Grid: Photos on Left, Bio & Manifesto on Right -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               
-              <!-- Left Column: Bento Photo Showcase (D:\ANH) -->
+              <!-- Left Column: Bento Photo Showcase -->
               <div class="lg:col-span-5 space-y-4">
                 <!-- Main Featured Photo -->
                 <div class="relative rounded-2xl overflow-hidden border border-amber-400/30 group shadow-xl shadow-black/60 bg-[#07080d]">
@@ -508,18 +297,18 @@
               <!-- Right Column: Bio, Philosophy & Social Connect -->
               <div class="lg:col-span-7 space-y-6 text-left">
                 <div>
-                  <span class="text-xs font-bold text-amber-400 mono-font uppercase tracking-wider block mb-1">PHÁT TRIỂN HỆ THỐNG</span>
+                  <span class="text-xs font-bold text-amber-400 mono-font uppercase tracking-wider block mb-1">KIẾN TRÚC SƯ HỆ THỐNG</span>
                   <h3 class="text-2xl sm:text-4xl font-black text-white tracking-tight">
                     LÊ HOÀNG ĐỨC
                   </h3>
                   <p class="text-sm text-gray-400 mono-font mt-1">
-                    Buôn Ma Thuột, Đắk Lắk · Người phát triển bot TradeMatrix
+                    Buôn Ma Thuột, Đắk Lắk · Người xây dựng và phát triển hệ thống TradeMatrix
                   </p>
                 </div>
 
                 <!-- Manifesto Quote -->
                 <div class="p-5 rounded-2xl bg-white/[0.03] border-l-4 border-amber-400 border-white/10 text-gray-200 text-sm leading-relaxed italic">
-                  “TradeMatrix là công cụ giao dịch tự động do tôi phát triển nhằm mục tiêu duy trì kỷ luật, hạn chế vào lệnh theo cảm xúc và quản trị rủi ro an toàn hơn khi giao dịch Binance Futures. Hệ thống không cam kết làm giàu nhanh, mà tập trung vào sự ổn định, kỷ luật và bảo toàn vốn đường dài.”
+                  “TradeMatrix là công cụ giao dịch định lượng tự động do tôi phát triển nhằm mục tiêu duy trì kỷ luật thép, loại trừ tuyệt đối tâm lý sợ hãi hay lòng tham khi giao dịch Binance Futures. Hệ thống không theo đuổi việc làm giàu nhanh, mà kiên định với sự bền vững, an toàn vốn và lợi nhuận tích lũy đường dài.”
                 </div>
 
                 <!-- 3 Feature Pillars -->
@@ -529,18 +318,18 @@
                       <i data-lucide="shield-check" class="w-4 h-4"></i>
                     </div>
                     <div>
-                      <h4 class="text-xs font-bold text-white uppercase mono-font">Bảo Mật API Cá Nhân Tuyệt Đối</h4>
-                      <p class="text-xs text-gray-400 mt-0.5">Khóa API Binance Futures lưu 100% trên máy tính cá nhân của bạn. Không một ai (kể cả Admin) biết được khóa API của bạn.</p>
+                      <h4 class="text-xs font-bold text-white uppercase mono-font">Bảo Mật API Cá Nhân Tuyệt Đối (Zero-Custody)</h4>
+                      <p class="text-xs text-gray-400 mt-0.5">Khóa API Binance Futures lưu 100% trên máy tính cá nhân của bạn. Không một ai (kể cả tác giả) biết được khóa API của bạn.</p>
                     </div>
                   </div>
 
                   <div class="flex items-start space-x-3 p-3.5 rounded-xl bg-white/[0.02] border border-white/5">
                     <div class="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-                      <i data-lucide="sliders" class="w-4 h-4"></i>
+                      <i data-lucide="layers" class="w-4 h-4"></i>
                     </div>
                     <div>
-                      <h4 class="text-xs font-bold text-white uppercase mono-font">Gợi Ý Quản Lý Vốn & Đòn Bẩy</h4>
-                      <p class="text-xs text-gray-400 mt-0.5">Gợi ý mốc đòn bẩy và khối lượng vào lệnh theo từng mốc vốn, giữ đệm an toàn cháy tài khoản luôn xa hơn 15% – 32%.</p>
+                      <h4 class="text-xs font-bold text-white uppercase mono-font">Kiến Trúc 5 Tầng Phòng Vệ Độc Quyền</h4>
+                      <p class="text-xs text-gray-400 mt-0.5">Sàng lọc nghiêm ngặt từng nến 1M qua 5 tầng chốt chặn vi mô, loại bỏ bẫy cá mập và bảo toàn trọn vẹn 100% các lệnh thắng.</p>
                     </div>
                   </div>
 
@@ -549,8 +338,8 @@
                       <i data-lucide="user-check" class="w-4 h-4"></i>
                     </div>
                     <div>
-                      <h4 class="text-xs font-bold text-white uppercase mono-font">Hỗ Trợ & Cấp Quyền Trực Tiếp</h4>
-                      <p class="text-xs text-gray-400 mt-0.5">Tôi trực tiếp phê duyệt thành viên, giải đáp kỹ thuật và đồng hành cùng anh em trong quá trình vận hành tool.</p>
+                      <h4 class="text-xs font-bold text-white uppercase mono-font">Đồng Hành & Hỗ Trợ Kỹ Thuật Trực Tiếp</h4>
+                      <p class="text-xs text-gray-400 mt-0.5">Tôi trực tiếp phê duyệt người dùng, giải đáp kỹ thuật, liên tục tối ưu thuật toán và đồng hành cùng anh em vận hành tool.</p>
                     </div>
                   </div>
                 </div>
@@ -565,9 +354,9 @@
                     <span class="font-bold group-hover:translate-x-1 transition-transform">›</span>
                   </a>
 
-                  <a href="dashboard.html" class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-white font-semibold text-xs transition uppercase tracking-wider">
-                    <i data-lucide="layout-dashboard" class="w-4 h-4 text-amber-400"></i>
-                    <span>Mở Bảng Điều Khiển</span>
+                  <a href="#how-it-works" class="w-full sm:w-auto inline-flex items-center justify-center space-x-2 px-6 py-3.5 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 text-white font-semibold text-xs transition uppercase tracking-wider">
+                    <i data-lucide="shield-alert" class="w-4 h-4 text-amber-400"></i>
+                    <span>Xem 5 Tầng Phòng Vệ ↓</span>
                   </a>
                 </div>
 
@@ -578,6 +367,376 @@
 
         </div>
       </section>
+
+      <!-- ================= 2. 5-STAGE DEFENSE & FLOW SECTION ================= -->
+      <section id="how-it-works" class="my-24 text-left relative">
+        
+        <!-- Header -->
+        <div class="text-center max-w-3xl mx-auto mb-16 scroll-item reveal-flip-up">
+          <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-400 text-xs font-bold mono-font uppercase tracking-wider mb-4">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            <span>QUY TRÌNH VẬN HÀNH THỰC CHIẾN</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+            CÁCH THỨC HOẠT ĐỘNG <br>
+            <span class="bg-gradient-to-r from-amber-300 via-yellow-400 to-cyan-400 bg-clip-text text-transparent">
+              KIẾN TRÚC 5 TẦNG PHÒNG VỆ
+            </span>
+          </h2>
+          <p class="text-sm sm:text-base text-gray-300 mt-4 leading-relaxed font-light">
+            Mỗi tín hiệu trước khi gửi lệnh vào Binance Futures phải vượt qua phễu lọc 5 tầng nghiêm ngặt. Loại bỏ 100% bẫy giá giả mạo, chặn đu đỉnh và bán đáy, đồng thời bảo toàn trọn vẹn mọi lệnh thắng lớn.
+          </p>
+        </div>
+
+        <!-- Vertical Interactive Defense Pipeline Cards -->
+        <div class="max-w-4xl mx-auto space-y-6 relative">
+          
+          <!-- STAGE 0: ENTRY SIGNAL -->
+          <div class="pipeline-card p-6 sm:p-7 border-cyan-400/30 bg-cyan-950/20 shadow-xl shadow-cyan-500/5 scroll-item reveal-laser-left">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div class="flex items-center space-x-4">
+                <div class="w-12 h-12 rounded-2xl bg-cyan-400/15 border border-cyan-400/40 flex items-center justify-center text-cyan-300 shrink-0 shadow-lg shadow-cyan-500/20">
+                  <i data-lucide="radar" class="w-6 h-6 animate-spin-cw"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2 mb-1">
+                    <span class="px-2.5 py-0.5 rounded-md bg-cyan-400/20 text-cyan-300 border border-cyan-400/30 text-[10px] font-extrabold mono-font uppercase">KHỞI ĐẦU</span>
+                    <h3 class="text-lg font-black text-white">[ Tín Hiệu Vào Thị Trường ]</h3>
+                  </div>
+                  <p class="text-xs text-gray-300">
+                    Scanner quét liên tục 30+ cặp Altcoin mỗi 60s. AI Ensemble tổng hợp 91 đặc trưng (ADX, ATR, RSI, Bollinger, MACD, Volume Profile) cùng JEV Agent phân tích đa khung 15M – 1H – 4H.
+                  </p>
+                </div>
+              </div>
+              <span class="px-3 py-1 rounded-full bg-cyan-400/10 text-cyan-300 border border-cyan-400/30 text-xs font-bold mono-font shrink-0">
+                DATA STREAM
+              </span>
+            </div>
+          </div>
+
+          <!-- CONNECTOR ARROW 1 -->
+          <div class="flex flex-col items-center justify-center py-1">
+            <div class="w-0.5 h-6 bg-gradient-to-b from-cyan-400 to-amber-400"></div>
+            <span class="px-3 py-0.5 rounded-full bg-[#0b0e17] border border-cyan-400/40 text-[10px] font-black mono-font text-cyan-300 shadow-sm">
+              ▼ PASS SƠ LOẠI
+            </span>
+            <div class="w-0.5 h-6 bg-gradient-to-b from-cyan-400 to-amber-400"></div>
+          </div>
+
+          <!-- TẦNG 1: COLD-START WARMUP -->
+          <div class="pipeline-card pipeline-card-tier1 p-6 sm:p-7 border-white/10 hover:border-cyan-400/40 scroll-item reveal-laser-right">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/5 mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+                  <i data-lucide="cpu" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs font-extrabold text-cyan-400 mono-font">TẦNG 1</span>
+                    <h4 class="text-base font-black text-white">Cold-Start Warmup & JEV Veto</h4>
+                  </div>
+                  <p class="text-[11px] text-gray-400">Lọc sơ bộ chu kỳ hội tụ mô hình máy học vừa tải lại</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 text-[11px] font-bold mono-font shrink-0">
+                VETO NẾU MODEL CHƯA ỔN ĐỊNH
+              </span>
+            </div>
+            <div class="p-4 rounded-xl bg-black/40 border border-white/5 text-xs text-gray-300 leading-relaxed mono-font">
+              <span class="text-cyan-300 font-bold">Quy tắc:</span> Mô hình vừa khởi động / retrain + JEV AI khuyến nghị <span class="text-amber-400 font-bold">HOLD</span>? <br>
+              <span class="text-rose-400 font-bold">→ VETO 100% HỦY LỆNH NGAY</span> để loại bỏ nhiễu biên độ khi mô hình chưa hoàn tất ổn định (chặn tuyệt đối lỗi lọt lệnh như PHA/USDT).
+            </div>
+          </div>
+
+          <!-- CONNECTOR ARROW 2 -->
+          <div class="flex flex-col items-center justify-center py-1">
+            <div class="w-0.5 h-6 bg-gradient-to-b from-amber-400 to-yellow-500"></div>
+            <span class="px-3 py-0.5 rounded-full bg-[#0b0e17] border border-amber-400/40 text-[10px] font-black mono-font text-amber-300 shadow-sm">
+              ▼ PASS TẦNG 1
+            </span>
+            <div class="w-0.5 h-6 bg-gradient-to-b from-amber-400 to-yellow-500"></div>
+          </div>
+
+          <!-- TẦNG 2: DẢI BIẾN ĐỘNG ĐỘNG LƯỢNG MACRO ADX & ATR -->
+          <div class="pipeline-card pipeline-card-tier2 p-6 sm:p-7 border-white/10 hover:border-amber-400/40 scroll-item reveal-laser-left">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/5 mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                  <i data-lucide="activity" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs font-extrabold text-amber-400 mono-font">TẦNG 2</span>
+                    <h4 class="text-base font-black text-white">Dải Biến Động Động Lượng (Macro ADX & ATR Gate)</h4>
+                  </div>
+                  <p class="text-[11px] text-gray-400">Kiểm định sức mạnh sóng thật và ngăn chặn đu đỉnh phân phối</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full bg-amber-400/10 text-amber-300 border border-amber-400/20 text-[11px] font-bold mono-font shrink-0">
+                CHẶN BREAKOUT GIẢ & ĐU ĐỈNH
+              </span>
+            </div>
+            <div class="space-y-2 text-xs mono-font">
+              <div class="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300">
+                • <span class="font-bold">ADX &lt; 22.0:</span> Chặn Breakout Yếu (thị trường đi ngang lừa đảo, cấm mở lệnh).
+              </div>
+              <div class="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-300">
+                • <span class="font-bold">22.0 &le; ADX &lt; 55.0:</span> Vùng Xu Hướng Phát Triển Lành Mạnh <span class="font-bold">→ [CHO PHÉP VÀO LỆNH]</span>.
+              </div>
+              <div class="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300">
+                • <span class="font-bold">ADX &ge; 55.0 hoặc (ADX &ge; 45.0 + ATR &ge; 5.0%):</span> Chặn Bơm Xả Cực Hạn (cấm BUY Altcoin đu đỉnh phân phối như bài học DUSK).
+              </div>
+            </div>
+          </div>
+
+          <!-- CONNECTOR ARROW 3 -->
+          <div class="flex flex-col items-center justify-center py-1">
+            <div class="w-0.5 h-6 bg-gradient-to-b from-yellow-500 to-rose-500"></div>
+            <span class="px-3 py-0.5 rounded-full bg-[#0b0e17] border border-rose-400/40 text-[10px] font-black mono-font text-rose-300 shadow-sm">
+              ▼ PASS TẦNG 2
+            </span>
+            <div class="w-0.5 h-6 bg-gradient-to-b from-yellow-500 to-rose-500"></div>
+          </div>
+
+          <!-- TẦNG 3: TRẠNG THÁI GIÁ & BẪY NẾN (RSI / WICK) -->
+          <div class="pipeline-card pipeline-card-tier3 p-6 sm:p-7 border-white/10 hover:border-rose-400/40 scroll-item reveal-laser-right">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/5 mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+                  <i data-lucide="zap" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs font-extrabold text-rose-400 mono-font">TẦNG 3</span>
+                    <h4 class="text-base font-black text-white">Trạng Thái Giá & Bẫy Nến (RSI 15M & Price Action Wick)</h4>
+                  </div>
+                  <p class="text-[11px] text-gray-400">Chống bán tháo đuôi đáy và nhận diện cú quét bẫy giá tăng (Bull Trap)</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/20 text-[11px] font-bold mono-font shrink-0">
+                CHẶN BÁN ĐUỔI ĐÁY QUÁ BÁN
+              </span>
+            </div>
+            <div class="p-4 rounded-xl bg-black/40 border border-white/5 text-xs text-gray-300 leading-relaxed mono-font">
+              <span class="text-rose-400 font-bold">• RSI &le; 35.0:</span> Cấm SHORT đuổi đáy (vùng quá bán sâu rất dễ bật nảy hồi kỹ thuật Mean Reversion cắn SL như SNDK, SOL). <br>
+              <span class="text-emerald-400 font-bold">• Ngoại lệ duy nhất:</span> Chỉ mở SHORT nếu cây nến có râu bẫy giá tăng rõ rệt (<span class="text-white">has_bull_trap_wick</span>) quét thanh khoản phía trên trước khi xả.
+            </div>
+          </div>
+
+          <!-- CONNECTOR ARROW 4 -->
+          <div class="flex flex-col items-center justify-center py-1">
+            <div class="w-0.5 h-6 bg-gradient-to-b from-rose-500 to-purple-500"></div>
+            <span class="px-3 py-0.5 rounded-full bg-[#0b0e17] border border-purple-400/40 text-[10px] font-black mono-font text-purple-300 shadow-sm">
+              ▼ PASS TẦNG 3
+            </span>
+            <div class="w-0.5 h-6 bg-gradient-to-b from-rose-500 to-purple-500"></div>
+          </div>
+
+          <!-- TẦNG 4: BỘ LỌC ĐỒNG THUẬN THÍCH ỨNG VI MÔ -->
+          <div class="pipeline-card pipeline-card-tier4 p-6 sm:p-7 border-white/10 hover:border-purple-400/40 scroll-item reveal-laser-left">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/5 mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
+                  <i data-lucide="layers" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs font-extrabold text-purple-400 mono-font">TẦNG 4</span>
+                    <h4 class="text-base font-black text-white">Bộ Lọc Đồng Thuận Thích Ứng (Adaptive Micro Consensus)</h4>
+                  </div>
+                  <p class="text-[11px] text-gray-400">Cơ chế độc quyền: Triệt tiêu lệnh rác, bảo toàn 100% lệnh thắng lớn</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20 text-[11px] font-bold mono-font shrink-0">
+                BẢO TOÀN LỆNH THẮNG LỚN
+              </span>
+            </div>
+            <div class="p-4 rounded-xl bg-black/40 border border-white/5 text-xs text-gray-300 leading-relaxed mono-font space-y-2">
+              <div>• <span class="text-emerald-400 font-bold">AI &ge; 60%:</span> Duyệt vào lệnh theo chuẩn động lượng thông thường.</div>
+              <div>• <span class="text-amber-400 font-bold">AI &lt; 60%:</span> Phải có tối thiểu <span class="text-white font-bold">&ge; 3 chiến thuật kỹ thuật đồng thuận</span> HOẶC <span class="text-cyan-300 font-bold">&ge; 1 kỹ thuật + JEV MTF &ge; 80% + ADX &ge; 25</span>.</div>
+              <div class="pt-1 text-[11px] text-gray-400 border-t border-white/5">
+                <span class="text-purple-300 font-bold">Thực nghiệm 105 vị thế:</span> Triệt tiêu hoàn toàn lệnh rác (TAO, AERO, WLD, ON), giữ vững 100% lệnh siêu lợi nhuận của CYS (+28.2%), INIT (+25.7%), AVAX (+7.3%).
+              </div>
+            </div>
+          </div>
+
+          <!-- CONNECTOR ARROW 5 -->
+          <div class="flex flex-col items-center justify-center py-1">
+            <div class="w-0.5 h-6 bg-gradient-to-b from-purple-500 to-emerald-500"></div>
+            <span class="px-3 py-0.5 rounded-full bg-[#0b0e17] border border-emerald-400/40 text-[10px] font-black mono-font text-emerald-300 shadow-sm">
+              ▼ PASS TẦNG 4
+            </span>
+            <div class="w-0.5 h-6 bg-gradient-to-b from-purple-500 to-emerald-500"></div>
+          </div>
+
+          <!-- TẦNG 5: KHÓA PHẠT COOLDOWN LŨY TIẾN SQLITE -->
+          <div class="pipeline-card pipeline-card-tier5 p-6 sm:p-7 border-white/10 hover:border-emerald-400/40 scroll-item reveal-laser-right">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/5 mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                  <i data-lucide="shield-alert" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs font-extrabold text-emerald-400 mono-font">TẦNG 5</span>
+                    <h4 class="text-base font-black text-white">Kiểm Tra Khóa Phạt Cooldown Lũy Tiến SQLite (180m – 360m)</h4>
+                  </div>
+                  <p class="text-[11px] text-gray-400">Trừng phạt nghiêm khắc các đồng coin dính lệnh lỗ và chuỗi thua liên tiếp</p>
+                </div>
+              </div>
+              <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[11px] font-bold mono-font shrink-0">
+                ĐỒNG BỘ SQLITE BỀN VỮNG
+              </span>
+            </div>
+            <div class="p-4 rounded-xl bg-black/40 border border-white/5 text-xs text-gray-300 leading-relaxed mono-font space-y-1.5">
+              <div>• <span class="text-amber-400 font-bold">Lệnh đóng Net PnL &lt; 0</span> (SL, DOA 15m/25m/35m, hoặc đóng tay): Tự động khóa cặp tiền <span class="text-white font-bold">180 phút (3 tiếng)</span>.</div>
+              <div>• <span class="text-rose-400 font-bold">Chuỗi thua lần 2 cùng cặp (Streak &ge; 2):</span> Nhân đôi thời gian khóa lên <span class="text-rose-300 font-bold">360 phút (6 tiếng)</span>.</div>
+              <div>• <span class="text-emerald-400 font-bold">Lưu trữ SQLite vĩnh viễn:</span> Khởi động lại bot hay reload máy tính đều giữ nguyên lệnh khóa, không bao giờ vào lệnh trả thù (Revenge Trading).</div>
+            </div>
+          </div>
+
+          <!-- CONNECTOR ARROW 6 (FINAL PASS) -->
+          <div class="flex flex-col items-center justify-center py-2">
+            <div class="w-0.5 h-8 bg-gradient-to-b from-emerald-500 to-green-400 animate-pulse"></div>
+            <span class="px-4 py-1 rounded-full bg-emerald-500/20 border border-emerald-400 text-xs font-black mono-font text-emerald-300 shadow-lg shadow-emerald-500/30">
+              ✓ VƯỢT QUA 100% 5 TẦNG BẢO VỆ
+            </span>
+            <div class="w-0.5 h-8 bg-gradient-to-b from-emerald-500 to-green-400 animate-pulse"></div>
+          </div>
+
+          <!-- FINAL STEP: EXECUTE TRADE -->
+          <div class="pipeline-card p-7 sm:p-8 border-emerald-400/50 bg-gradient-to-r from-emerald-950/40 via-[#0b0e17] to-cyan-950/30 shadow-2xl shadow-emerald-500/15 scroll-item reveal-golden-pulse">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+              <div class="flex items-center space-x-4">
+                <div class="w-14 h-14 rounded-2xl bg-emerald-400/20 border-2 border-emerald-400 flex items-center justify-center text-emerald-300 shrink-0 shadow-lg shadow-emerald-400/30">
+                  <i data-lucide="check-circle-2" class="w-7 h-7"></i>
+                </div>
+                <div>
+                  <div class="flex items-center space-x-2 mb-1">
+                    <span class="px-2.5 py-0.5 rounded-md bg-emerald-400 text-black text-[10px] font-black mono-font uppercase">KẾT QUẢ CUỐI</span>
+                    <h3 class="text-xl font-black text-white">[ CHẤP THUẬN VÀO LỆNH ]</h3>
+                  </div>
+                  <p class="text-xs sm:text-sm text-gray-200 leading-relaxed font-light">
+                    Phân bổ ký quỹ an toàn theo ma trận vốn, kích hoạt đòn bẩy thích ứng, gửi lệnh Market/Limit tới Binance Futures, tự động đặt Stop Loss cứng và đồng bộ dữ liệu Real-time lên Web Dashboard!
+                  </p>
+                </div>
+              </div>
+              <a href="dashboard.html" class="px-6 py-3 rounded-full bg-emerald-400 hover:bg-emerald-300 text-black font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-emerald-400/30 transition shrink-0 active:scale-95">
+                Xem Lệnh Thực Chiến ›
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ================= 3. ADVANCED FEATURES SECTION (SCROLL REVEAL) ================= -->
+      <section id="features" class="my-24 text-left relative">
+        
+        <!-- Section Header -->
+        <div class="text-center max-w-3xl mx-auto mb-16 scroll-item reveal-flip-up">
+          <div class="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-cyan-400/10 border border-cyan-400/30 text-cyan-400 text-xs font-bold mono-font uppercase tracking-wider mb-4">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+            <span>CÔNG NGHỆ ĐỘT PHÁ</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+            VÀ CÁC TÍNH NĂNG HẤP DẪN <br>
+            <span class="bg-gradient-to-r from-cyan-400 via-blue-400 to-amber-400 bg-clip-text text-transparent">
+              CỦA TOOL TRADEMATRIX
+            </span>
+          </h2>
+          <p class="text-sm sm:text-base text-gray-300 mt-4 leading-relaxed font-light">
+            Sự kết hợp hoàn hảo giữa Mô hình Ngôn ngữ Lớn AI chạy offline cục bộ, quản trị rủi ro cơ khí và hệ thống giám sát đám mây thời gian thực.
+          </p>
+        </div>
+
+        <!-- Bento Grid of 5 Unique Feature Cards (Mỗi phần hiệu ứng trình chiếu riêng biệt) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          
+          <!-- Card 1: Dual AI Brain (Laser Left Reveal) -->
+          <div class="kenzo-card p-7 relative overflow-hidden group scroll-item reveal-laser-left border-cyan-400/20 hover:border-cyan-400/50">
+            <div class="w-12 h-12 rounded-2xl bg-cyan-400/10 border border-cyan-400/30 flex items-center justify-center text-cyan-400 mb-5 group-hover:scale-110 transition-transform">
+              <i data-lucide="cpu" class="w-6 h-6"></i>
+            </div>
+            <div class="flex items-center space-x-2 mb-2">
+              <span class="text-[10px] text-cyan-300 mono-font font-bold uppercase tracking-wider">AI ENSEMBLE + JEV</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Bộ Não Kép AI & JEV LLM Cục Bộ</h3>
+            <p class="text-xs text-gray-400 leading-relaxed font-light">
+              Tích hợp mô hình ngôn ngữ lớn Qwen 2.5 7B & DeepSeek chạy trực tiếp qua Ollama offline cục bộ, phối hợp ăn ý với Machine Learning 91 đặc trưng (LightGBM). Phân tích tổng thể đa khung thời gian 15m – 1h – 4h để xác nhận xu hướng vĩ mô trước khi mở lệnh.
+            </p>
+          </div>
+
+          <!-- Card 2: Drawdown Breaker 5% (Laser Right Reveal) -->
+          <div class="kenzo-card p-7 relative overflow-hidden group scroll-item reveal-laser-right border-amber-400/20 hover:border-amber-400/50">
+            <div class="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 mb-5 group-hover:scale-110 transition-transform">
+              <i data-lucide="shield-alert" class="w-6 h-6"></i>
+            </div>
+            <div class="flex items-center space-x-2 mb-2">
+              <span class="text-[10px] text-amber-300 mono-font font-bold uppercase tracking-wider">CIRCUIT BREAKER</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Cầu Chì Tự Ngắt Bảo Vệ Vốn (Drawdown 5%)</h3>
+            <p class="text-xs text-gray-400 leading-relaxed font-light">
+              Cơ chế an toàn tối thượng: Nếu tổng mức sụt giảm PnL trong ngày vượt quá 5% vốn ban đầu, bot tự động kích hoạt chế độ khẩn cấp, đóng sạch toàn bộ vị thế mở và ngừng giao dịch để bảo toàn số dư còn lại.
+            </p>
+          </div>
+
+          <!-- Card 3: DOA Dynamic Exit & Breakeven (3D Flip Up Reveal) -->
+          <div class="kenzo-card p-7 relative overflow-hidden group scroll-item reveal-flip-up border-rose-400/20 hover:border-rose-400/50">
+            <div class="w-12 h-12 rounded-2xl bg-rose-400/10 border border-rose-400/30 flex items-center justify-center text-rose-400 mb-5 group-hover:scale-110 transition-transform">
+              <i data-lucide="timer" class="w-6 h-6"></i>
+            </div>
+            <div class="flex items-center space-x-2 mb-2">
+              <span class="text-[10px] text-rose-300 mono-font font-bold uppercase tracking-wider">DOA DYNAMIC EXIT</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping"></span>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Cắt Lệnh Ứ Đọng DOA & Kéo SL Hòa Vốn</h3>
+            <p class="text-xs text-gray-400 leading-relaxed font-light">
+              Tự động nhận diện các vị thế đi ngang ứ đọng không sinh lời sau 15m, 25m hoặc 35m để chủ động cắt sớm, giải phóng vốn cho các cơ hội mới. Tự động dời Stop Loss về điểm vào lệnh (Breakeven) ngay khi có lợi nhuận đệm.
+            </p>
+          </div>
+
+          <!-- Card 4: Zero-Custody Security (Hologram Zoom Reveal) -->
+          <div class="kenzo-card p-7 relative overflow-hidden group scroll-item reveal-hologram-zoom border-emerald-400/20 hover:border-emerald-400/50">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-400/10 border border-emerald-400/30 flex items-center justify-center text-emerald-400 mb-5 group-hover:scale-110 transition-transform">
+              <i data-lucide="lock" class="w-6 h-6"></i>
+            </div>
+            <div class="flex items-center space-x-2 mb-2">
+              <span class="text-[10px] text-emerald-300 mono-font font-bold uppercase tracking-wider">ZERO-CUSTODY PRIVACY</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Bảo Mật Zero-Custody 100% Cục Bộ</h3>
+            <p class="text-xs text-gray-400 leading-relaxed font-light">
+              Khóa API Binance Futures chỉ lưu trữ duy nhất trên máy tính cá nhân của người dùng. Quyền hạn API chỉ cho phép Giao dịch Hợp đồng Tương lai, nghiêm cấm quyền Rút tiền. Không máy chủ trung gian nào có thể can thiệp vốn của bạn.
+            </p>
+          </div>
+
+          <!-- Card 5: Real-time Telemetry Dashboard (Golden Pulse Reveal) -->
+          <div class="kenzo-card p-7 relative overflow-hidden group scroll-item reveal-golden-pulse border-purple-400/20 hover:border-purple-400/50 md:col-span-2 lg:col-span-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div class="w-12 h-12 rounded-2xl bg-purple-400/10 border border-purple-400/30 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
+                <i data-lucide="layout-dashboard" class="w-6 h-6"></i>
+              </div>
+              <span class="px-3 py-1 rounded-full bg-purple-400/10 text-purple-300 border border-purple-400/20 text-xs font-bold mono-font">
+                FIREBASE CLOUD TELEMETRY
+              </span>
+            </div>
+            <div class="flex items-center space-x-2 mb-2">
+              <span class="text-[10px] text-purple-300 mono-font font-bold uppercase tracking-wider">ĐIỀU KHIỂN TỪ XA 24/7</span>
+              <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping"></span>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Giám Sát Telemetry & Web Dashboard Thời Gian Thực</h3>
+            <p class="text-xs text-gray-400 leading-relaxed font-light">
+              Đồng bộ dữ liệu tài khoản, vị thế mở, lịch sử PnL từng phút và nhật ký giao dịch lên Web Dashboard bảo mật. Người dùng có thể theo dõi biến động tài khoản và gửi lệnh Bật / Tắt Bot từ xa ngay trên trình duyệt điện thoại ở bất cứ đâu.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+
 
     </div>
   </main>
@@ -609,6 +768,7 @@
   <script src="js/three-world.js"></script>
   <script src="js/pointer-trail.js"></script>
   <script src="js/matrix-rain.js"></script>
+  <script src="js/scroll-effects.js"></script>
 
   <!-- Firebase & App Script -->
   <script type="module" src="js/auth.js"></script>
