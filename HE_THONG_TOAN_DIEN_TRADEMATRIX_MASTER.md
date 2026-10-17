@@ -172,8 +172,8 @@ Toàn bộ hệ thống phòng vệ được thiết kế để loại bỏ tri�
 ┌────────────────────────────────────────────────────────┐
 │ TẦNG 4: SÀN ĐỒNG THUẬN VI MÔ (MICRO CONSENSUS)         │
 │ ➜ AI Ensemble >= 60%: Duyệt bình thường                │
-│ ➜ AI 50% - 60%: Cần >= 3 chiến thuật độc lập           │
-│   HOẶC (>= 1 kỹ thuật + JEV >= 80% + ADX >= 25.0)      │
+│ ➜ AI 50% - 60%: Bắt buộc ADX >= 30.0 & ATR < 5.0% kèm  │
+│   (>= 3 chiến thuật & >= 2 kỹ thuật) HOẶC (JEV >= 80%) │
 │ ➜ Bắt buộc ít nhất 1 chiến thuật kỹ thuật độc lập      │
 └──────────────────────────┬─────────────────────────────┘
                            │ PASS
