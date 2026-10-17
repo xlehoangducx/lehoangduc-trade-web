@@ -206,17 +206,28 @@ Toàn bộ hệ thống phòng vệ được thiết kế để loại bỏ tri�
 
 ## 5. KHO DỮ LIỆU LỆNH LỊCH SỬ & ĐIỂM CHUẨN ĐỐI CHỨNG THỰC NGHIỆM
 
-Đây là **kho tri thức thực nghiệm vô giá** được tích lũy qua hàng trăm lệnh thực chiến trên Binance Futures, đóng vai trò là "Thước đo đối chứng" (Ground Truth) để thẩm định mọi cải tiến thuật toán.
+Đây là **kho tri thức thực nghiệm vô giá** được tích lũy qua toàn bộ lịch sử thực chiến trên Binance Futures từ ngày đầu tiên khởi chạy bot đến nay, đóng vai trò là "Thước đo đối chứng" (Ground Truth) để thẩm định mọi cải tiến thuật toán.
 
-### 5.1. Bảng Điểm Chuẩn 105 Lệnh Binance Futures Thực Tế (29/09 – 16/10):
-* **Tổng số vị thế:** 105 Round-trip trades (325 lượt Fills).
-* **Quy chuẩn hạch toán:** Dữ liệu nến 1m OHLCV, tính chuẩn xác 100% phí Taker 0.05% cả hai đầu vào và ra.
-* **Kết quả đối chứng:**
+### 5.1. Toàn Bộ 203 Lệnh Thực Chiến Binance (Từ 28/09/2026 Đến 17/10/2026):
+* **Nguồn dữ liệu gốc:** Trích xuất trực tiếp 100% từ API sàn Binance Futures (`fapiPrivateGetIncome`) và đồng bộ với database cục bộ `data/trade_bot.db`.
+* **Tổng số giao dịch tài khoản (Income Transactions):** **431 bản ghi** (Lưu trữ vĩnh viễn tại [`data/ALL_BINANCE_INCOME_HISTORY.csv`](file:///d:/TRADE/data/ALL_BINANCE_INCOME_HISTORY.csv)).
+* **Tổng số lệnh chốt PnL (Realized PnL Closes):** **203 lệnh** (Lưu trữ vĩnh viễn tại [`data/ALL_BINANCE_REALIZED_PNL_HISTORY.csv`](file:///d:/TRADE/data/ALL_BINANCE_REALIZED_PNL_HISTORY.csv)).
+  * **Số lệnh Thắng (Wins):** **115 lệnh** (Tỷ lệ thắng thực tế: **56.7%**).
+  * **Số lệnh Thua (Losses):** **88 lệnh** (43.3%).
+  * **Số lệnh Hòa vốn (BE):** 0 lệnh.
+  * **Tổng PnL thực tế tích lũy:** **`-4.8568 USDT`** (Mức lỗ rất nhỏ nhờ cơ chế kiểm soát Drawdown và vị thế nhỏ 5% vốn).
+  * **Top 10 cặp tiền thực chiến nhiều nhất:** `SOXL/USDT` (10 lệnh), `SOL/USDT` (9 lệnh), `DUSK/USDT` (9 lệnh), `DOGE/USDT` (7 lệnh), `MANTA/USDT` (7 lệnh), `ZEC/USDC` (6 lệnh), `AXL/USDT` (6 lệnh), `HYPE/USDT` (5 lệnh), `S/USDT` (5 lệnh), `AGT/USDT` (4 lệnh).
+
+### 5.2. Mối Quan Hệ Giữa "Tập Mẫu 105 Vị Thế" và "203 Lệnh Chốt PnL":
+* **Làm rõ sự khác biệt:**
+  * **203 Lệnh Realized PnL (431 giao dịch):** Là **TOÀN BỘ** lịch sử giao dịch từ ngày 28/09 đến 17/10 trên tài khoản Binance này.
+  * **Tập mẫu 105 Vị thế (325 lượt Fills):** Là tập hợp 105 vị thế Round-trip liên tục (từ 29/09 đến 16/10) được trích xuất để làm **bài test giải phẫu nến 1m chuyên sâu**, hạch toán 100% phí Taker 0.05% cả 2 đầu.
+* **Kết quả đối chứng trên tập 105 vị thế:**
   * Thuật toán phòng vệ vi mô cứu nguy và tăng lãi cho **42 vị thế** (+7.50 USDT).
   * Giảm **58.5% tổng mức lỗ ròng lịch sử** (từ `-7.94 USDT` về `-3.29 USDT`).
   * Rút ngắn thời gian ngâm lệnh từ **112.8 phút** xuống **31.7 phút** (triệt tiêu căn bệnh Zombie Bleeding giam lệnh âm 23 tiếng như LAB -9.45%, ERA -4.56%).
 
-### 5.2. Giải Phẫu 4 Căn Bệnh Gốc Rễ Từ Lịch Sử Thua Lỗ:
+### 5.3. Giải Phẫu 4 Căn Bệnh Gốc Rễ Từ Lịch Sử Thua Lỗ:
 | Căn Bệnh | Cặp Tiền Điển Hình | Dữ Liệu Lúc Vào Lệnh | Nguyên Nhân Bị Lừa | Cơ Chế Phòng Vệ Đã Thiết Lập Để Diệt Tận Gốc |
 |---|---|---|---|---|
 | **1. Bẫy Đu Đỉnh Bơm Xả Quá Độ (Climax Pump)** | `DUSK/USDT`<br/>(04:21 & 05:53 ngày 16/10) | `ADX = 62.8`<br/>`ATR = 6.49%`<br/>Giá đỉnh: 0.11015 | Nến 15m nằm trên EMA20/50 bị ngộ nhận là Strong Trend, thực chất là giai đoạn phân phối xả hàng. | **Tầng 2:** CẤM BUY Altcoin khi $\text{ADX} \ge 55.0$. Kích hoạt Cooldown 180 phút nếu dính lệnh lỗ. |
