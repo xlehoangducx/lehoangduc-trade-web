@@ -273,46 +273,149 @@ presetButtons.forEach(btn => {
 
 
     if (val <= 60) {
-
       inputLeverage.value = 10;
-
       inputMaxTrades.value = 2;
-
     } else if (val <= 100) {
-
-      inputLeverage.value = 8;
-
-      inputMaxTrades.value = 3;
-
+      inputLeverage.value = 10;
+      inputMaxTrades.value = 2;
     } else if (val <= 300) {
-
       inputLeverage.value = 8;
-
-      inputMaxTrades.value = 4;
-
+      inputMaxTrades.value = 3;
     } else if (val <= 500) {
-
       inputLeverage.value = 6;
-
       inputMaxTrades.value = 4;
-
     } else if (val <= 1000) {
-
       inputLeverage.value = 5;
-
       inputMaxTrades.value = 5;
-
     } else {
-
       inputLeverage.value = 4;
-
       inputMaxTrades.value = 6;
-
     }
-
+    updateCloudLiveSimulator();
   });
-
 });
+
+// Event Listeners cho ô nhập liệu đòn bẩy & vị thế để tính toán Simulator tức thì
+inputLeverage?.addEventListener("input", updateCloudLiveSimulator);
+inputMaxTrades?.addEventListener("input", updateCloudLiveSimulator);
+
+// Bảng Mô Phỏng Ước Tính Lệnh & Lãi/Lỗ Trực Quan (Cloud Live Order Simulator)
+function updateCloudLiveSimulator() {
+  const levInput = document.getElementById("inputLeverage");
+  const posInput = document.getElementById("inputMaxTrades");
+  
+  const leverage = Math.max(1, Number(levInput ? levInput.value : 10) || 10);
+  const slots = Math.max(1, Number(posInput ? posInput.value : 2) || 2);
+  
+  // Equity từ telemetry live bot (hoặc fallback 97.85)
+  const equity = Math.max(10.0, Number(window._lastTelemetryEquity || window._lastTelemetryBalance || 97.85));
+  
+  // Ngân sách cơ sở cho 1 slot vị thế
+  const baseSlotBudget = equity / slots;
+  
+  // Quy mô vị thế Notional theo phân khúc
+  // Altcoin: 95% slot budget (khống chế trần cứng $5,000 cho tài khoản lớn)
+  const altNotional = Math.min(5000.0, Math.max(6.0, baseSlotBudget * 0.95));
+  // BTC/ETH: 130% slot budget
+  const btcNotional = Math.max(10.0, baseSlotBudget * 1.30);
+  
+  // Ký quỹ thực tế cho 1 lệnh theo đòn bẩy
+  const marginPerOrder = altNotional / leverage;
+  const marginPctPerOrder = (marginPerOrder / equity) * 100;
+  
+  // Tổng ký quỹ khi mở đủ tất cả các vị thế cùng lúc
+  const totalMaxMargin = marginPerOrder * slots;
+  const totalMarginPct = Math.min(100, (totalMaxMargin / equity) * 100);
+  const cashBufferPct = Math.max(0, 100 - totalMarginPct);
+  
+  // Ước tính Lãi / Lỗ:
+  // 1. Lệnh thắng chuẩn (Chốt TP1 +1.2%)
+  const normalWinUSDT = altNotional * 0.012;
+  const normalWinROE = (normalWinUSDT / marginPerOrder) * 100;
+  const dailyTarget3Trades = normalWinUSDT * 3;
+  
+  // 2. Lệnh ăn sóng dài (Runner TP2 +3.5% ~ +5.0%)
+  const waveWinMinUSDT = altNotional * 0.035;
+  const waveWinMaxUSDT = altNotional * 0.050;
+  const waveWinROE = (waveWinMinUSDT / marginPerOrder) * 100;
+  
+  // 3. Cắt lỗ tối đa (Dính SL cứng -2.0%)
+  const maxLossUSDT = altNotional * 0.020;
+  const maxLossAccountPct = (maxLossUSDT / equity) * 100;
+  
+  // 4. Cắt sớm DOA (sau 45p sideway/yếu, cắt chỉ -0.05%)
+  const doaLossUSDT = altNotional * 0.0005;
+
+  // Cập nhật giao diện Cloud
+  const eqBadge = document.getElementById("cloudSimEquityBadge");
+  if (eqBadge) eqBadge.textContent = "Vốn Live: $" + equity.toFixed(2) + " USDT";
+
+  const slotsLabel = document.getElementById("cloudSimSlotsLabel");
+  if (slotsLabel) slotsLabel.textContent = slots + " vị thế";
+
+  const levLabel = document.getElementById("cloudSimLevLabel");
+  if (levLabel) levLabel.textContent = leverage + "x";
+
+  const safetyBadge = document.getElementById("cloudSimMarginSafety");
+  if (safetyBadge) {
+    if (cashBufferPct >= 80) {
+      safetyBadge.textContent = "Đệm tiền mặt: " + cashBufferPct.toFixed(1) + "% (Cực kỳ an toàn)";
+      safetyBadge.className = "px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 font-semibold text-[10px]";
+    } else if (cashBufferPct >= 60) {
+      safetyBadge.textContent = "Đệm tiền mặt: " + cashBufferPct.toFixed(1) + "% (Cân bằng)";
+      safetyBadge.className = "px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 font-semibold text-[10px]";
+    } else {
+      safetyBadge.textContent = "Đệm tiền mặt: " + cashBufferPct.toFixed(1) + "% (Ký quỹ cao)";
+      safetyBadge.className = "px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 font-semibold text-[10px]";
+    }
+  }
+
+  const capTag = document.getElementById("cloudSimCapTag");
+  if (capTag) {
+    if (altNotional >= 5000) {
+      capTag.textContent = "Altcoin (Trần cứng $5k)";
+      capTag.className = "text-amber-400 font-bold";
+    } else {
+      capTag.textContent = "Altcoin (95% slot)";
+      capTag.className = "text-cyan-400 font-bold";
+    }
+  }
+
+  const notionalVal = document.getElementById("cloudSimNotionalVal");
+  if (notionalVal) notionalVal.textContent = "~$" + altNotional.toFixed(2) + " USDT";
+
+  const notionalSub = document.getElementById("cloudSimNotionalSub");
+  if (notionalSub) {
+    notionalSub.innerHTML = `BTC/ETH: ~$${btcNotional.toFixed(1)} · Ký quỹ: <span class="text-amber-400 font-bold">~$${marginPerOrder.toFixed(2)}</span> (${marginPctPerOrder.toFixed(1)}% vốn)`;
+  }
+
+  const winVal = document.getElementById("cloudSimWinVal");
+  if (winVal) winVal.textContent = "+$" + normalWinUSDT.toFixed(2) + " USDT";
+
+  const winSub = document.getElementById("cloudSimWinSub");
+  if (winSub) {
+    winSub.innerHTML = `+${normalWinROE.toFixed(1)}% ROE · 3 lệnh/ngày = <strong class="text-emerald-400 font-bold">+$${dailyTarget3Trades.toFixed(2)}</strong>`;
+  }
+
+  const waveVal = document.getElementById("cloudSimWaveVal");
+  if (waveVal) waveVal.textContent = "+$" + waveWinMinUSDT.toFixed(2) + " ~ +$" + waveWinMaxUSDT.toFixed(2) + " USDT";
+
+  const waveSub = document.getElementById("cloudSimWaveSub");
+  if (waveSub) {
+    waveSub.innerHTML = `+${waveWinROE.toFixed(0)}%+ ROE · 1-2 sóng = <strong class="text-blue-400 font-bold">+$${(waveWinMinUSDT * 2).toFixed(2)}</strong>`;
+  }
+
+  const lossVal = document.getElementById("cloudSimLossVal");
+  if (lossVal) lossVal.textContent = "-$" + maxLossUSDT.toFixed(2) + " USDT";
+
+  const lossSub = document.getElementById("cloudSimLossSub");
+  if (lossSub) {
+    lossSub.innerHTML = `Mất -${maxLossAccountPct.toFixed(2)}% vốn · Cắt sớm DOA: <strong class="text-gray-300">-$${doaLossUSDT < 0.01 ? '0.01' : doaLossUSDT.toFixed(2)}</strong>`;
+  }
+}
+
+// Khởi chạy mô phỏng ban đầu
+setTimeout(updateCloudLiveSimulator, 300);
 
 
 
@@ -823,6 +926,7 @@ function listenToBotTelemetry(userId, isAdmin) {
       window._lastTelemetryBalance = balance;
       window._lastTelemetryEquity = equity;
       window._lastUsedMargin = usedMargin;
+      updateCloudLiveSimulator();
 
       // 1. Equity Futures
       const statEquity = document.getElementById("statEquity");
