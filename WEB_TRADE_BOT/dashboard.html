@@ -134,10 +134,41 @@
     </header>
 
     <!-- Main Content Workspace -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="flex-1 w-full max-w-[1850px] mx-auto px-2 sm:px-4 lg:px-6 py-6">
 
       <!-- ================= TAB 1: ĐIỀU KHIỂN BOT ================= -->
-      <section id="tab-control" class="tab-content space-y-5 sm:space-y-6">
+      <section id="tab-control" class="tab-content">
+        <div class="flex flex-col xl:flex-row items-start justify-center gap-4 xl:gap-5 2xl:gap-6">
+
+          <!-- ================= CỘT TRÁI (BÊN TRÁI): BẢNG XẾP HẠNG TÍN HIỆU THỊ TRƯỜNG (TOP 1 & 2) ================= -->
+          <aside class="w-full xl:w-80 2xl:w-[350px] shrink-0 space-y-3.5 order-2 xl:order-1">
+            <div class="kenzo-card p-3.5 sm:p-4 border-amber-400/25 sticky top-24">
+              <div class="flex items-center justify-between pb-3 border-b border-white/10 mb-3.5">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-lg bg-amber-400/15 border border-amber-400/35 flex items-center justify-center text-amber-400 shrink-0">
+                    <i data-lucide="radar" class="w-4 h-4 animate-spin-cw"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-xs sm:text-sm font-black text-white mono-font tracking-wide">
+                      BẢNG XẾP HẠNG TÍN HIỆU THỊ TRƯỜNG
+                    </h3>
+                    <div class="text-[10px] text-amber-400 mono-font font-bold">
+                      🎯 RA-ĐA LƯỢNG TỬ (TOP 1 & 2)
+                    </div>
+                  </div>
+                </div>
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              </div>
+
+              <!-- Danh sách thẻ Top 1 & Top 2 -->
+              <div class="space-y-3" id="radarColLeft">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+          </aside>
+
+          <!-- ================= CỘT GIỮA (TRUNG TÂM): TOÀN BỘ CÁC THẺ STATS, VỊ THẾ & ĐIỀU KHIỂN ================= -->
+          <div class="flex-1 w-full min-w-0 max-w-5xl 2xl:max-w-6xl space-y-5 sm:space-y-6 order-1 xl:order-2">
         
         <!-- Top Metrics Cards: 6 Institutional Cards (2 cols mobile, 3 cols tablet, 6 cols desktop) -->
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 sm:gap-3.5">
@@ -268,55 +299,6 @@
           <div class="flex items-center gap-1.5 text-[11px] text-gray-400 ml-auto">
             <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400 shrink-0"></i>
             <span class="text-emerald-400/90 font-medium truncate">Trailing Stop + DOA Decay + Cooldown 180m</span>
-          </div>
-        </div>
-
-        <!-- ================= SECTION 0: RA-ĐA LƯỢNG TỬ (NEAR-MISS RADAR LEADERBOARD) ================= -->
-        <div class="kenzo-card p-4 sm:p-5 border-amber-400/20">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-white/10 mb-4 gap-2">
-            <div class="flex items-center gap-2.5">
-              <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400/20 via-yellow-500/10 to-[#07080d] border border-amber-400/40 flex items-center justify-center text-amber-400 shrink-0 shadow-lg shadow-amber-400/20">
-                <i data-lucide="radar" class="w-4 h-4 animate-spin-cw"></i>
-              </div>
-              <div>
-                <div class="flex items-center gap-2 flex-wrap">
-                  <h3 class="text-sm sm:text-base font-black text-white mono-font tracking-wide">
-                    RA-ĐA LƯỢNG TỬ: BẢNG XẾP HẠNG TÍN HIỆU RÌNH MỒI (NEAR-MISS RADAR)
-                  </h3>
-                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-                </div>
-                <p class="text-[11px] text-gray-400 mt-0.5">
-                  Top các cặp tiền bot đang bám sát & xém đạt ngưỡng vào lệnh. Tự động đồng bộ thời gian thực từ máy treo bot PC2.
-                </p>
-              </div>
-            </div>
-            <div class="flex items-center gap-2 text-[10px] sm:text-[11px] mono-font shrink-0">
-              <span class="px-2.5 py-1 rounded-lg bg-white/[0.04] text-gray-300 border border-white/10">
-                Đang quét: <strong class="text-amber-400" id="radarTotalScanned">35+ Cặp</strong>
-              </span>
-              <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
-                ● Tự Động Thăng Hạng
-              </span>
-            </div>
-          </div>
-
-          <!-- Radar Leaderboard: 2 Bên (Bên Trái: Top 1 & Top 2 | Bên Phải: Top 3 & Top 4) -->
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-3.5" id="radarLeaderboardGrid">
-            <!-- CỘT TRÁI (BÊN TRÁI): TOP 1 & TOP 2 -->
-            <div class="space-y-3.5" id="radarColLeft">
-              <div class="py-8 px-4 text-center rounded-2xl bg-white/[0.015] border border-white/5 flex flex-col items-center justify-center">
-                <i data-lucide="radar" class="w-6 h-6 text-amber-400 animate-pulse mb-2"></i>
-                <span class="text-xs font-bold text-white mono-font">Đang nạp dữ liệu Ra-đa...</span>
-              </div>
-            </div>
-
-            <!-- CỘT PHẢI (BÊN PHẢI): TOP 3 & TOP 4 -->
-            <div class="space-y-3.5" id="radarColRight">
-              <div class="py-8 px-4 text-center rounded-2xl bg-white/[0.015] border border-white/5 flex flex-col items-center justify-center">
-                <i data-lucide="shield-check" class="w-6 h-6 text-emerald-400 mb-2"></i>
-                <span class="text-xs font-bold text-white mono-font">Chốt chặn an toàn đang trực 24/7</span>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -616,7 +598,36 @@
             <span class="px-2.5 py-1 rounded-lg bg-white/[0.04] text-gray-300 border border-white/10 font-bold">ATR ADAPTIVE 24/7</span>
           </div>
         </div>
+          </div>
 
+          <!-- ================= CỘT PHẢI (BÊN PHẢI): BẢNG XẾP HẠNG TÍN HIỆU THỊ TRƯỜNG (TOP 3 & 4) ================= -->
+          <aside class="w-full xl:w-80 2xl:w-[350px] shrink-0 space-y-3.5 order-3">
+            <div class="kenzo-card p-3.5 sm:p-4 border-cyan-400/25 sticky top-24">
+              <div class="flex items-center justify-between pb-3 border-b border-white/10 mb-3.5">
+                <div class="flex items-center gap-2">
+                  <div class="w-7 h-7 rounded-lg bg-cyan-400/15 border border-cyan-400/35 flex items-center justify-center text-cyan-400 shrink-0">
+                    <i data-lucide="radar" class="w-4 h-4 animate-spin-cw"></i>
+                  </div>
+                  <div>
+                    <h3 class="text-xs sm:text-sm font-black text-white mono-font tracking-wide">
+                      BẢNG XẾP HẠNG TÍN HIỆU THỊ TRƯỜNG
+                    </h3>
+                    <div class="text-[10px] text-cyan-400 mono-font font-bold">
+                      🎯 RA-ĐA LƯỢNG TỬ (TOP 3 & 4)
+                    </div>
+                  </div>
+                </div>
+                <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+              </div>
+
+              <!-- Danh sách thẻ Top 3 & Top 4 -->
+              <div class="space-y-3" id="radarColRight">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+          </aside>
+
+        </div>
       </section>
 
       <!-- ================= TAB 2: GỢI Ý QUẢN TRỊ VỐN ================= -->
