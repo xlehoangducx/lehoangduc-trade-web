@@ -271,6 +271,55 @@
           </div>
         </div>
 
+        <!-- ================= SECTION 0: RA-ĐA LƯỢNG TỬ (NEAR-MISS RADAR LEADERBOARD) ================= -->
+        <div class="kenzo-card p-4 sm:p-5 border-amber-400/20">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-white/10 mb-4 gap-2">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400/20 via-yellow-500/10 to-[#07080d] border border-amber-400/40 flex items-center justify-center text-amber-400 shrink-0 shadow-lg shadow-amber-400/20">
+                <i data-lucide="radar" class="w-4 h-4 animate-spin-cw"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h3 class="text-sm sm:text-base font-black text-white mono-font tracking-wide">
+                    RA-ĐA LƯỢNG TỬ: BẢNG XẾP HẠNG TÍN HIỆU RÌNH MỒI (NEAR-MISS RADAR)
+                  </h3>
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                </div>
+                <p class="text-[11px] text-gray-400 mt-0.5">
+                  Top các cặp tiền bot đang bám sát & xém đạt ngưỡng vào lệnh. Tự động đồng bộ thời gian thực từ máy treo bot PC2.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 text-[10px] sm:text-[11px] mono-font shrink-0">
+              <span class="px-2.5 py-1 rounded-lg bg-white/[0.04] text-gray-300 border border-white/10">
+                Đang quét: <strong class="text-amber-400" id="radarTotalScanned">35+ Cặp</strong>
+              </span>
+              <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                ● Tự Động Thăng Hạng
+              </span>
+            </div>
+          </div>
+
+          <!-- Radar Leaderboard: 2 Bên (Bên Trái: Top 1 & Top 2 | Bên Phải: Top 3 & Top 4) -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-3.5" id="radarLeaderboardGrid">
+            <!-- CỘT TRÁI (BÊN TRÁI): TOP 1 & TOP 2 -->
+            <div class="space-y-3.5" id="radarColLeft">
+              <div class="py-8 px-4 text-center rounded-2xl bg-white/[0.015] border border-white/5 flex flex-col items-center justify-center">
+                <i data-lucide="radar" class="w-6 h-6 text-amber-400 animate-pulse mb-2"></i>
+                <span class="text-xs font-bold text-white mono-font">Đang nạp dữ liệu Ra-đa...</span>
+              </div>
+            </div>
+
+            <!-- CỘT PHẢI (BÊN PHẢI): TOP 3 & TOP 4 -->
+            <div class="space-y-3.5" id="radarColRight">
+              <div class="py-8 px-4 text-center rounded-2xl bg-white/[0.015] border border-white/5 flex flex-col items-center justify-center">
+                <i data-lucide="shield-check" class="w-6 h-6 text-emerald-400 mb-2"></i>
+                <span class="text-xs font-bold text-white mono-font">Chốt chặn an toàn đang trực 24/7</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- ================= SECTION 1: VỊ THẾ ĐANG CHẠY (ACTIVE POSITIONS) ================= -->
         <!-- ĐƯỢC ĐƯA LÊN ĐẦU: Giúp điện thoại mở ra thấy ngay vị thế đang lãi/lỗ mà không cần cuộn trang -->
         <div class="kenzo-card p-4 sm:p-6 border-white/10">

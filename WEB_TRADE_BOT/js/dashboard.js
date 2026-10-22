@@ -273,46 +273,149 @@ presetButtons.forEach(btn => {
 
 
     if (val <= 60) {
-
       inputLeverage.value = 10;
-
       inputMaxTrades.value = 2;
-
     } else if (val <= 100) {
-
-      inputLeverage.value = 8;
-
-      inputMaxTrades.value = 3;
-
+      inputLeverage.value = 10;
+      inputMaxTrades.value = 2;
     } else if (val <= 300) {
-
       inputLeverage.value = 8;
-
-      inputMaxTrades.value = 4;
-
+      inputMaxTrades.value = 3;
     } else if (val <= 500) {
-
       inputLeverage.value = 6;
-
       inputMaxTrades.value = 4;
-
     } else if (val <= 1000) {
-
       inputLeverage.value = 5;
-
       inputMaxTrades.value = 5;
-
     } else {
-
       inputLeverage.value = 4;
-
       inputMaxTrades.value = 6;
-
     }
-
+    updateCloudLiveSimulator();
   });
-
 });
+
+// Event Listeners cho ô nhập liệu đòn bẩy & vị thế để tính toán Simulator tức thì
+inputLeverage?.addEventListener("input", updateCloudLiveSimulator);
+inputMaxTrades?.addEventListener("input", updateCloudLiveSimulator);
+
+// Bảng Mô Phỏng Ước Tính Lệnh & Lãi/Lỗ Trực Quan (Cloud Live Order Simulator)
+function updateCloudLiveSimulator() {
+  const levInput = document.getElementById("inputLeverage");
+  const posInput = document.getElementById("inputMaxTrades");
+  
+  const leverage = Math.max(1, Number(levInput ? levInput.value : 10) || 10);
+  const slots = Math.max(1, Number(posInput ? posInput.value : 2) || 2);
+  
+  // Equity từ telemetry live bot (hoặc fallback 97.85)
+  const equity = Math.max(10.0, Number(window._lastTelemetryEquity || window._lastTelemetryBalance || 97.85));
+  
+  // Ngân sách cơ sở cho 1 slot vị thế
+  const baseSlotBudget = equity / slots;
+  
+  // Quy mô vị thế Notional theo phân khúc
+  // Altcoin: 95% slot budget (khống chế trần cứng $5,000 cho tài khoản lớn)
+  const altNotional = Math.min(5000.0, Math.max(6.0, baseSlotBudget * 0.95));
+  // BTC/ETH: 130% slot budget
+  const btcNotional = Math.max(10.0, baseSlotBudget * 1.30);
+  
+  // Ký quỹ thực tế cho 1 lệnh theo đòn bẩy
+  const marginPerOrder = altNotional / leverage;
+  const marginPctPerOrder = (marginPerOrder / equity) * 100;
+  
+  // Tổng ký quỹ khi mở đủ tất cả các vị thế cùng lúc
+  const totalMaxMargin = marginPerOrder * slots;
+  const totalMarginPct = Math.min(100, (totalMaxMargin / equity) * 100);
+  const cashBufferPct = Math.max(0, 100 - totalMarginPct);
+  
+  // Ước tính Lãi / Lỗ:
+  // 1. Lệnh thắng chuẩn (Chốt TP1 +1.2%)
+  const normalWinUSDT = altNotional * 0.012;
+  const normalWinROE = (normalWinUSDT / marginPerOrder) * 100;
+  const dailyTarget3Trades = normalWinUSDT * 3;
+  
+  // 2. Lệnh ăn sóng dài (Runner TP2 +3.5% ~ +5.0%)
+  const waveWinMinUSDT = altNotional * 0.035;
+  const waveWinMaxUSDT = altNotional * 0.050;
+  const waveWinROE = (waveWinMinUSDT / marginPerOrder) * 100;
+  
+  // 3. Cắt lỗ tối đa (Dính SL cứng -2.0%)
+  const maxLossUSDT = altNotional * 0.020;
+  const maxLossAccountPct = (maxLossUSDT / equity) * 100;
+  
+  // 4. Cắt sớm DOA (sau 45p sideway/yếu, cắt chỉ -0.05%)
+  const doaLossUSDT = altNotional * 0.0005;
+
+  // Cập nhật giao diện Cloud
+  const eqBadge = document.getElementById("cloudSimEquityBadge");
+  if (eqBadge) eqBadge.textContent = "Vốn Live: $" + equity.toFixed(2) + " USDT";
+
+  const slotsLabel = document.getElementById("cloudSimSlotsLabel");
+  if (slotsLabel) slotsLabel.textContent = slots + " vị thế";
+
+  const levLabel = document.getElementById("cloudSimLevLabel");
+  if (levLabel) levLabel.textContent = leverage + "x";
+
+  const safetyBadge = document.getElementById("cloudSimMarginSafety");
+  if (safetyBadge) {
+    if (cashBufferPct >= 80) {
+      safetyBadge.textContent = "Đệm tiền mặt: " + cashBufferPct.toFixed(1) + "% (Cực kỳ an toàn)";
+      safetyBadge.className = "px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 font-semibold text-[10px]";
+    } else if (cashBufferPct >= 60) {
+      safetyBadge.textContent = "Đệm tiền mặt: " + cashBufferPct.toFixed(1) + "% (Cân bằng)";
+      safetyBadge.className = "px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 font-semibold text-[10px]";
+    } else {
+      safetyBadge.textContent = "Đệm tiền mặt: " + cashBufferPct.toFixed(1) + "% (Ký quỹ cao)";
+      safetyBadge.className = "px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 font-semibold text-[10px]";
+    }
+  }
+
+  const capTag = document.getElementById("cloudSimCapTag");
+  if (capTag) {
+    if (altNotional >= 5000) {
+      capTag.textContent = "Altcoin (Trần cứng $5k)";
+      capTag.className = "text-amber-400 font-bold";
+    } else {
+      capTag.textContent = "Altcoin (95% slot)";
+      capTag.className = "text-cyan-400 font-bold";
+    }
+  }
+
+  const notionalVal = document.getElementById("cloudSimNotionalVal");
+  if (notionalVal) notionalVal.textContent = "~$" + altNotional.toFixed(2) + " USDT";
+
+  const notionalSub = document.getElementById("cloudSimNotionalSub");
+  if (notionalSub) {
+    notionalSub.innerHTML = `BTC/ETH: ~$${btcNotional.toFixed(1)} · Ký quỹ: <span class="text-amber-400 font-bold">~$${marginPerOrder.toFixed(2)}</span> (${marginPctPerOrder.toFixed(1)}% vốn)`;
+  }
+
+  const winVal = document.getElementById("cloudSimWinVal");
+  if (winVal) winVal.textContent = "+$" + normalWinUSDT.toFixed(2) + " USDT";
+
+  const winSub = document.getElementById("cloudSimWinSub");
+  if (winSub) {
+    winSub.innerHTML = `+${normalWinROE.toFixed(1)}% ROE · 3 lệnh/ngày = <strong class="text-emerald-400 font-bold">+$${dailyTarget3Trades.toFixed(2)}</strong>`;
+  }
+
+  const waveVal = document.getElementById("cloudSimWaveVal");
+  if (waveVal) waveVal.textContent = "+$" + waveWinMinUSDT.toFixed(2) + " ~ +$" + waveWinMaxUSDT.toFixed(2) + " USDT";
+
+  const waveSub = document.getElementById("cloudSimWaveSub");
+  if (waveSub) {
+    waveSub.innerHTML = `+${waveWinROE.toFixed(0)}%+ ROE · 1-2 sóng = <strong class="text-blue-400 font-bold">+$${(waveWinMinUSDT * 2).toFixed(2)}</strong>`;
+  }
+
+  const lossVal = document.getElementById("cloudSimLossVal");
+  if (lossVal) lossVal.textContent = "-$" + maxLossUSDT.toFixed(2) + " USDT";
+
+  const lossSub = document.getElementById("cloudSimLossSub");
+  if (lossSub) {
+    lossSub.innerHTML = `Mất -${maxLossAccountPct.toFixed(2)}% vốn · Cắt sớm DOA: <strong class="text-gray-300">-$${doaLossUSDT < 0.01 ? '0.01' : doaLossUSDT.toFixed(2)}</strong>`;
+  }
+}
+
+// Khởi chạy mô phỏng ban đầu
+setTimeout(updateCloudLiveSimulator, 300);
 
 
 
@@ -823,6 +926,7 @@ function listenToBotTelemetry(userId, isAdmin) {
       window._lastTelemetryBalance = balance;
       window._lastTelemetryEquity = equity;
       window._lastUsedMargin = usedMargin;
+      updateCloudLiveSimulator();
 
       // 1. Equity Futures
       const statEquity = document.getElementById("statEquity");
@@ -953,7 +1057,11 @@ function listenToBotTelemetry(userId, isAdmin) {
 
       if (positionsTbody || positionsMobileList) {
 
-        const rawPositions = data.positions || [];
+        // Cập nhật Ra-đa Rình Mồi Leaderboard
+      const rawRadar = data.radar_candidates || [];
+      renderRadarLeaderboard(rawRadar);
+
+      const rawPositions = data.positions || [];
 
         if (posCountBadge) {
           posCountBadge.textContent = `(${rawPositions.length})`;
@@ -1350,3 +1458,151 @@ onAuthStateChanged(auth, async (user) => {
 
 });
 
+
+
+// ============================================================================
+// RA-ĐA LƯỢNG TỬ: BẢNG XẾP HẠNG TÍN HIỆU RÌNH MỒI (NEAR-MISS RADAR LEADERBOARD)
+// ============================================================================
+function renderRadarLeaderboard(candidates) {
+  const colLeft = document.getElementById("radarColLeft");
+  const colRight = document.getElementById("radarColRight");
+  if (!colLeft || !colRight) return;
+
+  if (!candidates || candidates.length === 0) {
+    const emptyHtml = `
+      <div class="col-span-full py-8 px-4 text-center rounded-2xl bg-white/[0.015] border border-white/5 flex flex-col items-center justify-center w-full">
+        <div class="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400 mb-2.5">
+          <i data-lucide="radar" class="w-6 h-6 animate-pulse"></i>
+        </div>
+        <div class="text-xs font-bold text-white mono-font">Ra-đa Lượng Tử Đang Quét 35+ Cặp Tiền Binance Futures...</div>
+        <div class="text-[11px] text-gray-400 mt-1 max-w-md">Các chốt chặn vi mô đang bảo vệ an toàn vốn tuyệt đối. Chưa có tín hiệu nào bị nghẽn ở bước cuối. Khi có cặp xém vào, hệ thống sẽ tự động hiển thị tại đây!</div>
+      </div>
+    `;
+    colLeft.innerHTML = emptyHtml;
+    colRight.innerHTML = "";
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  // Chia đôi: Top 1 & 2 bên trái, Top 3 & 4 bên phải (mỗi bên 2 cái đúng yêu cầu)
+  const leftItems = candidates.slice(0, 2);
+  const rightItems = candidates.slice(2, 4);
+
+  function createCardHtml(c, idx) {
+    const isLong = (c.side || "LONG").toUpperCase() === "LONG" || (c.side || "").toUpperCase() === "BUY";
+    const dirClass = isLong
+      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+      : "bg-rose-500/15 text-rose-400 border-rose-500/30";
+    const dirText = isLong ? "LONG" : "SHORT";
+    
+    // Rank styling
+    let rankBadge = c.rank_badge || `#${idx + 1}`;
+    let rankBorder = "border-white/10";
+    let glowBar = "from-cyan-400 via-blue-500 to-transparent";
+    let barGradient = "from-cyan-500 via-blue-400 to-cyan-300";
+    let textRankColor = "text-cyan-400";
+    
+    if (idx === 0) {
+      rankBorder = "border-amber-400/40";
+      glowBar = "from-amber-400 via-yellow-500 to-transparent";
+      barGradient = "from-amber-500 via-yellow-400 to-amber-300";
+      textRankColor = "text-amber-400";
+    } else if (idx === 1) {
+      rankBorder = "border-slate-300/40";
+      glowBar = "from-slate-200 via-gray-400 to-transparent";
+      barGradient = "from-slate-400 via-gray-300 to-slate-200";
+      textRankColor = "text-slate-300";
+    } else if (idx === 2) {
+      rankBorder = "border-amber-600/40";
+      glowBar = "from-amber-600 via-yellow-700 to-transparent";
+      barGradient = "from-amber-700 via-amber-600 to-yellow-600";
+      textRankColor = "text-amber-500";
+    }
+
+    const readiness = Math.min(99, Math.max(10, Number(c.readiness_pct) || 75));
+    const hitCount = Number(c.hit_count) || 1;
+    const hitTag = hitCount > 1 
+      ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold mono-font bg-amber-400/15 text-amber-300 border border-amber-400/30 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>Xém vào ${hitCount} lần</span>`
+      : `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold mono-font bg-white/5 text-gray-300 border border-white/10">Mới quét</span>`;
+
+    const timeWindow = c.time_window_str || c.last_seen_str || "Vừa xong";
+    const bottleneckReason = c.bottleneck_reason || "Đang kiểm tra ngưỡng an toàn";
+
+    return `
+      <div class="p-3.5 rounded-2xl bg-[#090d16]/95 border ${rankBorder} hover:border-amber-400/60 transition-all duration-300 shadow-xl relative overflow-hidden group">
+        <!-- Top ambient glow bar -->
+        <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${glowBar}"></div>
+
+        <!-- Header: Rank, Symbol, Side, Hit Tag -->
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2 py-0.5 rounded-lg text-xs font-black mono-font bg-white/[0.06] ${textRankColor} border border-white/10">
+              ${rankBadge}
+            </span>
+            <span class="text-sm font-black text-white mono-font tracking-wide">
+              ${c.symbol}
+            </span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-extrabold mono-font border ${dirClass}">
+              ${dirText}
+            </span>
+          </div>
+          <div class="shrink-0">
+            ${hitTag}
+          </div>
+        </div>
+
+        <!-- Time window & Last seen -->
+        <div class="flex items-center justify-between text-[10px] text-gray-400 mono-font mb-2.5">
+          <span>Khung giờ: <strong class="text-gray-300">${timeWindow}</strong></span>
+          <span>Cập nhật: <strong class="text-gray-300">${c.last_seen_str || '--'}</strong></span>
+        </div>
+
+        <!-- Readiness Progress Bar -->
+        <div class="mb-2.5">
+          <div class="flex items-center justify-between text-[11px] mono-font mb-1">
+            <span class="text-gray-300 font-semibold flex items-center gap-1">
+              <i data-lucide="crosshair" class="w-3.5 h-3.5 ${textRankColor}"></i>
+              <span>Độ Sẵn Sàng Vào Lệnh:</span>
+            </span>
+            <span class="${textRankColor} font-black">${readiness.toFixed(1)}%</span>
+          </div>
+          <div class="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden p-0.5 border border-white/10">
+            <div class="h-full rounded-full bg-gradient-to-r ${barGradient} transition-all duration-500 shadow-sm" style="width: ${readiness}%"></div>
+          </div>
+        </div>
+
+        <!-- 3 Key Specs: AI Ensemble, Consensus, Dynamic Leverage -->
+        <div class="grid grid-cols-3 gap-1.5 mb-2.5 text-[10px] mono-font text-center">
+          <div class="p-1.5 rounded-lg bg-black/50 border border-white/5">
+            <div class="text-gray-400">AI Ensemble</div>
+            <div class="font-bold text-white text-[11px] mt-0.5">${c.side === 'LONG' || c.side === 'BUY' ? 'BUY' : 'SELL'} ${c.confidence_pct || '--'}%</div>
+          </div>
+          <div class="p-1.5 rounded-lg bg-black/50 border border-white/5">
+            <div class="text-gray-400">Đồng Thuận</div>
+            <div class="font-bold text-white text-[11px] mt-0.5 truncate" title="${c.strategies_agreed || '--'}">${c.strategies_agreed || '2/2'}</div>
+          </div>
+          <div class="p-1.5 rounded-lg bg-black/50 border border-white/5">
+            <div class="text-gray-400">Đòn Bẩy Dự Kiến</div>
+            <div class="font-bold text-amber-400 text-[11px] mt-0.5">${c.dynamic_leverage || '5x'}</div>
+          </div>
+        </div>
+
+        <!-- Bottleneck Reason Box -->
+        <div class="p-2 rounded-xl bg-amber-500/[0.07] border border-amber-500/20 flex items-start gap-2">
+          <i data-lucide="shield-alert" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+          <div class="text-[11px] text-gray-300 leading-snug">
+            <span class="text-amber-400 font-bold">Lý do chặn:</span>
+            <span>${bottleneckReason}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  colLeft.innerHTML = leftItems.map((c, i) => createCardHtml(c, i)).join("");
+  colRight.innerHTML = rightItems.map((c, i) => createCardHtml(c, i + 2)).join("");
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+}

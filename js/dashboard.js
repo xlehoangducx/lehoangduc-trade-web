@@ -1057,7 +1057,11 @@ function listenToBotTelemetry(userId, isAdmin) {
 
       if (positionsTbody || positionsMobileList) {
 
-        const rawPositions = data.positions || [];
+        // Cập nhật Ra-đa Rình Mồi Leaderboard
+      const rawRadar = data.radar_candidates || [];
+      renderRadarLeaderboard(rawRadar);
+
+      const rawPositions = data.positions || [];
 
         if (posCountBadge) {
           posCountBadge.textContent = `(${rawPositions.length})`;
@@ -1454,3 +1458,151 @@ onAuthStateChanged(auth, async (user) => {
 
 });
 
+
+
+// ============================================================================
+// RA-ĐA LƯỢNG TỬ: BẢNG XẾP HẠNG TÍN HIỆU RÌNH MỒI (NEAR-MISS RADAR LEADERBOARD)
+// ============================================================================
+function renderRadarLeaderboard(candidates) {
+  const colLeft = document.getElementById("radarColLeft");
+  const colRight = document.getElementById("radarColRight");
+  if (!colLeft || !colRight) return;
+
+  if (!candidates || candidates.length === 0) {
+    const emptyHtml = `
+      <div class="col-span-full py-8 px-4 text-center rounded-2xl bg-white/[0.015] border border-white/5 flex flex-col items-center justify-center w-full">
+        <div class="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400 mb-2.5">
+          <i data-lucide="radar" class="w-6 h-6 animate-pulse"></i>
+        </div>
+        <div class="text-xs font-bold text-white mono-font">Ra-đa Lượng Tử Đang Quét 35+ Cặp Tiền Binance Futures...</div>
+        <div class="text-[11px] text-gray-400 mt-1 max-w-md">Các chốt chặn vi mô đang bảo vệ an toàn vốn tuyệt đối. Chưa có tín hiệu nào bị nghẽn ở bước cuối. Khi có cặp xém vào, hệ thống sẽ tự động hiển thị tại đây!</div>
+      </div>
+    `;
+    colLeft.innerHTML = emptyHtml;
+    colRight.innerHTML = "";
+    if (window.lucide) lucide.createIcons();
+    return;
+  }
+
+  // Chia đôi: Top 1 & 2 bên trái, Top 3 & 4 bên phải (mỗi bên 2 cái đúng yêu cầu)
+  const leftItems = candidates.slice(0, 2);
+  const rightItems = candidates.slice(2, 4);
+
+  function createCardHtml(c, idx) {
+    const isLong = (c.side || "LONG").toUpperCase() === "LONG" || (c.side || "").toUpperCase() === "BUY";
+    const dirClass = isLong
+      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+      : "bg-rose-500/15 text-rose-400 border-rose-500/30";
+    const dirText = isLong ? "LONG" : "SHORT";
+    
+    // Rank styling
+    let rankBadge = c.rank_badge || `#${idx + 1}`;
+    let rankBorder = "border-white/10";
+    let glowBar = "from-cyan-400 via-blue-500 to-transparent";
+    let barGradient = "from-cyan-500 via-blue-400 to-cyan-300";
+    let textRankColor = "text-cyan-400";
+    
+    if (idx === 0) {
+      rankBorder = "border-amber-400/40";
+      glowBar = "from-amber-400 via-yellow-500 to-transparent";
+      barGradient = "from-amber-500 via-yellow-400 to-amber-300";
+      textRankColor = "text-amber-400";
+    } else if (idx === 1) {
+      rankBorder = "border-slate-300/40";
+      glowBar = "from-slate-200 via-gray-400 to-transparent";
+      barGradient = "from-slate-400 via-gray-300 to-slate-200";
+      textRankColor = "text-slate-300";
+    } else if (idx === 2) {
+      rankBorder = "border-amber-600/40";
+      glowBar = "from-amber-600 via-yellow-700 to-transparent";
+      barGradient = "from-amber-700 via-amber-600 to-yellow-600";
+      textRankColor = "text-amber-500";
+    }
+
+    const readiness = Math.min(99, Math.max(10, Number(c.readiness_pct) || 75));
+    const hitCount = Number(c.hit_count) || 1;
+    const hitTag = hitCount > 1 
+      ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold mono-font bg-amber-400/15 text-amber-300 border border-amber-400/30 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>Xém vào ${hitCount} lần</span>`
+      : `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold mono-font bg-white/5 text-gray-300 border border-white/10">Mới quét</span>`;
+
+    const timeWindow = c.time_window_str || c.last_seen_str || "Vừa xong";
+    const bottleneckReason = c.bottleneck_reason || "Đang kiểm tra ngưỡng an toàn";
+
+    return `
+      <div class="p-3.5 rounded-2xl bg-[#090d16]/95 border ${rankBorder} hover:border-amber-400/60 transition-all duration-300 shadow-xl relative overflow-hidden group">
+        <!-- Top ambient glow bar -->
+        <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${glowBar}"></div>
+
+        <!-- Header: Rank, Symbol, Side, Hit Tag -->
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2 py-0.5 rounded-lg text-xs font-black mono-font bg-white/[0.06] ${textRankColor} border border-white/10">
+              ${rankBadge}
+            </span>
+            <span class="text-sm font-black text-white mono-font tracking-wide">
+              ${c.symbol}
+            </span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-extrabold mono-font border ${dirClass}">
+              ${dirText}
+            </span>
+          </div>
+          <div class="shrink-0">
+            ${hitTag}
+          </div>
+        </div>
+
+        <!-- Time window & Last seen -->
+        <div class="flex items-center justify-between text-[10px] text-gray-400 mono-font mb-2.5">
+          <span>Khung giờ: <strong class="text-gray-300">${timeWindow}</strong></span>
+          <span>Cập nhật: <strong class="text-gray-300">${c.last_seen_str || '--'}</strong></span>
+        </div>
+
+        <!-- Readiness Progress Bar -->
+        <div class="mb-2.5">
+          <div class="flex items-center justify-between text-[11px] mono-font mb-1">
+            <span class="text-gray-300 font-semibold flex items-center gap-1">
+              <i data-lucide="crosshair" class="w-3.5 h-3.5 ${textRankColor}"></i>
+              <span>Độ Sẵn Sàng Vào Lệnh:</span>
+            </span>
+            <span class="${textRankColor} font-black">${readiness.toFixed(1)}%</span>
+          </div>
+          <div class="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden p-0.5 border border-white/10">
+            <div class="h-full rounded-full bg-gradient-to-r ${barGradient} transition-all duration-500 shadow-sm" style="width: ${readiness}%"></div>
+          </div>
+        </div>
+
+        <!-- 3 Key Specs: AI Ensemble, Consensus, Dynamic Leverage -->
+        <div class="grid grid-cols-3 gap-1.5 mb-2.5 text-[10px] mono-font text-center">
+          <div class="p-1.5 rounded-lg bg-black/50 border border-white/5">
+            <div class="text-gray-400">AI Ensemble</div>
+            <div class="font-bold text-white text-[11px] mt-0.5">${c.side === 'LONG' || c.side === 'BUY' ? 'BUY' : 'SELL'} ${c.confidence_pct || '--'}%</div>
+          </div>
+          <div class="p-1.5 rounded-lg bg-black/50 border border-white/5">
+            <div class="text-gray-400">Đồng Thuận</div>
+            <div class="font-bold text-white text-[11px] mt-0.5 truncate" title="${c.strategies_agreed || '--'}">${c.strategies_agreed || '2/2'}</div>
+          </div>
+          <div class="p-1.5 rounded-lg bg-black/50 border border-white/5">
+            <div class="text-gray-400">Đòn Bẩy Dự Kiến</div>
+            <div class="font-bold text-amber-400 text-[11px] mt-0.5">${c.dynamic_leverage || '5x'}</div>
+          </div>
+        </div>
+
+        <!-- Bottleneck Reason Box -->
+        <div class="p-2 rounded-xl bg-amber-500/[0.07] border border-amber-500/20 flex items-start gap-2">
+          <i data-lucide="shield-alert" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
+          <div class="text-[11px] text-gray-300 leading-snug">
+            <span class="text-amber-400 font-bold">Lý do chặn:</span>
+            <span>${bottleneckReason}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  colLeft.innerHTML = leftItems.map((c, i) => createCardHtml(c, i)).join("");
+  colRight.innerHTML = rightItems.map((c, i) => createCardHtml(c, i + 2)).join("");
+
+  if (window.lucide) {
+    lucide.createIcons();
+  }
+}
