@@ -1472,6 +1472,20 @@ onAuthStateChanged(auth, async (user) => {
 // ============================================================================
 const DEFAULT_RADAR_CANDIDATES = [
   {
+    symbol: "TSLA/USDT",
+    side: "LONG",
+    confidence_pct: 78.5,
+    score: 0.7250,
+    strategies_agreed: "2/2 (AI + Trend)",
+    dynamic_leverage: "5x",
+    bottleneck_gate: "M1_SNIPER_STALKING",
+    bottleneck_reason: "Đang rình nến M1 Sniper Retest hồi về giá hời -0.35% để khớp Limit Maker",
+    readiness_pct: 98.0,
+    hit_count: 6,
+    time_window_str: "01:15 → 01:45",
+    last_seen_str: "01:45:20"
+  },
+  {
     symbol: "PONS/USDT",
     side: "SHORT",
     confidence_pct: 78.4,
@@ -1486,20 +1500,6 @@ const DEFAULT_RADAR_CANDIDATES = [
     last_seen_str: "18:29:15"
   },
   {
-    symbol: "TSLA/USDT",
-    side: "LONG",
-    confidence_pct: 72.1,
-    score: 0.6520,
-    strategies_agreed: "2/2 (Trend + Mom)",
-    dynamic_leverage: "5x",
-    bottleneck_gate: "M1_SNIPER_STALKING",
-    bottleneck_reason: "Đang rình nến M1 Sniper Retest hồi về giá hời -0.35% để khớp Limit Maker",
-    readiness_pct: 95.0,
-    hit_count: 3,
-    time_window_str: "00:09 → 00:25",
-    last_seen_str: "00:25:40"
-  },
-  {
     symbol: "BIRB/USDT",
     side: "SHORT",
     confidence_pct: 74.5,
@@ -1508,24 +1508,24 @@ const DEFAULT_RADAR_CANDIDATES = [
     dynamic_leverage: "5x",
     bottleneck_gate: "RVOL",
     bottleneck_reason: "Chốt chặn RVol sàn 45%: Volume nến (48.9%) vừa đủ kích hoạt lệnh, đang chờ nhịp retest",
-    readiness_pct: 84.0,
+    readiness_pct: 85.0,
     hit_count: 4,
     time_window_str: "22:45 → 23:05",
     last_seen_str: "23:05:12"
   },
   {
-    symbol: "MU/USDT",
+    symbol: "CRCL/USDT",
     side: "LONG",
-    confidence_pct: 68.2,
-    score: 0.5410,
-    strategies_agreed: "1/2 (AI Ensemble)",
-    dynamic_leverage: "6x",
+    confidence_pct: 73.2,
+    score: 0.6120,
+    strategies_agreed: "2/2 (AI Ensemble + Mom)",
+    dynamic_leverage: "5x",
     bottleneck_gate: "15M_ALIGNMENT",
-    bottleneck_reason: "15M Alignment Gate: Nến tác chiến 15M đang sideway đi ngang (RSI 52), chờ bứt phá",
-    readiness_pct: 78.0,
-    hit_count: 2,
-    time_window_str: "23:50 → 00:15",
-    last_seen_str: "00:15:30"
+    bottleneck_reason: "15M Alignment Gate: Nến tác chiến 15M đang sideway tích lũy, chờ nến bứt phá",
+    readiness_pct: 82.0,
+    hit_count: 3,
+    time_window_str: "01:30 → 01:55",
+    last_seen_str: "01:55:10"
   }
 ];
 
@@ -1535,9 +1535,47 @@ function renderRadarLeaderboard(rawCandidates) {
     const colRight = document.getElementById("radarColRight");
     if (!colLeft || !colRight) return;
 
-    let candidates = (rawCandidates && Array.isArray(rawCandidates) && rawCandidates.length > 0) 
-      ? rawCandidates 
-      : DEFAULT_RADAR_CANDIDATES;
+    const normalizeSym = (s) => String(s || "").split(":")[0].trim().toUpperCase();
+
+    // 1. Khử trùng lặp tuyệt đối (Strict Deduplication) từ dữ liệu bot gửi lên
+    const seen = new Set();
+    let candidates = [];
+
+    if (Array.isArray(rawCandidates) && rawCandidates.length > 0) {
+      for (const c of rawCandidates) {
+        if (!c || !c.symbol) continue;
+        const base = normalizeSym(c.symbol);
+        if (!seen.has(base)) {
+          seen.add(base);
+          candidates.push({ ...c, symbol: base });
+        }
+      }
+    }
+
+    // 2. Nếu thiếu suất Top 4, bù thêm ứng viên mặc định KHÔNG TRÙNG LẶP với bất kỳ coin nào đã có
+    if (candidates.length < 4) {
+      for (const def of DEFAULT_RADAR_CANDIDATES) {
+        if (candidates.length >= 4) break;
+        const baseDef = normalizeSym(def.symbol);
+        if (!seen.has(baseDef)) {
+          seen.add(baseDef);
+          candidates.push({ ...def, symbol: baseDef });
+        }
+      }
+    }
+
+    // 3. Sắp xếp thứ hạng CHUẨN XÁC theo Tiềm Năng Khớp Lệnh (Readiness % giảm dần -> Confidence % -> Hit count)
+    candidates.sort((a, b) => {
+      const rA = Number(a.readiness_pct) || 0;
+      const rB = Number(b.readiness_pct) || 0;
+      if (rB !== rA) return rB - rA;
+      const cA = Number(a.confidence_pct) || 0;
+      const cB = Number(b.confidence_pct) || 0;
+      if (cB !== cA) return cB - cA;
+      const hA = Number(a.hit_count) || 0;
+      const hB = Number(b.hit_count) || 0;
+      return hB - hA;
+    });
 
     const leftItems = candidates.slice(0, 2);
     const rightItems = candidates.slice(2, 4);
@@ -1549,7 +1587,7 @@ function renderRadarLeaderboard(rawCandidates) {
         : "bg-rose-500/20 text-rose-400 border-rose-500/40";
       const dirText = isLong ? "LONG" : "SHORT";
       
-      let rankBadge = c.rank_badge || (idx === 0 ? "🥇 #1" : idx === 1 ? "🥈 #2" : idx === 2 ? "🥉 #3" : "🎖️ #4");
+      let rankBadge = (idx === 0 ? "🥇 #1" : idx === 1 ? "🥈 #2" : idx === 2 ? "🥉 #3" : "🎖️ #4");
       let rankBorder = "border-white/10";
       let glowBar = "from-cyan-400 via-blue-500 to-transparent";
       let barGradient = "from-cyan-500 via-blue-400 to-cyan-300";
@@ -1580,7 +1618,7 @@ function renderRadarLeaderboard(rawCandidates) {
       const readiness = Math.min(99, Math.max(10, Number(c.readiness_pct) || 75));
       const hitCount = (c.hit_count !== undefined && c.hit_count !== null && Number(c.hit_count) > 0)
         ? Number(c.hit_count)
-        : (idx === 0 ? 7 : idx === 1 ? 3 : idx === 2 ? 4 : 2);
+        : 1;
 
       const hitTag = `<span class="px-2 py-0.5 rounded-md text-[10px] font-black mono-font bg-amber-400/15 text-amber-300 border border-amber-400/35 flex items-center gap-1 shrink-0 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>🔥 Xém vào ${hitCount} lần</span>`;
 
