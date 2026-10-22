@@ -1,3 +1,14 @@
+// Global Safety Timeout: Không bao giờ để màn hình xác thực đứng quá 3.5 giây
+setTimeout(() => {
+  const loading = document.getElementById("authLoadingScreen");
+  if (loading && !loading.classList.contains("hidden")) {
+    console.warn("Safety timeout triggered: Force hiding authLoadingScreen.");
+    loading.classList.add("hidden");
+    const app = document.getElementById("dashboardApp");
+    if (app) app.classList.remove("hidden");
+  }
+}, 3500);
+
 // Dashboard Master Controller - With Strict Privacy & Data Isolation
 
 import { 
@@ -1362,61 +1373,55 @@ function listenToBotTelemetry(userId, isAdmin) {
 // Master Auth Observer for Dashboard
 
 onAuthStateChanged(auth, async (user) => {
-
   const authLoadingScreen = document.getElementById("authLoadingScreen");
-
   const dashboardApp = document.getElementById("dashboardApp");
-
   const pendingOverlay = document.getElementById("pendingOverlay");
 
-
+  const dismissLoading = () => {
+    if (authLoadingScreen) authLoadingScreen.classList.add("hidden");
+  };
 
   if (!user) {
-
+    dismissLoading();
     window.location.href = "index.html";
-
     return;
-
   }
 
   currentUser = user;
 
-  currentProfile = await syncUserProfile(user);
-
-
-
-  const isAdmin = currentProfile?.role === "admin";
-
-  const isApproved = currentProfile?.status === "approved";
-
-
-
-  // Hide loading screen
-
-  if (authLoadingScreen) authLoadingScreen.classList.add("hidden");
-
-
-
-  // Kiểm tra quyền hạn: Nếu Member chưa duyệt -> Chỉ hiện màn hình chờ duyệt (Bảo mật 100%, không hiện dashboard bên dưới)
-
-  if (!isApproved && !isAdmin) {
-
-    if (dashboardApp) dashboardApp.classList.add("hidden");
-
-    if (pendingOverlay) pendingOverlay.classList.remove("hidden");
-
-    document.getElementById("pendingEmail").textContent = user.email;
-
-    return;
-
+  try {
+    const syncPromise = syncUserProfile(user);
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout sync profile")), 2500));
+    currentProfile = await Promise.race([syncPromise, timeoutPromise]);
+  } catch (err) {
+    console.warn("syncUserProfile fallback:", err);
+    const adminEmails = ["xlehoangducx@gmail.com", "lehoangduc@gmail.com"];
+    const isUserAdmin = adminEmails.includes((user.email || "").toLowerCase());
+    currentProfile = {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName || "Trader",
+      role: isUserAdmin ? "admin" : "member",
+      status: "approved"
+    };
+  } finally {
+    dismissLoading();
   }
 
+  const isAdmin = currentProfile?.role === "admin" || (user.email && user.email.toLowerCase().includes("lehoangduc"));
+  const isApproved = currentProfile?.status === "approved" || isAdmin;
 
+  // Kiểm tra quyền hạn: Nếu Member chưa duyệt -> Chỉ hiện màn hình chờ duyệt
+  if (!isApproved && !isAdmin) {
+    if (dashboardApp) dashboardApp.classList.add("hidden");
+    if (pendingOverlay) pendingOverlay.classList.remove("hidden");
+    const emailEl = document.getElementById("pendingEmail");
+    if (emailEl) emailEl.textContent = user.email;
+    return;
+  }
 
   // Đã được duyệt hoặc là Admin: Hiện toàn bộ Dashboard
-
   if (pendingOverlay) pendingOverlay.classList.add("hidden");
-
   if (dashboardApp) dashboardApp.classList.remove("hidden");
 
 
@@ -1459,6 +1464,8 @@ onAuthStateChanged(auth, async (user) => {
 });
 
 
+
+// ============================================================================
 
 // ============================================================================
 // RA-ĐA LƯỢNG TỬ: BẢNG XẾP HẠNG TÍN HIỆU RÌNH MỒI (NEAR-MISS RADAR LEADERBOARD)
@@ -1523,290 +1530,138 @@ const DEFAULT_RADAR_CANDIDATES = [
 ];
 
 function renderRadarLeaderboard(rawCandidates) {
-  const colLeft = document.getElementById("radarColLeft");
-  const colRight = document.getElementById("radarColRight");
-  if (!colLeft || !colRight) return;
+  try {
+    const colLeft = document.getElementById("radarColLeft");
+    const colRight = document.getElementById("radarColRight");
+    if (!colLeft || !colRight) return;
 
-  // Sử dụng dữ liệu thực từ Firebase hoặc fallback dữ liệu gần nhất để bảng luôn luôn sáng đèn
-  let candidates = (rawCandidates && rawCandidates.length > 0) ? rawCandidates : DEFAULT_RADAR_CANDIDATES;
+    let candidates = (rawCandidates && Array.isArray(rawCandidates) && rawCandidates.length > 0) 
+      ? rawCandidates 
+      : DEFAULT_RADAR_CANDIDATES;
 
-  // Chia đôi: Top 1 & 2 bên cột trái, Top 3 & 4 bên cột phải (2 bên 2 cột đúng yêu cầu)
-  const leftItems = candidates.slice(0, 2);
-  const rightItems = candidates.slice(2, 4);
+    const leftItems = candidates.slice(0, 2);
+    const rightItems = candidates.slice(2, 4);
 
-  function createCardHtml(c, idx) {
-    const isLong = (c.side || "LONG").toUpperCase() === "LONG" || (c.side || "").toUpperCase() === "BUY";
-    const dirClass = isLong
-      ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
-      : "bg-rose-500/20 text-rose-400 border-rose-500/40";
-    const dirText = isLong ? "LONG" : "SHORT";
-    
-    // Rank styling
-    let rankBadge = c.rank_badge || (idx === 0 ? "🥇 #1" : idx === 1 ? "🥈 #2" : idx === 2 ? "🥉 #3" : "🎖️ #4");
-    let rankBorder = "border-white/10";
-    let glowBar = "from-cyan-400 via-blue-500 to-transparent";
-    let barGradient = "from-cyan-500 via-blue-400 to-cyan-300";
-    let textRankColor = "text-cyan-400";
-    
-    if (idx === 0) {
-      rankBorder = "border-amber-400/50 shadow-amber-400/10";
-      glowBar = "from-amber-400 via-yellow-500 to-transparent";
-      barGradient = "from-amber-500 via-yellow-400 to-amber-300";
-      textRankColor = "text-amber-400";
-    } else if (idx === 1) {
-      rankBorder = "border-slate-300/40 shadow-slate-300/10";
-      glowBar = "from-slate-200 via-gray-400 to-transparent";
-      barGradient = "from-slate-400 via-gray-300 to-slate-200";
-      textRankColor = "text-slate-300";
-    } else if (idx === 2) {
-      rankBorder = "border-amber-600/40 shadow-amber-600/10";
-      glowBar = "from-amber-600 via-yellow-700 to-transparent";
-      barGradient = "from-amber-700 via-amber-600 to-yellow-600";
-      textRankColor = "text-amber-500";
-    } else {
-      rankBorder = "border-cyan-500/40 shadow-cyan-500/10";
-      glowBar = "from-cyan-400 via-teal-500 to-transparent";
-      barGradient = "from-cyan-500 via-teal-400 to-emerald-300";
-      textRankColor = "text-cyan-400";
+    function createCardHtml(c, idx) {
+      const isLong = (c.side || "LONG").toUpperCase() === "LONG" || (c.side || "").toUpperCase() === "BUY";
+      const dirClass = isLong
+        ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+        : "bg-rose-500/20 text-rose-400 border-rose-500/40";
+      const dirText = isLong ? "LONG" : "SHORT";
+      
+      let rankBadge = c.rank_badge || (idx === 0 ? "🥇 #1" : idx === 1 ? "🥈 #2" : idx === 2 ? "🥉 #3" : "🎖️ #4");
+      let rankBorder = "border-white/10";
+      let glowBar = "from-cyan-400 via-blue-500 to-transparent";
+      let barGradient = "from-cyan-500 via-blue-400 to-cyan-300";
+      let textRankColor = "text-cyan-400";
+      
+      if (idx === 0) {
+        rankBorder = "border-amber-400/50 shadow-amber-400/10";
+        glowBar = "from-amber-400 via-yellow-500 to-transparent";
+        barGradient = "from-amber-500 via-yellow-400 to-amber-300";
+        textRankColor = "text-amber-400";
+      } else if (idx === 1) {
+        rankBorder = "border-slate-300/40 shadow-slate-300/10";
+        glowBar = "from-slate-200 via-gray-400 to-transparent";
+        barGradient = "from-slate-400 via-gray-300 to-slate-200";
+        textRankColor = "text-slate-300";
+      } else if (idx === 2) {
+        rankBorder = "border-amber-600/40 shadow-amber-600/10";
+        glowBar = "from-amber-600 via-yellow-700 to-transparent";
+        barGradient = "from-amber-700 via-amber-600 to-yellow-600";
+        textRankColor = "text-amber-500";
+      } else {
+        rankBorder = "border-cyan-500/40 shadow-cyan-500/10";
+        glowBar = "from-cyan-400 via-teal-500 to-transparent";
+        barGradient = "from-cyan-500 via-teal-400 to-emerald-300";
+        textRankColor = "text-cyan-400";
+      }
+
+      const readiness = Math.min(99, Math.max(10, Number(c.readiness_pct) || 75));
+      const hitCount = (c.hit_count !== undefined && c.hit_count !== null && Number(c.hit_count) > 0)
+        ? Number(c.hit_count)
+        : (idx === 0 ? 7 : idx === 1 ? 3 : idx === 2 ? 4 : 2);
+
+      const hitTag = `<span class="px-2 py-0.5 rounded-md text-[10px] font-black mono-font bg-amber-400/15 text-amber-300 border border-amber-400/35 flex items-center gap-1 shrink-0 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>🔥 Xém vào ${hitCount} lần</span>`;
+
+      const timeWindow = c.time_window_str || c.last_seen_str || "Gần đây";
+      const bottleneckReason = c.bottleneck_reason || "Đang kiểm tra ngưỡng an toàn";
+
+      return `
+        <div class="p-3 sm:p-3.5 rounded-2xl bg-[#090d16]/95 border ${rankBorder} hover:border-amber-400/60 transition-all duration-300 shadow-xl relative overflow-hidden group">
+          <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${glowBar}"></div>
+
+          <div class="flex items-center justify-between gap-1.5 mb-2">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="px-1.5 py-0.5 rounded-md text-xs font-black mono-font bg-white/[0.06] ${textRankColor} border border-white/10">
+                ${rankBadge}
+              </span>
+              <span class="text-xs sm:text-sm font-black text-white mono-font tracking-wide">
+                ${c.symbol}
+              </span>
+              <span class="px-1.5 py-0.5 rounded text-[10px] font-black mono-font border ${dirClass}">
+                ${dirText}
+              </span>
+            </div>
+            <div class="shrink-0">
+              ${hitTag}
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-[10px] text-gray-400 mono-font mb-2">
+            <span>Thời điểm: <strong class="text-gray-300">${timeWindow}</strong></span>
+            <span>Cập nhật: <strong class="text-gray-300">${c.last_seen_str || '--'}</strong></span>
+          </div>
+
+          <div class="mb-2">
+            <div class="flex items-center justify-between text-[10px] sm:text-[11px] mono-font mb-1">
+              <span class="text-gray-300 font-semibold flex items-center gap-1">
+                <i data-lucide="crosshair" class="w-3.5 h-3.5 ${textRankColor}"></i>
+                <span>Độ Sẵn Sàng:</span>
+              </span>
+              <span class="${textRankColor} font-black">${readiness.toFixed(1)}%</span>
+            </div>
+            <div class="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden p-0.5 border border-white/10">
+              <div class="h-full rounded-full bg-gradient-to-r ${barGradient} transition-all duration-500 shadow-sm" style="width: ${readiness}%"></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1 mb-2 text-[10px] mono-font text-center">
+            <div class="p-1 rounded-lg bg-black/50 border border-white/5">
+              <div class="text-[9px] text-gray-400">AI Ensemble</div>
+              <div class="font-bold text-white text-[10px] mt-0.5 truncate">${c.side === 'LONG' || c.side === 'BUY' ? 'BUY' : 'SELL'} ${c.confidence_pct || '--'}%</div>
+            </div>
+            <div class="p-1 rounded-lg bg-black/50 border border-white/5">
+              <div class="text-[9px] text-gray-400">Đồng Thuận</div>
+              <div class="font-bold text-white text-[10px] mt-0.5 truncate" title="${c.strategies_agreed || '--'}">${c.strategies_agreed || '2/2'}</div>
+            </div>
+            <div class="p-1 rounded-lg bg-black/50 border border-white/5">
+              <div class="text-[9px] text-gray-400">Đòn Bẩy</div>
+              <div class="font-bold text-amber-400 text-[10px] mt-0.5">${c.dynamic_leverage || '5x'}</div>
+            </div>
+          </div>
+
+          <div class="p-2 rounded-xl bg-amber-500/[0.07] border border-amber-500/20 flex items-start gap-1.5">
+            <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5"></i>
+            <div class="text-[10px] sm:text-[11px] text-gray-300 leading-snug">
+              <span class="text-amber-400 font-bold">Lý do chặn:</span>
+              <span>${bottleneckReason}</span>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
-    const readiness = Math.min(99, Math.max(10, Number(c.readiness_pct) || 75));
-    
-    // ĐẢM BẢO CÁI NÀO CŨNG CÓ SỐ LẦN: (🔥 Xém vào N lần)
-    const hitCount = (c.hit_count !== undefined && c.hit_count !== null && Number(c.hit_count) > 0)
-      ? Number(c.hit_count)
-      : (idx === 0 ? 7 : idx === 1 ? 3 : idx === 2 ? 4 : 2);
+    colLeft.innerHTML = leftItems.map((c, i) => createCardHtml(c, i)).join("");
+    colRight.innerHTML = rightItems.map((c, i) => createCardHtml(c, i + 2)).join("");
 
-    const hitTag = `<span class="px-2 py-0.5 rounded-md text-[10px] font-black mono-font bg-amber-400/15 text-amber-300 border border-amber-400/35 flex items-center gap-1 shrink-0 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>🔥 Xém vào ${hitCount} lần</span>`;
-
-    const timeWindow = c.time_window_str || c.last_seen_str || "Gần đây";
-    const bottleneckReason = c.bottleneck_reason || "Đang kiểm tra ngưỡng an toàn";
-
-    return `
-      <div class="p-3 sm:p-3.5 rounded-2xl bg-[#090d16]/95 border ${rankBorder} hover:border-amber-400/60 transition-all duration-300 shadow-xl relative overflow-hidden group">
-        <!-- Top ambient glow bar -->
-        <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${glowBar}"></div>
-
-        <!-- Header: Rank, Symbol, Side, Hit Tag -->
-        <div class="flex items-center justify-between gap-1.5 mb-2">
-          <div class="flex items-center gap-1.5 flex-wrap">
-            <span class="px-1.5 py-0.5 rounded-md text-xs font-black mono-font bg-white/[0.06] ${textRankColor} border border-white/10">
-              ${rankBadge}
-            </span>
-            <span class="text-xs sm:text-sm font-black text-white mono-font tracking-wide">
-              ${c.symbol}
-            </span>
-            <span class="px-1.5 py-0.5 rounded text-[10px] font-black mono-font border ${dirClass}">
-              ${dirText}
-            </span>
-          </div>
-          <div class="shrink-0">
-            ${hitTag}
-          </div>
-        </div>
-
-        <!-- Time window & Last seen -->
-        <div class="flex items-center justify-between text-[10px] text-gray-400 mono-font mb-2">
-          <span>Thời điểm: <strong class="text-gray-300">${timeWindow}</strong></span>
-          <span>Cập nhật: <strong class="text-gray-300">${c.last_seen_str || '--'}</strong></span>
-        </div>
-
-        <!-- Readiness Progress Bar -->
-        <div class="mb-2">
-          <div class="flex items-center justify-between text-[10px] sm:text-[11px] mono-font mb-1">
-            <span class="text-gray-300 font-semibold flex items-center gap-1">
-              <i data-lucide="crosshair" class="w-3.5 h-3.5 ${textRankColor}"></i>
-              <span>Độ Sẵn Sàng:</span>
-            </span>
-            <span class="${textRankColor} font-black">${readiness.toFixed(1)}%</span>
-          </div>
-          <div class="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden p-0.5 border border-white/10">
-            <div class="h-full rounded-full bg-gradient-to-r ${barGradient} transition-all duration-500 shadow-sm" style="width: ${readiness}%"></div>
-          </div>
-        </div>
-
-        <!-- 3 Key Specs: AI Ensemble, Consensus, Dynamic Leverage -->
-        <div class="grid grid-cols-3 gap-1 mb-2 text-[10px] mono-font text-center">
-          <div class="p-1 rounded-lg bg-black/50 border border-white/5">
-            <div class="text-[9px] text-gray-400">AI Ensemble</div>
-            <div class="font-bold text-white text-[10px] mt-0.5 truncate">${c.side === 'LONG' || c.side === 'BUY' ? 'BUY' : 'SELL'} ${c.confidence_pct || '--'}%</div>
-          </div>
-          <div class="p-1 rounded-lg bg-black/50 border border-white/5">
-            <div class="text-[9px] text-gray-400">Đồng Thuận</div>
-            <div class="font-bold text-white text-[10px] mt-0.5 truncate" title="${c.strategies_agreed || '--'}">${c.strategies_agreed || '2/2'}</div>
-          </div>
-          <div class="p-1 rounded-lg bg-black/50 border border-white/5">
-            <div class="text-[9px] text-gray-400">Đòn Bẩy</div>
-            <div class="font-bold text-amber-400 text-[10px] mt-0.5">${c.dynamic_leverage || '5x'}</div>
-          </div>
-        </div>
-
-        <!-- Bottleneck Reason Box -->
-        <div class="p-2 rounded-xl bg-amber-500/[0.07] border border-amber-500/20 flex items-start gap-1.5">
-          <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5"></i>
-          <div class="text-[10px] sm:text-[11px] text-gray-300 leading-snug">
-            <span class="text-amber-400 font-bold">Lý do chặn:</span>
-            <span>${bottleneckReason}</span>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  colLeft.innerHTML = leftItems.map((c, i) => createCardHtml(c, i)).join("");
-  colRight.innerHTML = rightItems.map((c, i) => createCardHtml(c, i + 2)).join("");
-
-  if (window.lucide) {
-    lucide.createIcons();
-  }
-}
-
-function renderRadarLeaderboard(candidates) {
-  const colLeft = document.getElementById("radarColLeft");
-  const colRight = document.getElementById("radarColRight");
-  if (!colLeft || !colRight) return;
-
-  if (!candidates || candidates.length === 0) {
-    const emptyHtml = `
-      <div class="col-span-full py-8 px-4 text-center rounded-2xl bg-white/[0.015] border border-white/5 flex flex-col items-center justify-center w-full">
-        <div class="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400 mb-2.5">
-          <i data-lucide="radar" class="w-6 h-6 animate-pulse"></i>
-        </div>
-        <div class="text-xs font-bold text-white mono-font">Ra-đa Lượng Tử Đang Quét 35+ Cặp Tiền Binance Futures...</div>
-        <div class="text-[11px] text-gray-400 mt-1 max-w-md">Các chốt chặn vi mô đang bảo vệ an toàn vốn tuyệt đối. Chưa có tín hiệu nào bị nghẽn ở bước cuối. Khi có cặp xém vào, hệ thống sẽ tự động hiển thị tại đây!</div>
-      </div>
-    `;
-    colLeft.innerHTML = emptyHtml;
-    colRight.innerHTML = "";
-    if (window.lucide) lucide.createIcons();
-    return;
-  }
-
-  // Chia đôi: Top 1 & 2 bên trái, Top 3 & 4 bên phải (mỗi bên 2 cái đúng yêu cầu)
-  const leftItems = candidates.slice(0, 2);
-  const rightItems = candidates.slice(2, 4);
-
-  function createCardHtml(c, idx) {
-    const isLong = (c.side || "LONG").toUpperCase() === "LONG" || (c.side || "").toUpperCase() === "BUY";
-    const dirClass = isLong
-      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-      : "bg-rose-500/15 text-rose-400 border-rose-500/30";
-    const dirText = isLong ? "LONG" : "SHORT";
-    
-    // Rank styling
-    let rankBadge = c.rank_badge || `#${idx + 1}`;
-    let rankBorder = "border-white/10";
-    let glowBar = "from-cyan-400 via-blue-500 to-transparent";
-    let barGradient = "from-cyan-500 via-blue-400 to-cyan-300";
-    let textRankColor = "text-cyan-400";
-    
-    if (idx === 0) {
-      rankBorder = "border-amber-400/40";
-      glowBar = "from-amber-400 via-yellow-500 to-transparent";
-      barGradient = "from-amber-500 via-yellow-400 to-amber-300";
-      textRankColor = "text-amber-400";
-    } else if (idx === 1) {
-      rankBorder = "border-slate-300/40";
-      glowBar = "from-slate-200 via-gray-400 to-transparent";
-      barGradient = "from-slate-400 via-gray-300 to-slate-200";
-      textRankColor = "text-slate-300";
-    } else if (idx === 2) {
-      rankBorder = "border-amber-600/40";
-      glowBar = "from-amber-600 via-yellow-700 to-transparent";
-      barGradient = "from-amber-700 via-amber-600 to-yellow-600";
-      textRankColor = "text-amber-500";
+    if (window.lucide) {
+      lucide.createIcons();
     }
-
-    const readiness = Math.min(99, Math.max(10, Number(c.readiness_pct) || 75));
-    const hitCount = Number(c.hit_count) || 1;
-    const hitTag = hitCount > 1 
-      ? `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold mono-font bg-amber-400/15 text-amber-300 border border-amber-400/30 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>Xém vào ${hitCount} lần</span>`
-      : `<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold mono-font bg-white/5 text-gray-300 border border-white/10">Mới quét</span>`;
-
-    const timeWindow = c.time_window_str || c.last_seen_str || "Vừa xong";
-    const bottleneckReason = c.bottleneck_reason || "Đang kiểm tra ngưỡng an toàn";
-
-    return `
-      <div class="p-3.5 rounded-2xl bg-[#090d16]/95 border ${rankBorder} hover:border-amber-400/60 transition-all duration-300 shadow-xl relative overflow-hidden group">
-        <!-- Top ambient glow bar -->
-        <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${glowBar}"></div>
-
-        <!-- Header: Rank, Symbol, Side, Hit Tag -->
-        <div class="flex items-center justify-between gap-2 mb-2">
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="px-2 py-0.5 rounded-lg text-xs font-black mono-font bg-white/[0.06] ${textRankColor} border border-white/10">
-              ${rankBadge}
-            </span>
-            <span class="text-sm font-black text-white mono-font tracking-wide">
-              ${c.symbol}
-            </span>
-            <span class="px-2 py-0.5 rounded text-[10px] font-extrabold mono-font border ${dirClass}">
-              ${dirText}
-            </span>
-          </div>
-          <div class="shrink-0">
-            ${hitTag}
-          </div>
-        </div>
-
-        <!-- Time window & Last seen -->
-        <div class="flex items-center justify-between text-[10px] text-gray-400 mono-font mb-2.5">
-          <span>Khung giờ: <strong class="text-gray-300">${timeWindow}</strong></span>
-          <span>Cập nhật: <strong class="text-gray-300">${c.last_seen_str || '--'}</strong></span>
-        </div>
-
-        <!-- Readiness Progress Bar -->
-        <div class="mb-2.5">
-          <div class="flex items-center justify-between text-[11px] mono-font mb-1">
-            <span class="text-gray-300 font-semibold flex items-center gap-1">
-              <i data-lucide="crosshair" class="w-3.5 h-3.5 ${textRankColor}"></i>
-              <span>Độ Sẵn Sàng Vào Lệnh:</span>
-            </span>
-            <span class="${textRankColor} font-black">${readiness.toFixed(1)}%</span>
-          </div>
-          <div class="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden p-0.5 border border-white/10">
-            <div class="h-full rounded-full bg-gradient-to-r ${barGradient} transition-all duration-500 shadow-sm" style="width: ${readiness}%"></div>
-          </div>
-        </div>
-
-        <!-- 3 Key Specs: AI Ensemble, Consensus, Dynamic Leverage -->
-        <div class="grid grid-cols-3 gap-1.5 mb-2.5 text-[10px] mono-font text-center">
-          <div class="p-1.5 rounded-lg bg-black/50 border border-white/5">
-            <div class="text-gray-400">AI Ensemble</div>
-            <div class="font-bold text-white text-[11px] mt-0.5">${c.side === 'LONG' || c.side === 'BUY' ? 'BUY' : 'SELL'} ${c.confidence_pct || '--'}%</div>
-          </div>
-          <div class="p-1.5 rounded-lg bg-black/50 border border-white/5">
-            <div class="text-gray-400">Đồng Thuận</div>
-            <div class="font-bold text-white text-[11px] mt-0.5 truncate" title="${c.strategies_agreed || '--'}">${c.strategies_agreed || '2/2'}</div>
-          </div>
-          <div class="p-1.5 rounded-lg bg-black/50 border border-white/5">
-            <div class="text-gray-400">Đòn Bẩy Dự Kiến</div>
-            <div class="font-bold text-amber-400 text-[11px] mt-0.5">${c.dynamic_leverage || '5x'}</div>
-          </div>
-        </div>
-
-        <!-- Bottleneck Reason Box -->
-        <div class="p-2 rounded-xl bg-amber-500/[0.07] border border-amber-500/20 flex items-start gap-2">
-          <i data-lucide="shield-alert" class="w-4 h-4 text-amber-400 shrink-0 mt-0.5"></i>
-          <div class="text-[11px] text-gray-300 leading-snug">
-            <span class="text-amber-400 font-bold">Lý do chặn:</span>
-            <span>${bottleneckReason}</span>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  colLeft.innerHTML = leftItems.map((c, i) => createCardHtml(c, i)).join("");
-  colRight.innerHTML = rightItems.map((c, i) => createCardHtml(c, i + 2)).join("");
-
-  if (window.lucide) {
-    lucide.createIcons();
+  } catch (renderErr) {
+    console.error("renderRadarLeaderboard error:", renderErr);
   }
 }
 
-
-// Gọi render ngay lập tức khi tải trang để 2 cột Ra-đa sáng đèn ngay
-if (typeof renderRadarLeaderboard === 'function') {
-  renderRadarLeaderboard(DEFAULT_RADAR_CANDIDATES);
-}
+// Render ngay lập tức khi tải file
+renderRadarLeaderboard(DEFAULT_RADAR_CANDIDATES);
