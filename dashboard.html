@@ -850,6 +850,34 @@
               </div>
             </div>
 
+            <!-- Auto-Adopt Manual Positions Controls -->
+            <div class="mt-4 pt-4 border-t border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                  <i class="fas fa-shield-halved text-xs"></i>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-white mono-font tracking-wide">BẢO HỘ LỆNH TAY (MANUAL ADOPT)</span>
+                    <span id="manualAdoptBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold mono-font bg-white/5 text-gray-400 border border-white/10">TẮT</span>
+                  </div>
+                  <p class="text-[10px] sm:text-[11px] text-gray-400 mt-0.5">
+                    Khi BẬT: Tool tự nhận diện lệnh vào tay trên Binance, tự đặt SL bảo vệ sàn và gồng lãi Trailing Stop + Chốt lời 50%.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Manual Adopt Mode Buttons (Tắt / Bật Bảo Hộ) -->
+              <div class="flex items-center gap-1.5 p-1 rounded-xl bg-white/[0.03] border border-white/10 shrink-0">
+                <button type="button" id="btnManualAdoptOff" class="px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition bg-white/10 text-white border border-white/20">
+                  TẮT
+                </button>
+                <button type="button" id="btnManualAdoptOn" class="px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition text-gray-400 hover:text-white border border-transparent">
+                  BẬT BẢO HỘ
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
 

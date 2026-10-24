@@ -1078,6 +1078,14 @@ document.getElementById("btnSaveConfig")?.addEventListener("click", (e) => {
 
 
 
+// Manual Adopt Toggle Buttons
+document.getElementById("btnManualAdoptOff")?.addEventListener("click", (e) => {
+  sendBotCommand("toggle_manual_adopt", { enabled: false }, e.currentTarget);
+});
+document.getElementById("btnManualAdoptOn")?.addEventListener("click", (e) => {
+  sendBotCommand("toggle_manual_adopt", { enabled: true }, e.currentTarget);
+});
+
 // TradFi US Stocks Mode Toggle Buttons
 
 document.getElementById("btnTradfiOff")?.addEventListener("click", (e) => {
@@ -2061,6 +2069,30 @@ function listenToBotTelemetry(userId, isAdmin) {
       }
 
 
+
+            // Sync Manual Adopt Status
+      const manualAdoptEnabled = Boolean(telemetryData.auto_adopt_manual_positions);
+      const btnManualAdoptOff = document.getElementById("btnManualAdoptOff");
+      const btnManualAdoptOn = document.getElementById("btnManualAdoptOn");
+      const manualAdoptBadge = document.getElementById("manualAdoptBadge");
+
+      if (btnManualAdoptOff && btnManualAdoptOn) {
+        if (manualAdoptEnabled) {
+          btnManualAdoptOn.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition bg-emerald-500/20 text-emerald-400 border border-emerald-500/40";
+          btnManualAdoptOff.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition text-gray-400 hover:text-white border border-transparent";
+          if (manualAdoptBadge) {
+            manualAdoptBadge.textContent = "ĐANG BẬT BẢO HỘ";
+            manualAdoptBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold mono-font bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+          }
+        } else {
+          btnManualAdoptOff.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition bg-white/10 text-white border border-white/20";
+          btnManualAdoptOn.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition text-gray-400 hover:text-white border border-transparent";
+          if (manualAdoptBadge) {
+            manualAdoptBadge.textContent = "TẮT";
+            manualAdoptBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold mono-font bg-white/5 text-gray-400 border border-white/10";
+          }
+        }
+      }
 
       const btnTradfiOff = document.getElementById("btnTradfiOff");
 
