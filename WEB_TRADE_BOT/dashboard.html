@@ -22,7 +22,7 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Custom Cyber Styles -->
-  <link rel="stylesheet" href="css/style.css?v=20261024_1420">
+  <link rel="stylesheet" href="css/style.css?v=20261024_1430">
   <!-- Cyber Radar Animations & Transitions -->
   <style>
     /* ===== CYBER RADAR 3D PERSPECTIVE, GAME-LIKE TRAJECTORIES & POST-EFFECTS ===== */
@@ -55,65 +55,20 @@
       border-radius: inherit;
     }
 
-    /* 1. Bay vút từ mép ngoài biên trái vào (Fly in from left screen edge) */
+    /* 1. Bay mượt mà từ mép ngoài biên trái vào (Fly in from left screen edge) */
     @keyframes radarWarpFlyInLeft {
       0% {
         opacity: 0;
-        transform: translate3d(-180px, 0, -80px) rotateY(32deg) scale(0.72);
-        filter: blur(8px) brightness(2);
-      }
-      60% {
-        opacity: 0.95;
-        transform: translate3d(12px, 0, 25px) rotateY(-5deg) scale(1.04);
-        filter: blur(0px) brightness(1.2);
-      }
-      80% {
-        transform: translate3d(-3px, 0, -5px) scale(0.99);
-      }
-      100% {
-        opacity: 1;
-        transform: translate3d(0, 0, 0) rotateY(0deg) scale(1);
-        filter: none;
-      }
-    }
-
-    /* 2. Bay vút từ mép ngoài biên phải vào (Fly in from right screen edge) */
-    @keyframes radarWarpFlyInRight {
-      0% {
-        opacity: 0;
-        transform: translate3d(180px, 0, -80px) rotateY(-32deg) scale(0.72);
-        filter: blur(8px) brightness(2);
-      }
-      60% {
-        opacity: 0.95;
-        transform: translate3d(-12px, 0, 25px) rotateY(5deg) scale(1.04);
-        filter: blur(0px) brightness(1.2);
-      }
-      80% {
-        transform: translate3d(3px, 0, -5px) scale(0.99);
-      }
-      100% {
-        opacity: 1;
-        transform: translate3d(0, 0, 0) rotateY(0deg) scale(1);
-        filter: none;
-      }
-    }
-
-    /* 3. Thăng hạng bứt phá liên cột (Top 4/3 -> Top 1/2): Bay xuyên biên lượng tử */
-    @keyframes radarQuantumCrossAscend {
-      0% {
-        opacity: 0;
-        transform: translate3d(160px, 70px, -100px) rotateY(-28deg) rotateX(10deg) scale(0.68);
-        filter: blur(10px) brightness(2.5);
+        transform: translate3d(-140px, 0, -60px) rotateY(24deg) scale(0.82);
+        filter: blur(6px) brightness(1.8);
       }
       50% {
         opacity: 0.95;
-        transform: translate3d(-16px, -12px, 50px) rotateY(6deg) scale(1.05);
-        filter: blur(0px) brightness(1.3);
-        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8), 0 0 45px var(--rank-glow-color, rgba(251,191,36,0.6));
+        transform: translate3d(8px, 0, 20px) rotateY(-3deg) scale(1.02);
+        filter: blur(0px) brightness(1.1);
       }
       75% {
-        transform: translate3d(4px, 3px, 12px) scale(0.99);
+        transform: translate3d(-2px, 0, 5px) scale(1.005);
       }
       100% {
         opacity: 1;
@@ -122,16 +77,61 @@
       }
     }
 
-    /* 4. Tụt hạng liên cột (Top 1/2 -> Top 3/4) */
+    /* 2. Bay mượt mà từ mép ngoài biên phải vào (Fly in from right screen edge) */
+    @keyframes radarWarpFlyInRight {
+      0% {
+        opacity: 0;
+        transform: translate3d(140px, 0, -60px) rotateY(-24deg) scale(0.82);
+        filter: blur(6px) brightness(1.8);
+      }
+      50% {
+        opacity: 0.95;
+        transform: translate3d(-8px, 0, 20px) rotateY(3deg) scale(1.02);
+        filter: blur(0px) brightness(1.1);
+      }
+      75% {
+        transform: translate3d(2px, 0, 5px) scale(1.005);
+      }
+      100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) rotateY(0deg) scale(1);
+        filter: none;
+      }
+    }
+
+    /* 3. Thăng hạng bứt phá liên cột: Bay xuyên biên lượng tử mượt mà */
+    @keyframes radarQuantumCrossAscend {
+      0% {
+        opacity: 0.15;
+        transform: translate3d(140px, 50px, -80px) rotateY(-20deg) scale(0.78);
+        filter: blur(6px) brightness(2);
+      }
+      50% {
+        opacity: 0.95;
+        transform: translate3d(-10px, -8px, 35px) rotateY(4deg) scale(1.03);
+        filter: blur(0px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), 0 0 35px var(--rank-glow-color, rgba(251,191,36,0.6));
+      }
+      75% {
+        transform: translate3d(2px, 2px, 8px) scale(1.005);
+      }
+      100% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) rotateY(0deg) scale(1);
+        filter: none;
+      }
+    }
+
+    /* 4. Tụt hạng liên cột */
     @keyframes radarQuantumCrossDescend {
       0% {
-        opacity: 0.2;
-        transform: translate3d(-140px, -45px, 50px) rotateY(22deg) scale(1.06);
-        filter: blur(6px);
+        opacity: 0.3;
+        transform: translate3d(-120px, -35px, 40px) rotateY(16deg) scale(1.04);
+        filter: blur(4px);
       }
       55% {
-        opacity: 0.88;
-        transform: translate3d(14px, 10px, -45px) rotateY(-8deg) scale(0.94);
+        opacity: 0.90;
+        transform: translate3d(10px, 8px, -30px) rotateY(-6deg) scale(0.96);
         filter: blur(0px);
       }
       100% {
@@ -144,14 +144,17 @@
     /* 5. Hoán đổi cùng cột (Top 2 -> Top 1 hoặc Top 4 -> Top 3) */
     @keyframes radarSwap3DAscend {
       0% {
-        opacity: 0.2;
-        transform: translate3d(0, 50px, -30px) rotateX(-14deg) scale(0.90);
-        filter: blur(5px);
+        opacity: 0.3;
+        transform: translate3d(0, 40px, -25px) rotateX(-10deg) scale(0.92);
+        filter: blur(4px);
       }
       50% {
-        opacity: 0.95;
-        transform: translate3d(0, -10px, 45px) rotateX(6deg) scale(1.04);
+        opacity: 0.98;
+        transform: translate3d(0, -6px, 35px) rotateX(4deg) scale(1.03);
         filter: blur(0px);
+      }
+      75% {
+        transform: translate3d(0, 2px, 8px) scale(1.005);
       }
       100% {
         opacity: 1;
@@ -162,14 +165,14 @@
 
     @keyframes radarSwap3DDescend {
       0% {
-        opacity: 0.3;
-        transform: translate3d(0, -38px, 30px) rotateX(10deg) scale(1.03);
-        filter: blur(3px);
+        opacity: 0.4;
+        transform: translate3d(0, -30px, 25px) rotateX(8deg) scale(1.02);
+        filter: blur(2px);
       }
       50% {
-        opacity: 0.85;
-        transform: translate3d(0, 8px, -30px) rotateX(-6deg) scale(0.96);
-        filter: blur(1px);
+        opacity: 0.90;
+        transform: translate3d(0, 6px, -20px) rotateX(-4deg) scale(0.97);
+        filter: blur(0px);
       }
       100% {
         opacity: 1;
@@ -178,217 +181,61 @@
       }
     }
 
-    /* 6. HIỆU ỨNG NỔ KHÓA NĂNG LƯỢNG KHI RÁP VÀO VỊ TRÍ (Snap Docking Energy Burst) */
-    @keyframes radarDockingBurst {
-      0% {
-        transform: translate(-50%, -50%) scale(0.3);
-        opacity: 1;
-        border-width: 4px;
-        box-shadow: 0 0 10px var(--rank-glow-color, rgba(251,191,36,0.9)), inset 0 0 10px var(--rank-glow-color, rgba(251,191,36,0.9));
-      }
-      45% {
-        opacity: 0.85;
-        border-width: 2.5px;
-        box-shadow: 0 0 30px var(--rank-glow-color, rgba(251,191,36,0.7)), inset 0 0 20px var(--rank-glow-color, rgba(251,191,36,0.5));
-      }
-      100% {
-        transform: translate(-50%, -50%) scale(1.55);
-        opacity: 0;
-        border-width: 1px;
-        box-shadow: 0 0 60px transparent;
-      }
-    }
-
-    .radar-docking-burst-fx {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 100%;
-      height: 100%;
-      border-radius: inherit;
-      border: 2px solid var(--rank-glow-color, rgba(251, 191, 36, 0.9));
-      pointer-events: none;
-      animation: radarDockingBurst 0.95s cubic-bezier(0.12, 0.9, 0.24, 1) forwards;
-      z-index: 25;
-    }
-
-        /* 7. HIỆU ỨNG HẠT NĂNG LƯỢNG & NẾN THEO CHUỘT (Interactive Multi-Tier Sparks) */
-    .radar-spark-item {
-      position: absolute;
-      pointer-events: none;
-      z-index: 50;
-      user-select: none;
-      line-height: 1;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transform-origin: center center;
-      animation: radarSparkFloat 0.85s cubic-bezier(0.16, 0.9, 0.3, 1) forwards;
-    }
-
-    @keyframes radarSparkFloat {
-      0% {
-        opacity: 1;
-        transform: translate3d(0, 0, 0) scale(0.6) rotate(0deg);
-        filter: drop-shadow(0 0 6px var(--spark-glow, #fbbf24));
-      }
-      35% {
-        opacity: 1;
-        transform: translate3d(calc(var(--dx) * 0.4), calc(var(--dy) * 0.4), 0) scale(1.25) rotate(calc(var(--end-rot) * 0.5));
-        filter: drop-shadow(0 0 14px var(--spark-glow, #fbbf24));
-      }
-      100% {
-        opacity: 0;
-        transform: translate3d(var(--dx), var(--dy), 0) scale(0.3) rotate(var(--end-rot));
-        filter: drop-shadow(0 0 22px var(--spark-glow, #fbbf24));
-      }
-    }
-
-    .radar-mini-candle {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-    }
-    .radar-mini-candle .wick {
-      width: 1.5px;
-      height: 3px;
-    }
-    .radar-mini-candle .candle-body {
-      width: 5.5px;
-      height: 9px;
-      border-radius: 1px;
-    }
-    .radar-mini-candle.green .wick,
-    .radar-mini-candle.green .candle-body {
-      background: #00ff88;
-      box-shadow: 0 0 8px #00ff88, 0 0 16px rgba(0, 255, 136, 0.7);
-    }
-    .radar-mini-candle.red .wick,
-    .radar-mini-candle.red .candle-body {
-      background: #ff3366;
-      box-shadow: 0 0 8px #ff3366, 0 0 16px rgba(255, 51, 102, 0.7);
-    }
-
-    .radar-cursor-spark {
-      position: absolute;
-      width: 5.5px;
-      height: 5.5px;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 35;
-      animation: sparkDisperse 0.65s cubic-bezier(0.12, 0.8, 0.3, 1) forwards;
-    }
-
-    
-    /* Cho phép hiệu ứng nổ viền tỏa ra ngoài không bị cắt */
-    .radar-holo-card {
-      position: relative;
-      transform-style: preserve-3d;
-      will-change: transform, box-shadow, filter;
-      transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.3s ease;
-      overflow: visible !important;
-    }
-
-    /* Sóng xung kích phát quang bùng nổ theo 4 cạnh viền khi thẻ khớp vị trí */
+    /* Sóng xung kích hào quang bùng nổ theo 4 cạnh viền khi thẻ khớp vị trí (1.8s) */
     .radar-border-shockwave {
       position: absolute;
-      inset: -3px;
+      inset: -4px;
       border-radius: inherit;
       border: 2px solid var(--wave-color, #fbbf24);
       pointer-events: none;
       z-index: 40;
-      animation: borderShockwaveBurst 1.35s cubic-bezier(0.12, 0.9, 0.22, 1) forwards;
+      animation: borderShockwaveBurst 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     @keyframes borderShockwaveBurst {
       0% {
         opacity: 1;
         transform: scale(1);
-        box-shadow: 0 0 0px var(--wave-color, #fbbf24), inset 0 0 0px var(--wave-color, #fbbf24);
-      }
-      35% {
-        opacity: 0.95;
-        box-shadow: 0 0 30px var(--wave-color, #fbbf24), inset 0 0 16px var(--wave-color, #fbbf24);
-      }
-      100% {
-        opacity: 0;
-        transform: scale(1.08);
-        box-shadow: 0 0 50px var(--wave-color, #fbbf24), inset 0 0 25px transparent;
-      }
-    }
-
-    /* Các hạt nến, Bitcoin, $, và tia sáng bùng nổ tỏa ra ngoài từ 4 cạnh viền thẻ */
-    .radar-border-mote {
-      position: absolute;
-      pointer-events: none;
-      z-index: 50;
-      user-select: none;
-      line-height: 1;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transform-origin: center center;
-      animation: borderMoteBloom 1.35s cubic-bezier(0.12, 0.9, 0.22, 1) forwards;
-    }
-
-    @keyframes borderMoteBloom {
-      0% {
-        opacity: 1;
-        transform: translate3d(0, 0, 0) scale(0.6) rotate(0deg);
+        box-shadow: 0 0 0px var(--wave-color, #fbbf24);
       }
       30% {
-        opacity: 1;
-        transform: translate3d(calc(var(--dx) * 0.45), calc(var(--dy) * 0.45), 0) scale(1.2) rotate(calc(var(--rot) * 0.5));
+        opacity: 0.95;
+        box-shadow: 0 0 35px var(--wave-color, #fbbf24), 0 0 70px var(--wave-color, #fbbf24);
       }
       100% {
         opacity: 0;
-        transform: translate3d(var(--dx), var(--dy), 0) scale(0.4) rotate(var(--rot));
+        transform: scale(1.14);
+        box-shadow: 0 0 60px transparent;
       }
     }
 
-    .radar-mote-dot {
+    /* Hạt năng lượng bùng nổ tỏa ra ngoài từ 4 cạnh viền thẻ (1.8s) */
+    .radar-border-spark {
+      position: absolute;
       width: 5px;
       height: 5px;
       border-radius: 50%;
+      pointer-events: none;
+      z-index: 45;
+      animation: borderSparkFly 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    .radar-mini-candle {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-    }
-    .radar-mini-candle .wick {
-      width: 1.2px;
-      height: 3px;
-    }
-    .radar-mini-candle .candle-body {
-      width: 5px;
-      height: 9px;
-      border-radius: 1px;
-    }
-    .radar-mini-candle.green .wick,
-    .radar-mini-candle.green .candle-body {
-      background: #00ff88;
-      box-shadow: 0 0 8px #00ff88, 0 0 14px rgba(0, 255, 136, 0.8);
-    }
-    .radar-mini-candle.red .wick,
-    .radar-mini-candle.red .candle-body {
-      background: #ff3366;
-      box-shadow: 0 0 8px #ff3366, 0 0 14px rgba(255, 51, 102, 0.8);
-    }
-
-    .radar-cursor-spark {
-      position: absolute;
-      width: 4.5px;
-      height: 4.5px;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 35;
-      animation: sparkDisperse 0.65s cubic-bezier(0.12, 0.8, 0.3, 1) forwards;
+    @keyframes borderSparkFly {
+      0% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1.6);
+        filter: drop-shadow(0 0 8px var(--spark-color, #fbbf24));
+      }
+      25% {
+        opacity: 1;
+        transform: translate3d(calc(var(--dx) * 0.45), calc(var(--dy) * 0.45), 0) scale(1.3);
+        filter: drop-shadow(0 0 16px var(--spark-color, #fbbf24));
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(var(--dx), var(--dy), 0) scale(0.2);
+        filter: drop-shadow(0 0 24px var(--spark-color, #fbbf24));
+      }
     }
 
     /* 8. Hào quang thở (Breathing Aura) 4 Đẳng Cấp */
@@ -448,12 +295,12 @@
     .radar-card-top-3 { animation: radarAuraTop3Amber 4.0s infinite ease-in-out 0.8s; }
     .radar-card-top-4 { animation: radarAuraTop4Emerald 4.2s infinite ease-in-out 1.2s; }
 
-    .radar-anim-cross-ascend { animation: radarQuantumCrossAscend 0.95s cubic-bezier(0.18, 0.95, 0.32, 1) both; }
-    .radar-anim-cross-descend { animation: radarQuantumCrossDescend 0.95s cubic-bezier(0.18, 0.95, 0.32, 1) both; }
-    .radar-anim-warp-left { animation: radarWarpFlyInLeft 0.88s cubic-bezier(0.18, 0.95, 0.32, 1) both; }
-    .radar-anim-warp-right { animation: radarWarpFlyInRight 0.88s cubic-bezier(0.18, 0.95, 0.32, 1) both; }
-    .radar-anim-3d-ascend { animation: radarSwap3DAscend 0.85s cubic-bezier(0.18, 0.95, 0.32, 1) both; }
-    .radar-anim-3d-descend { animation: radarSwap3DDescend 0.85s cubic-bezier(0.18, 0.95, 0.32, 1) both; }
+    .radar-anim-cross-ascend { animation: radarQuantumCrossAscend 1.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .radar-anim-cross-descend { animation: radarQuantumCrossDescend 1.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .radar-anim-warp-left { animation: radarWarpFlyInLeft 1.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .radar-anim-warp-right { animation: radarWarpFlyInRight 1.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .radar-anim-3d-ascend { animation: radarSwap3DAscend 1.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+    .radar-anim-3d-descend { animation: radarSwap3DDescend 1.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
     .radar-laser-line {
       position: absolute;
@@ -473,7 +320,7 @@
   <canvas id="threeWorldCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
   
   <!-- Interactive Trader Candlestick Trail Canvas (Meng To pointer-trail-emitter) -->
-  <canvas id="candleCursorCanvas" class="fixed inset-0 pointer-events-none" style="position:fixed; inset:0; pointer-events:none; z-index:99999;"></canvas>
+  <canvas id="candleCursorCanvas" style="display:none;"></canvas>
   
   <div class="fixed inset-0 bg-radial-vignette pointer-events-none z-0"></div>
 
@@ -1528,7 +1375,7 @@
   <script src="js/matrix-rain.js"></script>
 
   <!-- App JavaScript Modules -->
-  <script type="module" src="js/dashboard_v2.js?v=20261024_1420"></script>
+  <script type="module" src="js/dashboard_v2.js?v=20261024_1430"></script>
   <script>
     lucide.createIcons();
   </script>

@@ -3259,42 +3259,19 @@ renderRadarLeaderboard([]);
 
 
 
-// ===== BÙNG NỔ CỘT NẾN, BITCOIN, $ & HẠT NĂNG LƯỢNG QUANH 4 VIỀN THẺ KHI KHỚP VỊ TRÍ =====
-function spawnBorderMote(card, x, y, dx, dy, color) {
-  const mote = document.createElement('div');
-  mote.className = 'radar-border-mote';
-  mote.style.left = `${x}px`;
-  mote.style.top = `${y}px`;
-  mote.style.setProperty('--dx', `${dx.toFixed(1)}px`);
-  mote.style.setProperty('--dy', `${dy.toFixed(1)}px`);
-  const rot = (Math.random() - 0.5) * 45;
-  mote.style.setProperty('--rot', `${rot.toFixed(1)}deg`);
-
-  const r = Math.random();
-  if (r < 0.28) {
-    mote.innerHTML = '<div class="radar-mini-candle green"><div class="wick"></div><div class="candle-body"></div></div>';
-  } else if (r < 0.52) {
-    mote.innerHTML = '<div class="radar-mini-candle red"><div class="wick"></div><div class="candle-body"></div></div>';
-  } else if (r < 0.72) {
-    mote.innerHTML = '₿';
-    mote.style.color = '#ffd700';
-    mote.style.fontFamily = '"JetBrains Mono", monospace';
-    mote.style.fontWeight = '900';
-    mote.style.fontSize = '14px';
-    mote.style.textShadow = '0 0 10px #fbbf24, 0 0 20px #f59e0b';
-  } else if (r < 0.86) {
-    mote.innerHTML = '$';
-    mote.style.color = '#ffcc00';
-    mote.style.fontFamily = '"JetBrains Mono", monospace';
-    mote.style.fontWeight = '900';
-    mote.style.fontSize = '13px';
-    mote.style.textShadow = '0 0 8px #ffaa00';
-  } else {
-    mote.innerHTML = `<div class="radar-mote-dot" style="background-color:${color}; box-shadow:0 0 10px ${color}, 0 0 20px ${color}"></div>`;
-  }
-
-  card.appendChild(mote);
-  setTimeout(() => { if (mote.parentNode) mote.remove(); }, 1450);
+// ===== BÙNG NỔ HẠT NĂNG LƯỢNG QUANH 4 VIỀN THẺ KHI KHỚP VỊ TRÍ (1.8s ĐIỆN ẢNH TỎA RỘNG) =====
+function spawnBorderSpark(container, x, y, dx, dy, color) {
+  const spark = document.createElement('div');
+  spark.className = 'radar-border-spark';
+  spark.style.left = `${x}px`;
+  spark.style.top = `${y}px`;
+  spark.style.backgroundColor = color;
+  spark.style.boxShadow = `0 0 10px ${color}, 0 0 20px ${color}`;
+  spark.style.setProperty('--dx', `${dx.toFixed(1)}px`);
+  spark.style.setProperty('--dy', `${dy.toFixed(1)}px`);
+  spark.style.setProperty('--spark-color', color);
+  container.appendChild(spark);
+  setTimeout(() => { if (spark.parentNode) spark.remove(); }, 1850);
 }
 
 function triggerCardBorderBurst(card) {
@@ -3303,55 +3280,54 @@ function triggerCardBorderBurst(card) {
   const h = card.offsetHeight || 160;
   const color = card.getAttribute('data-spark-color') || '#fbbf24';
 
-  // 1. Sóng xung kích phát quang bùng nổ theo hình chữ nhật viền thẻ
+  // 1. Sóng xung kích phát quang bùng nổ theo hình chữ nhật viền thẻ (1.8s)
   const shockwave = document.createElement('div');
   shockwave.className = 'radar-border-shockwave';
   shockwave.style.setProperty('--wave-color', color);
   card.appendChild(shockwave);
-  setTimeout(() => { if (shockwave.parentNode) shockwave.remove(); }, 1400);
+  setTimeout(() => { if (shockwave.parentNode) shockwave.remove(); }, 1850);
 
-  // 2. Chùm nến xanh/đỏ, Bitcoin ₿, Đô $, và hạt năng lượng bùng nổ tỏa ra ngoài từ 4 cạnh viền thẻ
-  const sideCount = 5;
-  // Cạnh trên (Bắn vút lên trên)
+  // 2. Chùm hạt phát quang tỏa rộng ra ngoài 4 cạnh viền (30px - 65px)
+  const sideCount = 6;
+  // Cạnh trên (Tỏa lên trên)
   for (let i = 0; i < sideCount; i++) {
     const px = (w / (sideCount + 1)) * (i + 1);
-    spawnBorderMote(card, px, 0, (Math.random() - 0.5) * 25, -(Math.random() * 35 + 20), color);
+    spawnBorderSpark(card, px, 0, (Math.random() - 0.5) * 30, -(Math.random() * 40 + 25), color);
   }
-  // Cạnh dưới (Bắn tỏa xuống dưới)
+  // Cạnh dưới (Tỏa xuống dưới)
   for (let i = 0; i < sideCount; i++) {
     const px = (w / (sideCount + 1)) * (i + 1);
-    spawnBorderMote(card, px, h, (Math.random() - 0.5) * 25, (Math.random() * 35 + 20), color);
+    spawnBorderSpark(card, px, h, (Math.random() - 0.5) * 30, (Math.random() * 40 + 25), color);
   }
-  // Cạnh trái (Bắn tỏa sang trái)
+  // Cạnh trái (Tỏa sang trái)
   for (let i = 0; i < 4; i++) {
     const py = (h / 5) * (i + 1);
-    spawnBorderMote(card, 0, py, -(Math.random() * 35 + 20), (Math.random() - 0.5) * 25, color);
+    spawnBorderSpark(card, 0, py, -(Math.random() * 40 + 25), (Math.random() - 0.5) * 30, color);
   }
-  // Cạnh phải (Bắn tỏa sang phải)
+  // Cạnh phải (Tỏa sang phải)
   for (let i = 0; i < 4; i++) {
     const py = (h / 5) * (i + 1);
-    spawnBorderMote(card, w, py, (Math.random() * 35 + 20), (Math.random() - 0.5) * 25, color);
+    spawnBorderSpark(card, w, py, (Math.random() * 40 + 25), (Math.random() - 0.5) * 30, color);
   }
 }
 
 function triggerAllCardsBorderBurst() {
   const cards = document.querySelectorAll('.radar-holo-card');
   cards.forEach((card, idx) => {
-    // Đợi thẻ bay ráp vào đúng vị trí rồi kích hoạt bùng nổ viền tỏa rộng
-    const delay = (idx * 160) + 480;
+    // Đợi thẻ bay mượt mà vào đúng vị trí rồi kích hoạt bùng nổ viền tỏa rộng
+    const delay = (idx * 220) + 700;
     setTimeout(() => {
       triggerCardBorderBurst(card);
     }, delay);
   });
 }
 
-// ===== BỘ ĐIỀU KHIỂN TƯƠNG TÁC 3D PARALLAX TILT & HẠT NĂNG LƯỢNG THEO CHUỘT (NGUYÊN BẢN MƯỢT MÀ) =====
+// ===== BỘ ĐIỀU KHIỂN TƯƠNG TÁC 3D PARALLAX TILT & HÀO QUANG ÁNH SÁNG KHI RÊ CHUỘT (KHÔNG CÓ CHẤM ĐI THEO) =====
 function attachRadar3DInteraction() {
   const cards = document.querySelectorAll('.radar-holo-card');
   cards.forEach(card => {
     if (card._tiltAttached) return;
     card._tiltAttached = true;
-    let lastSparkTime = 0;
 
     card.addEventListener('mousemove', (e) => {
       const rect = card.getBoundingClientRect();
@@ -3360,35 +3336,15 @@ function attachRadar3DInteraction() {
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
 
-      // Góc nghiêng 3D tối đa +-10 độ
+      // Góc nghiêng 3D mượt mà tối đa +-9 độ
       const rotateX = ((y - centerY) / centerY) * -9;
       const rotateY = ((x - centerX) / centerX) * 11;
 
-      card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(16px) scale3d(1.025, 1.025, 1.025)`;
+      card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(14px) scale3d(1.02, 1.02, 1.02)`;
       card.style.setProperty('--mouse-x', `${x.toFixed(1)}px`);
       card.style.setProperty('--mouse-y', `${y.toFixed(1)}px`);
       card.style.setProperty('--glare-opacity', '1');
-
-      // Tỏa chùm hạt năng lượng phát quang theo đường di chuột (nguyên bản mượt mà)
-      const now = performance.now();
-      if (now - lastSparkTime > 38) {
-        lastSparkTime = now;
-        const spark = document.createElement('div');
-        spark.className = 'radar-cursor-spark';
-        const color = card.getAttribute('data-spark-color') || '#fbbf24';
-        spark.style.left = `${x}px`;
-        spark.style.top = `${y}px`;
-        spark.style.backgroundColor = color;
-        spark.style.boxShadow = `0 0 8px ${color}, 0 0 16px ${color}`;
-
-        const dx = (Math.random() - 0.5) * 35;
-        const dy = (Math.random() - 0.5) * 35 - 12;
-        spark.style.setProperty('--dx', `${dx.toFixed(1)}px`);
-        spark.style.setProperty('--dy', `${dy.toFixed(1)}px`);
-
-        card.appendChild(spark);
-        setTimeout(() => { if (spark && spark.parentNode) spark.remove(); }, 650);
-      }
+      // Thẻ sáng rực rỡ khi rê chuột qua, hoàn toàn KHÔNG tạo hạt chấm theo chuột
     });
 
     card.addEventListener('mouseleave', () => {
