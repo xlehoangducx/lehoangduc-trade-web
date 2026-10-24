@@ -320,7 +320,7 @@
   <canvas id="threeWorldCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
   
   <!-- Interactive Trader Candlestick Trail Canvas (Meng To pointer-trail-emitter) -->
-  <canvas id="candleCursorCanvas" style="display:none;"></canvas>
+  <canvas id="candleCursorCanvas" class="fixed inset-0 pointer-events-none" style="position:fixed; inset:0; pointer-events:none; z-index:99999;"></canvas>
   
   <div class="fixed inset-0 bg-radial-vignette pointer-events-none z-0"></div>
 
@@ -1371,11 +1371,11 @@
 
   <!-- Meng To Three.js 3D World & Distance Emitter Modules -->
   <script src="js/three-world.js"></script>
-  <script src="js/pointer-trail.js?v=20261024_1400"></script>
+  <script src="js/pointer-trail.js?v=20261024_1435"></script>
   <script src="js/matrix-rain.js"></script>
 
   <!-- App JavaScript Modules -->
-  <script type="module" src="js/dashboard_v2.js?v=20261024_1430"></script>
+  <script type="module" src="js/dashboard_v2.js?v=20261024_1435"></script>
   <script>
     lucide.createIcons();
   </script>
