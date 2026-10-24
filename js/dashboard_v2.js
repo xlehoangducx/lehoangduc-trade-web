@@ -3026,36 +3026,48 @@ function renderRadarLeaderboard(rawCandidates) {
         : "bg-rose-500/20 text-rose-400 border-rose-500/40";
       const dirText = isLong ? "LONG" : "SHORT";
 
-      // 1. Phân loại hiệu ứng Hoán Đổi Vị Trí 3D (Rank Swap & 3D Orbital Trajectory)
+      // 1. Phân loại hiệu ứng Hoán Đổi Vị Trí Game-like & Quỹ đạo bay 3D
       const prevRank = (window._prevRadarRankMap && window._prevRadarRankMap[c.symbol]) ? window._prevRadarRankMap[c.symbol] : null;
       const currRank = idx + 1;
       
-      let movementClass = (idx < 2) ? 'radar-anim-3d-enter-left' : 'radar-anim-3d-enter-right';
+      let movementClass = (idx < 2) ? 'radar-anim-warp-left' : 'radar-anim-warp-right';
       let rankChangeBadge = '';
-      let isRankSwapped = false;
+      let isSnapDocking = false;
       
       if (prevRank) {
-        if (currRank < prevRank) {
-          // Bứt phá ngoạn mục soán ngôi lên hạng cao hơn (3D Z-Pop Ascend)!
+        if (prevRank >= 3 && currRank <= 2) {
+          // BỨT PHÁ XUYÊN BIÊN: Từ Cột Phải (Top 3/4) bay vút sang Cột Trái (Top 1/2)!
+          movementClass = 'radar-anim-cross-ascend';
+          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-0.5 animate-pulse shadow-sm">⚡ +${prevRank - currRank} Vượt Top</span>`;
+          isSnapDocking = true;
+        } else if (prevRank <= 2 && currRank >= 3) {
+          // TỤT HẠNG XUYÊN BIÊN: Từ Cột Trái (Top 1/2) rơi lướt sang Cột Phải (Top 3/4)!
+          movementClass = 'radar-anim-cross-descend';
+          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-rose-500/15 text-rose-300 border border-rose-500/30 flex items-center gap-0.5">🔻 Top ${currRank}</span>`;
+          isSnapDocking = true;
+        } else if (prevRank > currRank) {
+          // THĂNG HẠNG CÙNG CỘT (Top 2 -> Top 1 hoặc Top 4 -> Top 3)
           movementClass = 'radar-anim-3d-ascend';
-          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-0.5 animate-pulse shadow-sm">🚀 +${prevRank - currRank} Bứt phá</span>`;
-          isRankSwapped = true;
-        } else if (currRank > prevRank) {
-          // Tụt hạng nhường chỗ (3D Z-Submerge Descend)
+          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-0.5 animate-pulse">▲ +${prevRank - currRank}</span>`;
+          isSnapDocking = true;
+        } else if (prevRank < currRank) {
+          // TỤT HẠNG CÙNG CỘT (Top 1 -> Top 2 hoặc Top 3 -> Top 4)
           movementClass = 'radar-anim-3d-descend';
-          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-rose-500/15 text-rose-300 border border-rose-500/30 flex items-center gap-0.5">🔻 -${currRank - prevRank} Hạng</span>`;
-          isRankSwapped = true;
+          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-rose-500/15 text-rose-300 border border-rose-500/30 flex items-center gap-0.5">▼ Top ${currRank}</span>`;
+          isSnapDocking = true;
         } else {
-          // Giữ vững ngôi vị
-          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-white/[0.06] text-gray-400 border border-white/10 flex items-center gap-0.5">⚓ Giữ Top</span>`;
+          // GIỮ NGUYÊN VỊ TRÍ
+          movementClass = '';
+          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-white/[0.06] text-gray-400 border border-white/10 flex items-center gap-0.5">⚓ Top ${currRank}</span>`;
         }
       } else {
-        // Tân binh mới lọt vào Top 4 Ra-đa
-        rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-0.5 shadow-sm">⚡ Mới vào</span>`;
-        isRankSwapped = true;
+        // TÂN BINH MỚI LỌT VÀO TOP 4
+        movementClass = (idx < 2) ? 'radar-anim-warp-left' : 'radar-anim-warp-right';
+        rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-0.5 shadow-sm">⚡ Tân binh</span>`;
+        isSnapDocking = true;
       }
 
-      // 2. Thiết lập 4 ĐẶC TRƯNG HÌNH ẢNH HOÀN TOÀN KHÁC BIỆT CHO 4 THẺ
+      // 2. Thiết lập 4 ĐẶC TRƯNG HÌNH ẢNH HOÀN TOÀN KHÁC BIỆT (CHỈ ĐẶT TÊN TOP 1, TOP 2, TOP 3, TOP 4)
       let rankThemeClass = '';
       let rankBadge = '';
       let rankBg = '';
@@ -3066,11 +3078,12 @@ function renderRadarLeaderboard(rawCandidates) {
       let symColor = '';
       let sweepBeam = '';
       let glowColorRgba = '';
+      let sparkColorHex = '';
 
       if (idx === 0) {
-        // 🥇 TOP 1: QUÁN QUÂN RA-ĐA LƯỢNG TỬ (GOLD TITAN)
+        // 🥇 TOP 1 (GOLD CYBER)
         rankThemeClass = 'radar-card-top-1';
-        rankBadge = '🥇 #1 QUÁN QUÂN';
+        rankBadge = '🥇 TOP 1';
         rankBg = 'bg-gradient-to-br from-amber-500/[0.18] via-yellow-500/[0.06] to-[#070b14]';
         rankBorder = 'border-amber-400/65 shadow-amber-400/20';
         glowBar = 'from-amber-400 via-yellow-400 to-amber-200';
@@ -3078,11 +3091,12 @@ function renderRadarLeaderboard(rawCandidates) {
         textRankColor = 'text-amber-400';
         symColor = 'text-amber-300 font-black tracking-wider drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.95), transparent);';
-        glowColorRgba = 'rgba(251, 191, 36, 0.7)';
+        glowColorRgba = 'rgba(251, 191, 36, 0.8)';
+        sparkColorHex = '#fbbf24';
       } else if (idx === 1) {
-        // 🥈 TOP 2: Á QUÂN CHIẾN THUẬT (TITANIUM CYAN LASER)
+        // 🥈 TOP 2 (CYAN LASER)
         rankThemeClass = 'radar-card-top-2';
-        rankBadge = '🥈 #2 Á QUÂN';
+        rankBadge = '🥈 TOP 2';
         rankBg = 'bg-gradient-to-br from-cyan-500/[0.14] via-sky-500/[0.05] to-[#070b14]';
         rankBorder = 'border-cyan-400/55 shadow-cyan-400/15';
         glowBar = 'from-cyan-400 via-sky-400 to-blue-300';
@@ -3090,11 +3104,12 @@ function renderRadarLeaderboard(rawCandidates) {
         textRankColor = 'text-cyan-400';
         symColor = 'text-cyan-200 font-black tracking-wide drop-shadow-[0_0_8px_rgba(56,189,248,0.35)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.90), transparent);';
-        glowColorRgba = 'rgba(56, 189, 248, 0.6)';
+        glowColorRgba = 'rgba(56, 189, 248, 0.7)';
+        sparkColorHex = '#38bdf8';
       } else if (idx === 2) {
-        // 🥉 TOP 3: RÌNH MỒI HỔ PHÁCH (WARM AMBER FLAME)
+        // 🥉 TOP 3 (WARM AMBER)
         rankThemeClass = 'radar-card-top-3';
-        rankBadge = '🥉 #3 HỔ PHÁCH';
+        rankBadge = '🥉 TOP 3';
         rankBg = 'bg-gradient-to-br from-orange-500/[0.12] via-amber-600/[0.04] to-[#070b14]';
         rankBorder = 'border-orange-500/50 shadow-orange-500/15';
         glowBar = 'from-orange-500 via-amber-500 to-yellow-500';
@@ -3102,11 +3117,12 @@ function renderRadarLeaderboard(rawCandidates) {
         textRankColor = 'text-orange-400';
         symColor = 'text-orange-200 font-bold drop-shadow-[0_0_6px_rgba(249,115,22,0.3)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.85), transparent);';
-        glowColorRgba = 'rgba(249, 115, 22, 0.55)';
+        glowColorRgba = 'rgba(249, 115, 22, 0.65)';
+        sparkColorHex = '#fb923c';
       } else {
-        // 🎖️ TOP 4: TRINH SÁT LỤC BẢO (STEALTH MATRIX EMERALD)
+        // 🎖️ TOP 4 (STEALTH EMERALD)
         rankThemeClass = 'radar-card-top-4';
-        rankBadge = '🎖️ #4 TRINH SÁT';
+        rankBadge = '🎖️ TOP 4';
         rankBg = 'bg-gradient-to-br from-emerald-500/[0.11] via-teal-600/[0.03] to-[#070b14]';
         rankBorder = 'border-emerald-500/45 shadow-emerald-500/15';
         glowBar = 'from-emerald-500 via-teal-400 to-cyan-400';
@@ -3114,7 +3130,8 @@ function renderRadarLeaderboard(rawCandidates) {
         textRankColor = 'text-emerald-400';
         symColor = 'text-emerald-200 font-bold drop-shadow-[0_0_6px_rgba(16,185,129,0.3)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.80), transparent);';
-        glowColorRgba = 'rgba(16, 185, 129, 0.5)';
+        glowColorRgba = 'rgba(16, 185, 129, 0.6)';
+        sparkColorHex = '#34d399';
       }
 
       // 3. Bậc thang thời gian chuyển động (Cascading Staggered Timing: 0.00s, 0.16s, 0.32s, 0.48s)
@@ -3129,14 +3146,14 @@ function renderRadarLeaderboard(rawCandidates) {
       const timeWindow = c.time_window_str || c.last_seen_str || "Gần đây";
       const bottleneckReason = c.bottleneck_reason || "Đang kiểm tra ngưỡng an toàn";
 
-      // Hậu hiệu ứng: Sóng xung kích & Tàn ảnh phát quang khi vừa bứt phá / đổi vị trí
-      const shockwaveHtml = isRankSwapped ? `<div class="radar-shockwave-ring" style="--rank-glow-color: ${glowColorRgba};"></div><div class="radar-ghost-afterglow" style="--rank-glow-color: ${glowColorRgba};"></div>` : '';
+      // Hậu hiệu ứng: Sóng xung kích nổ khóa snap khi ráp vào vị trí
+      const dockingBurstHtml = isSnapDocking ? `<div class="radar-docking-burst-fx" style="--rank-glow-color: ${glowColorRgba};"></div>` : '';
 
       return `
-        <div class="radar-holo-card ${rankThemeClass} ${movementClass} p-3 sm:p-3.5 rounded-2xl ${rankBg} border ${rankBorder} shadow-2xl relative select-none group cursor-pointer" style="animation-delay: ${delaySec}s; --rank-glow-color: ${glowColorRgba};">
+        <div class="radar-holo-card ${rankThemeClass} ${movementClass} p-3 sm:p-3.5 rounded-2xl ${rankBg} border ${rankBorder} shadow-2xl relative select-none group cursor-pointer" data-spark-color="${sparkColorHex}" style="animation-delay: ${delaySec}s; --rank-glow-color: ${glowColorRgba};">
           <!-- Hậu hiệu ứng 3D: Vệt phản quang tương tác chuột (Holographic Glare) -->
           <div class="radar-holo-glare"></div>
-          ${shockwaveHtml}
+          ${dockingBurstHtml}
           <div class="radar-laser-line" style="${sweepBeam}"></div>
           <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${glowBar}"></div>
 
@@ -3223,7 +3240,7 @@ function renderRadarLeaderboard(rawCandidates) {
     });
     window._prevRadarRankMap = newRankMap;
 
-    // Gắn bộ điều khiển tương tác 3D Parallax Tilt (Nghiêng 3D & Phản quang Hologram khi rê chuột)
+    // Gắn bộ điều khiển tương tác 3D Parallax Tilt & Hạt Năng Lượng theo chuột
     attachRadar3DInteraction();
 
     if (window.lucide) {
@@ -3261,6 +3278,61 @@ function attachRadar3DInteraction() {
       card.style.setProperty('--mouse-x', `${x.toFixed(1)}px`);
       card.style.setProperty('--mouse-y', `${y.toFixed(1)}px`);
       card.style.setProperty('--glare-opacity', '1');
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0) scale3d(1, 1, 1)`;
+      card.style.setProperty('--glare-opacity', '0');
+    });
+  });
+}
+
+
+// ===== BỘ ĐIỀU KHIỂN TƯƠNG TÁC 3D PARALLAX TILT & HẠT NĂNG LƯỢNG THEO CHUỘT =====
+function attachRadar3DInteraction() {
+  const cards = document.querySelectorAll('.radar-holo-card');
+  cards.forEach(card => {
+    if (card._tiltAttached) return;
+    card._tiltAttached = true;
+    let lastSparkTime = 0;
+
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      // Góc nghiêng 3D tối đa +-10 độ
+      const rotateX = ((y - centerY) / centerY) * -9;
+      const rotateY = ((x - centerX) / centerX) * 11;
+
+      card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(16px) scale3d(1.025, 1.025, 1.025)`;
+      card.style.setProperty('--mouse-x', `${x.toFixed(1)}px`);
+      card.style.setProperty('--mouse-y', `${y.toFixed(1)}px`);
+      card.style.setProperty('--glare-opacity', '1');
+
+      // Tỏa chùm hạt năng lượng phát quang theo đường di chuột (Mouse Particle Trail)
+      const now = performance.now();
+      if (now - lastSparkTime > 40) { // Mỗi 40ms tạo 1 hạt, mượt mà và không gây nặng máy
+        lastSparkTime = now;
+        const spark = document.createElement('div');
+        spark.className = 'radar-cursor-spark';
+        const color = card.getAttribute('data-spark-color') || '#fbbf24';
+        spark.style.left = `${x}px`;
+        spark.style.top = `${y}px`;
+        spark.style.backgroundColor = color;
+        spark.style.boxShadow = `0 0 8px ${color}, 0 0 16px ${color}`;
+        
+        // Quỹ đạo tản ngẫu nhiên
+        const dx = (Math.random() - 0.5) * 35;
+        const dy = (Math.random() - 0.5) * 35 - 12;
+        spark.style.setProperty('--dx', `${dx.toFixed(1)}px`);
+        spark.style.setProperty('--dy', `${dy.toFixed(1)}px`);
+        
+        card.appendChild(spark);
+        setTimeout(() => { if (spark && spark.parentNode) spark.remove(); }, 650);
+      }
     });
 
     card.addEventListener('mouseleave', () => {
