@@ -3026,29 +3026,33 @@ function renderRadarLeaderboard(rawCandidates) {
         : "bg-rose-500/20 text-rose-400 border-rose-500/40";
       const dirText = isLong ? "LONG" : "SHORT";
 
-      // 1. Phân loại hiệu ứng Hoán Đổi Vị Trí (Rank Swap & Movement Dynamics)
+      // 1. Phân loại hiệu ứng Hoán Đổi Vị Trí 3D (Rank Swap & 3D Orbital Trajectory)
       const prevRank = (window._prevRadarRankMap && window._prevRadarRankMap[c.symbol]) ? window._prevRadarRankMap[c.symbol] : null;
       const currRank = idx + 1;
       
-      let movementClass = (idx < 2) ? 'radar-anim-enter-left' : 'radar-anim-enter-right';
+      let movementClass = (idx < 2) ? 'radar-anim-3d-enter-left' : 'radar-anim-3d-enter-right';
       let rankChangeBadge = '';
+      let isRankSwapped = false;
       
       if (prevRank) {
         if (currRank < prevRank) {
-          // Bứt phá ngoạn mục soán ngôi lên hạng cao hơn!
-          movementClass = 'radar-anim-ascend';
-          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-0.5 animate-pulse">🚀 +${prevRank - currRank} Bứt phá</span>`;
+          // Bứt phá ngoạn mục soán ngôi lên hạng cao hơn (3D Z-Pop Ascend)!
+          movementClass = 'radar-anim-3d-ascend';
+          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-0.5 animate-pulse shadow-sm">🚀 +${prevRank - currRank} Bứt phá</span>`;
+          isRankSwapped = true;
         } else if (currRank > prevRank) {
-          // Tụt hạng nhường chỗ
-          movementClass = 'radar-anim-descend';
+          // Tụt hạng nhường chỗ (3D Z-Submerge Descend)
+          movementClass = 'radar-anim-3d-descend';
           rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-rose-500/15 text-rose-300 border border-rose-500/30 flex items-center gap-0.5">🔻 -${currRank - prevRank} Hạng</span>`;
+          isRankSwapped = true;
         } else {
           // Giữ vững ngôi vị
           rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-white/[0.06] text-gray-400 border border-white/10 flex items-center gap-0.5">⚓ Giữ Top</span>`;
         }
       } else {
         // Tân binh mới lọt vào Top 4 Ra-đa
-        rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-0.5">⚡ Mới vào</span>`;
+        rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-0.5 shadow-sm">⚡ Mới vào</span>`;
+        isRankSwapped = true;
       }
 
       // 2. Thiết lập 4 ĐẶC TRƯNG HÌNH ẢNH HOÀN TOÀN KHÁC BIỆT CHO 4 THẺ
@@ -3061,51 +3065,56 @@ function renderRadarLeaderboard(rawCandidates) {
       let textRankColor = '';
       let symColor = '';
       let sweepBeam = '';
+      let glowColorRgba = '';
 
       if (idx === 0) {
         // 🥇 TOP 1: QUÁN QUÂN RA-ĐA LƯỢNG TỬ (GOLD TITAN)
         rankThemeClass = 'radar-card-top-1';
         rankBadge = '🥇 #1 QUÁN QUÂN';
-        rankBg = 'bg-gradient-to-br from-amber-500/[0.16] via-yellow-500/[0.06] to-[#080d1a]';
-        rankBorder = 'border-amber-400/60 shadow-amber-400/20';
+        rankBg = 'bg-gradient-to-br from-amber-500/[0.18] via-yellow-500/[0.06] to-[#070b14]';
+        rankBorder = 'border-amber-400/65 shadow-amber-400/20';
         glowBar = 'from-amber-400 via-yellow-400 to-amber-200';
         barGradient = 'from-amber-500 via-yellow-400 to-amber-200';
         textRankColor = 'text-amber-400';
-        symColor = 'text-amber-300';
+        symColor = 'text-amber-300 font-black tracking-wider drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.95), transparent);';
+        glowColorRgba = 'rgba(251, 191, 36, 0.7)';
       } else if (idx === 1) {
         // 🥈 TOP 2: Á QUÂN CHIẾN THUẬT (TITANIUM CYAN LASER)
         rankThemeClass = 'radar-card-top-2';
         rankBadge = '🥈 #2 Á QUÂN';
-        rankBg = 'bg-gradient-to-br from-cyan-500/[0.13] via-sky-500/[0.05] to-[#080d1a]';
-        rankBorder = 'border-cyan-400/50 shadow-cyan-400/15';
+        rankBg = 'bg-gradient-to-br from-cyan-500/[0.14] via-sky-500/[0.05] to-[#070b14]';
+        rankBorder = 'border-cyan-400/55 shadow-cyan-400/15';
         glowBar = 'from-cyan-400 via-sky-400 to-blue-300';
         barGradient = 'from-sky-500 via-cyan-400 to-teal-300';
         textRankColor = 'text-cyan-400';
-        symColor = 'text-cyan-200';
+        symColor = 'text-cyan-200 font-black tracking-wide drop-shadow-[0_0_8px_rgba(56,189,248,0.35)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.90), transparent);';
+        glowColorRgba = 'rgba(56, 189, 248, 0.6)';
       } else if (idx === 2) {
         // 🥉 TOP 3: RÌNH MỒI HỔ PHÁCH (WARM AMBER FLAME)
         rankThemeClass = 'radar-card-top-3';
         rankBadge = '🥉 #3 HỔ PHÁCH';
-        rankBg = 'bg-gradient-to-br from-orange-500/[0.11] via-amber-600/[0.04] to-[#080d1a]';
-        rankBorder = 'border-orange-500/45 shadow-orange-500/15';
+        rankBg = 'bg-gradient-to-br from-orange-500/[0.12] via-amber-600/[0.04] to-[#070b14]';
+        rankBorder = 'border-orange-500/50 shadow-orange-500/15';
         glowBar = 'from-orange-500 via-amber-500 to-yellow-500';
         barGradient = 'from-orange-600 via-amber-500 to-yellow-400';
         textRankColor = 'text-orange-400';
-        symColor = 'text-orange-200';
+        symColor = 'text-orange-200 font-bold drop-shadow-[0_0_6px_rgba(249,115,22,0.3)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.85), transparent);';
+        glowColorRgba = 'rgba(249, 115, 22, 0.55)';
       } else {
         // 🎖️ TOP 4: TRINH SÁT LỤC BẢO (STEALTH MATRIX EMERALD)
         rankThemeClass = 'radar-card-top-4';
         rankBadge = '🎖️ #4 TRINH SÁT';
-        rankBg = 'bg-gradient-to-br from-emerald-500/[0.10] via-teal-600/[0.03] to-[#080d1a]';
-        rankBorder = 'border-emerald-500/40 shadow-emerald-500/15';
+        rankBg = 'bg-gradient-to-br from-emerald-500/[0.11] via-teal-600/[0.03] to-[#070b14]';
+        rankBorder = 'border-emerald-500/45 shadow-emerald-500/15';
         glowBar = 'from-emerald-500 via-teal-400 to-cyan-400';
         barGradient = 'from-emerald-600 via-teal-400 to-emerald-300';
         textRankColor = 'text-emerald-400';
-        symColor = 'text-emerald-200';
+        symColor = 'text-emerald-200 font-bold drop-shadow-[0_0_6px_rgba(16,185,129,0.3)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.80), transparent);';
+        glowColorRgba = 'rgba(16, 185, 129, 0.5)';
       }
 
       // 3. Bậc thang thời gian chuyển động (Cascading Staggered Timing: 0.00s, 0.16s, 0.32s, 0.48s)
@@ -3120,17 +3129,23 @@ function renderRadarLeaderboard(rawCandidates) {
       const timeWindow = c.time_window_str || c.last_seen_str || "Gần đây";
       const bottleneckReason = c.bottleneck_reason || "Đang kiểm tra ngưỡng an toàn";
 
+      // Hậu hiệu ứng: Sóng xung kích & Tàn ảnh phát quang khi vừa bứt phá / đổi vị trí
+      const shockwaveHtml = isRankSwapped ? `<div class="radar-shockwave-ring" style="--rank-glow-color: ${glowColorRgba};"></div><div class="radar-ghost-afterglow" style="--rank-glow-color: ${glowColorRgba};"></div>` : '';
+
       return `
-        <div class="radar-card-container ${rankThemeClass} ${movementClass} p-3 sm:p-3.5 rounded-2xl ${rankBg} border ${rankBorder} transition-all duration-400 shadow-xl relative overflow-hidden group" style="animation-delay: ${delaySec}s;">
+        <div class="radar-holo-card ${rankThemeClass} ${movementClass} p-3 sm:p-3.5 rounded-2xl ${rankBg} border ${rankBorder} shadow-2xl relative select-none group cursor-pointer" style="animation-delay: ${delaySec}s; --rank-glow-color: ${glowColorRgba};">
+          <!-- Hậu hiệu ứng 3D: Vệt phản quang tương tác chuột (Holographic Glare) -->
+          <div class="radar-holo-glare"></div>
+          ${shockwaveHtml}
           <div class="radar-laser-line" style="${sweepBeam}"></div>
           <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${glowBar}"></div>
 
-          <div class="flex items-center justify-between gap-1.5 mb-2">
+          <div class="flex items-center justify-between gap-1.5 mb-2 relative z-10">
             <div class="flex items-center gap-1.5 flex-wrap">
               <span class="px-2 py-0.5 rounded-md text-xs font-black mono-font bg-white/[0.08] ${textRankColor} border border-white/10 shadow-sm">
                 ${rankBadge}
               </span>
-              <span class="text-xs sm:text-sm font-black ${symColor} mono-font tracking-wider">
+              <span class="text-xs sm:text-sm mono-font ${symColor}">
                 ${c.symbol}
               </span>
               <span class="px-1.5 py-0.5 rounded text-[10px] font-black mono-font border ${dirClass}">
@@ -3143,12 +3158,12 @@ function renderRadarLeaderboard(rawCandidates) {
             </div>
           </div>
 
-          <div class="flex items-center justify-between text-[10px] text-gray-400 mono-font mb-2">
+          <div class="flex items-center justify-between text-[10px] text-gray-400 mono-font mb-2 relative z-10">
             <span>Thời điểm: <strong class="text-gray-300">${timeWindow}</strong></span>
             <span>Cập nhật: <strong class="text-gray-300">${c.last_seen_str || '--'}</strong></span>
           </div>
 
-          <div class="mb-2">
+          <div class="mb-2 relative z-10">
             <div class="flex items-center justify-between text-[10px] sm:text-[11px] mono-font mb-1">
               <span class="text-gray-300 font-semibold flex items-center gap-1">
                 <i data-lucide="crosshair" class="w-3.5 h-3.5 ${textRankColor}"></i>
@@ -3161,22 +3176,22 @@ function renderRadarLeaderboard(rawCandidates) {
             </div>
           </div>
 
-          <div class="grid grid-cols-3 gap-1 mb-2 text-[10px] mono-font text-center">
-            <div class="p-1 rounded-lg bg-black/50 border border-white/5">
+          <div class="grid grid-cols-3 gap-1 mb-2 text-[10px] mono-font text-center relative z-10">
+            <div class="p-1 rounded-lg bg-black/60 border border-white/5">
               <div class="text-[9px] text-gray-400">AI Ensemble</div>
               <div class="font-bold text-white text-[10px] mt-0.5 truncate">${c.side === 'LONG' || c.side === 'BUY' ? 'BUY' : 'SELL'} ${c.confidence_pct || '--'}%</div>
             </div>
-            <div class="p-1 rounded-lg bg-black/50 border border-white/5">
+            <div class="p-1 rounded-lg bg-black/60 border border-white/5">
               <div class="text-[9px] text-gray-400">Đồng Thuận</div>
               <div class="font-bold text-white text-[10px] mt-0.5 truncate" title="${c.strategies_agreed || '--'}">${c.strategies_agreed || '2/2'}</div>
             </div>
-            <div class="p-1 rounded-lg bg-black/50 border border-white/5">
+            <div class="p-1 rounded-lg bg-black/60 border border-white/5">
               <div class="text-[9px] text-gray-400">Đòn Bẩy</div>
               <div class="font-bold ${textRankColor} text-[10px] mt-0.5">${c.dynamic_leverage || '5x'}</div>
             </div>
           </div>
 
-          <div class="p-2 rounded-xl bg-amber-500/[0.07] border border-amber-500/20 flex items-start gap-1.5">
+          <div class="p-2 rounded-xl bg-amber-500/[0.07] border border-amber-500/20 flex items-start gap-1.5 relative z-10">
             <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5"></i>
             <div class="text-[10px] sm:text-[11px] text-gray-300 leading-snug">
               <span class="text-amber-400 font-bold">Lý do chặn:</span>
@@ -3208,6 +3223,9 @@ function renderRadarLeaderboard(rawCandidates) {
     });
     window._prevRadarRankMap = newRankMap;
 
+    // Gắn bộ điều khiển tương tác 3D Parallax Tilt (Nghiêng 3D & Phản quang Hologram khi rê chuột)
+    attachRadar3DInteraction();
+
     if (window.lucide) {
       lucide.createIcons();
     }
@@ -3219,3 +3237,35 @@ function renderRadarLeaderboard(rawCandidates) {
 // Render ngay lập tức khi tải file (trạng thái rỗng an toàn, không coin ảo)
 renderRadarLeaderboard([]);
 
+
+
+// ===== BỘ ĐIỀU KHIỂN TƯƠNG TÁC 3D PARALLAX TILT & HOLOGRAM REFLECTION =====
+function attachRadar3DInteraction() {
+  const cards = document.querySelectorAll('.radar-holo-card');
+  cards.forEach(card => {
+    if (card._tiltAttached) return;
+    card._tiltAttached = true;
+
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      // Góc nghiêng 3D tối đa +-10 độ
+      const rotateX = ((y - centerY) / centerY) * -9;
+      const rotateY = ((x - centerX) / centerX) * 11;
+
+      card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(16px) scale3d(1.025, 1.025, 1.025)`;
+      card.style.setProperty('--mouse-x', `${x.toFixed(1)}px`);
+      card.style.setProperty('--mouse-y', `${y.toFixed(1)}px`);
+      card.style.setProperty('--glare-opacity', '1');
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0) scale3d(1, 1, 1)`;
+      card.style.setProperty('--glare-opacity', '0');
+    });
+  });
+}
