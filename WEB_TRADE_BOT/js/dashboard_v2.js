@@ -3038,32 +3038,32 @@ function renderRadarLeaderboard(rawCandidates) {
         if (prevRank >= 3 && currRank <= 2) {
           // BỨT PHÁ XUYÊN BIÊN: Từ Cột Phải (Top 3/4) bay vút sang Cột Trái (Top 1/2)!
           movementClass = 'radar-anim-cross-ascend';
-          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-0.5 animate-pulse shadow-sm">⚡ +${prevRank - currRank} Vượt Top</span>`;
+          rankChangeBadge = "";
           isSnapDocking = true;
         } else if (prevRank <= 2 && currRank >= 3) {
           // TỤT HẠNG XUYÊN BIÊN: Từ Cột Trái (Top 1/2) rơi lướt sang Cột Phải (Top 3/4)!
           movementClass = 'radar-anim-cross-descend';
-          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-rose-500/15 text-rose-300 border border-rose-500/30 flex items-center gap-0.5">🔻 Top ${currRank}</span>`;
+          rankChangeBadge = "";
           isSnapDocking = true;
         } else if (prevRank > currRank) {
           // THĂNG HẠNG CÙNG CỘT (Top 2 -> Top 1 hoặc Top 4 -> Top 3)
           movementClass = 'radar-anim-3d-ascend';
-          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-0.5 animate-pulse">▲ +${prevRank - currRank}</span>`;
+          rankChangeBadge = "";
           isSnapDocking = true;
         } else if (prevRank < currRank) {
           // TỤT HẠNG CÙNG CỘT (Top 1 -> Top 2 hoặc Top 3 -> Top 4)
           movementClass = 'radar-anim-3d-descend';
-          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-rose-500/15 text-rose-300 border border-rose-500/30 flex items-center gap-0.5">▼ Top ${currRank}</span>`;
+          rankChangeBadge = "";
           isSnapDocking = true;
         } else {
           // GIỮ NGUYÊN VỊ TRÍ
           movementClass = '';
-          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-white/[0.06] text-gray-400 border border-white/10 flex items-center gap-0.5">⚓ Top ${currRank}</span>`;
+          rankChangeBadge = "";
         }
       } else {
         // TÂN BINH MỚI LỌT VÀO TOP 4
         movementClass = (idx < 2) ? 'radar-anim-warp-left' : 'radar-anim-warp-right';
-        rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-0.5 shadow-sm">⚡ Tân binh</span>`;
+        rankChangeBadge = "";
         isSnapDocking = true;
       }
 
@@ -3141,7 +3141,7 @@ function renderRadarLeaderboard(rawCandidates) {
         ? Number(c.hit_count)
         : 1;
 
-      const hitTag = `<span class="px-2 py-0.5 rounded-md text-[10px] font-black mono-font bg-amber-400/15 text-amber-300 border border-amber-400/35 flex items-center gap-1 shrink-0 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>🔥 Xém vào ${hitCount} lần</span>`;
+      const hitTag = "";
 
       const timeWindow = c.time_window_str || c.last_seen_str || "Gần đây";
       const bottleneckReason = c.bottleneck_reason || "Đang kiểm tra ngưỡng an toàn";
@@ -3150,7 +3150,7 @@ function renderRadarLeaderboard(rawCandidates) {
       const dockingBurstHtml = isSnapDocking ? `<div class="radar-docking-burst-fx" style="--rank-glow-color: ${glowColorRgba};"></div>` : '';
 
       return `
-        <div class="radar-holo-card ${rankThemeClass} ${movementClass} p-3 sm:p-3.5 rounded-2xl ${rankBg} border ${rankBorder} shadow-2xl relative select-none group cursor-pointer" data-spark-color="${sparkColorHex}" style="animation-delay: ${delaySec}s; --rank-glow-color: ${glowColorRgba};">
+        <div class="radar-holo-card ${rankThemeClass} ${movementClass} p-3 sm:p-3.5 rounded-2xl ${rankBg} border ${rankBorder} shadow-2xl relative select-none group cursor-pointer" data-rank="${idx + 1}" data-spark-color="${sparkColorHex}" style="animation-delay: ${delaySec}s; --rank-glow-color: ${glowColorRgba};">
           <!-- Hậu hiệu ứng 3D: Vệt phản quang tương tác chuột (Holographic Glare) -->
           <div class="radar-holo-glare"></div>
           ${dockingBurstHtml}
@@ -3168,10 +3168,10 @@ function renderRadarLeaderboard(rawCandidates) {
               <span class="px-1.5 py-0.5 rounded text-[10px] font-black mono-font border ${dirClass}">
                 ${dirText}
               </span>
-              ${rankChangeBadge}
+              
             </div>
             <div class="shrink-0">
-              ${hitTag}
+              
             </div>
           </div>
 
@@ -3256,7 +3256,7 @@ renderRadarLeaderboard([]);
 
 
 
-// ===== BỘ ĐIỀU KHIỂN TƯƠNG TÁC 3D PARALLAX TILT & HẠT NĂNG LƯỢNG THEO CHUỘT =====
+// ===== BỘ ĐIỀU KHIỂN TƯƠNG TÁC 3D PARALLAX TILT & HẠT NĂNG LƯỢNG ĐA ĐẲNG CẤP =====
 function attachRadar3DInteraction() {
   const cards = document.querySelectorAll('.radar-holo-card');
   cards.forEach(card => {
@@ -3280,26 +3280,79 @@ function attachRadar3DInteraction() {
       card.style.setProperty('--mouse-y', `${y.toFixed(1)}px`);
       card.style.setProperty('--glare-opacity', '1');
 
-      // Tỏa chùm hạt năng lượng phát quang theo đường di chuột (Mouse Particle Trail)
+      // Tỏa chùm hạt năng lượng phát quang theo đường di chuột (Đa dạng 4 đẳng cấp)
       const now = performance.now();
-      if (now - lastSparkTime > 40) { // Mỗi 40ms tạo 1 hạt, mượt mà và không gây nặng máy
+      if (now - lastSparkTime > 35) {
         lastSparkTime = now;
         const spark = document.createElement('div');
-        spark.className = 'radar-cursor-spark';
-        const color = card.getAttribute('data-spark-color') || '#fbbf24';
+        spark.className = 'radar-spark-item';
         spark.style.left = `${x}px`;
         spark.style.top = `${y}px`;
-        spark.style.backgroundColor = color;
-        spark.style.boxShadow = `0 0 8px ${color}, 0 0 16px ${color}`;
-        
-        // Quỹ đạo tản ngẫu nhiên
-        const dx = (Math.random() - 0.5) * 35;
-        const dy = (Math.random() - 0.5) * 35 - 12;
+
+        const dx = (Math.random() - 0.5) * 44;
+        const dy = -(Math.random() * 32 + 12);
+        const rot = (Math.random() - 0.5) * 40;
         spark.style.setProperty('--dx', `${dx.toFixed(1)}px`);
         spark.style.setProperty('--dy', `${dy.toFixed(1)}px`);
-        
+        spark.style.setProperty('--end-rot', `${rot.toFixed(1)}deg`);
+
+        const rank = card.getAttribute('data-rank') || (card.classList.contains('radar-card-top-1') ? '1' : (card.classList.contains('radar-card-top-2') ? '2' : (card.classList.contains('radar-card-top-3') ? '3' : '4')));
+
+        if (rank === '1') {
+          // 🥇 TOP 1: Golden BTC, Nến Xanh/Đỏ mini, Dollar, Sao vàng
+          spark.style.setProperty('--spark-glow', '#fbbf24');
+          const r = Math.random();
+          if (r < 0.28) {
+            spark.innerHTML = '₿';
+            spark.style.color = '#ffd700';
+            spark.style.fontSize = '18px';
+            spark.style.fontWeight = '900';
+            spark.style.textShadow = '0 0 10px #fbbf24, 0 0 20px #f59e0b';
+          } else if (r < 0.50) {
+            spark.innerHTML = '<div class="radar-mini-candle green"><div class="wick"></div><div class="candle-body"></div></div>';
+          } else if (r < 0.70) {
+            spark.innerHTML = '<div class="radar-mini-candle red"><div class="wick"></div><div class="candle-body"></div></div>';
+          } else if (r < 0.86) {
+            spark.innerHTML = '$';
+            spark.style.color = '#fef08a';
+            spark.style.fontSize = '16px';
+            spark.style.fontWeight = '900';
+            spark.style.textShadow = '0 0 10px #eab308, 0 0 18px #ca8a04';
+          } else {
+            spark.innerHTML = '✨';
+            spark.style.fontSize = '15px';
+            spark.style.filter = 'drop-shadow(0 0 8px #fbbf24)';
+          }
+        } else if (rank === '2') {
+          // 🥈 TOP 2: Cyan Plasma Crystals & Laser Bolts
+          spark.style.setProperty('--spark-glow', '#00e5ff');
+          const icons = ['💠', '⚡', '✦', '🔷', '❄️'];
+          spark.innerHTML = icons[Math.floor(Math.random() * icons.length)];
+          spark.style.color = '#00e5ff';
+          spark.style.fontSize = '15px';
+          spark.style.filter = 'drop-shadow(0 0 10px #00e5ff) drop-shadow(0 0 20px #0284c7)';
+        } else if (rank === '3') {
+          // 🥉 TOP 3: Flame Amber Phoenix & Hot Embers
+          spark.style.setProperty('--spark-glow', '#ea580c');
+          const icons = ['🔥', '💥', '✴️', '🟠', '✨'];
+          spark.innerHTML = icons[Math.floor(Math.random() * icons.length)];
+          spark.style.fontSize = '15px';
+          spark.style.filter = 'drop-shadow(0 0 10px #f97316) drop-shadow(0 0 20px #dc2626)';
+        } else {
+          // 🎖️ TOP 4: Emerald Matrix Binary Streams & Quantum Shards
+          spark.style.setProperty('--spark-glow', '#00ff88');
+          const icons = ['1', '0', '⟠', '❇️', '💎'];
+          const chosen = icons[Math.floor(Math.random() * icons.length)];
+          spark.innerHTML = chosen;
+          spark.style.color = '#00ff88';
+          spark.style.fontSize = (chosen === '1' || chosen === '0') ? '17px' : '14px';
+          spark.style.fontWeight = '900';
+          spark.style.fontFamily = '"JetBrains Mono", monospace';
+          spark.style.textShadow = '0 0 8px #00ff88, 0 0 16px #059669';
+        }
+
         card.appendChild(spark);
-        setTimeout(() => { if (spark && spark.parentNode) spark.remove(); }, 650);
+        setTimeout(() => { if (spark && spark.parentNode) spark.remove(); }, 850);
       }
     });
 

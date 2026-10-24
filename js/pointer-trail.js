@@ -1,6 +1,5 @@
 // ============================================================================
-// Distance-Based Pointer Trail Emitter
-// Implemented directly from Meng To's `pointer-trail-emitter` skill
+// Distance-Based Pointer Trail Emitter (Enhanced: Vivid Candles, BTC & Gold Sparks)
 // ============================================================================
 
 (function () {
@@ -11,7 +10,6 @@
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  // Reduced motion preference
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (prefersReduced) return;
 
@@ -23,8 +21,7 @@
     height = canvas.height = window.innerHeight;
   });
 
-  // Fixed Ring-Buffer Pool (Zero GC allocation during high-speed movement)
-  const N = 120;
+  const N = 180;
   const pool = new Array(N);
   for (let i = 0; i < N; i++) {
     pool[i] = {
@@ -34,7 +31,7 @@
       vx: 0,
       vy: 0,
       life: 0,
-      maxLife: 45,
+      maxLife: 55,
       type: 'ember', // 'candle_green', 'candle_red', 'symbol_usd', 'symbol_btc', 'ember'
       size: 1,
       wickTop: 4,
@@ -44,65 +41,60 @@
     };
   }
 
-  // Emitter State
   const E = {
     x: -9999,
     y: -9999,
-    lx: -9999, // Last position
+    lx: -9999,
     ly: -9999,
-    acc: 0,    // Accumulated distance
-    slot: 0,   // Ring buffer cursor
+    acc: 0,
+    slot: 0,
     lastTime: performance.now(),
     idleTimer: 0,
     hasMoved: false
   };
 
-  const STEP = 14; // Distance in pixels between consecutive motes (Uniform density at any speed!)
+  const STEP = 10; // Pixels between motes for dense, fluid trail
 
   function spawnMote(x, y, vx, vy) {
     const i = E.slot;
-    E.slot = (i + 1) % N; // Take slot before advancing
+    E.slot = (i + 1) % N;
 
     const m = pool[i];
     m.active = true;
-    m.x = x + (Math.random() - 0.5) * 4;
-    m.y = y + (Math.random() - 0.5) * 4;
+    m.x = x + (Math.random() - 0.5) * 5;
+    m.y = y + (Math.random() - 0.5) * 5;
 
-    // Coasting with gentle drift
-    m.vx = vx * 0.22 + (Math.random() - 0.5) * 1.2;
-    m.vy = vy * 0.22 - (0.4 + Math.random() * 0.8);
+    m.vx = vx * 0.22 + (Math.random() - 0.5) * 1.4;
+    m.vy = vy * 0.22 - (0.5 + Math.random() * 1.0);
 
     m.life = 0;
-    m.maxLife = 38 + Math.floor(Math.random() * 24);
+    m.maxLife = 45 + Math.floor(Math.random() * 30);
     m.rot = (Math.random() - 0.5) * 0.4;
     m.rotSpeed = (Math.random() - 0.5) * 0.04;
 
-    // Distribute mote types:
-    // 40% Mini Candlestick, 30% Currency Symbol, 30% Glowing Spark
     const r = Math.random();
-    if (r < 0.22) {
+    if (r < 0.25) {
       m.type = 'candle_green';
-      m.size = 5 + Math.random() * 4;
-      m.wickTop = 3 + Math.random() * 3;
-      m.wickBottom = 3 + Math.random() * 3;
-    } else if (r < 0.44) {
+      m.size = 7 + Math.random() * 4;
+      m.wickTop = 4 + Math.random() * 3;
+      m.wickBottom = 4 + Math.random() * 3;
+    } else if (r < 0.50) {
       m.type = 'candle_red';
-      m.size = 5 + Math.random() * 4;
-      m.wickTop = 3 + Math.random() * 3;
-      m.wickBottom = 3 + Math.random() * 3;
-    } else if (r < 0.60) {
-      m.type = 'symbol_usd';
-      m.size = 11 + Math.random() * 4;
-    } else if (r < 0.75) {
+      m.size = 7 + Math.random() * 4;
+      m.wickTop = 4 + Math.random() * 3;
+      m.wickBottom = 4 + Math.random() * 3;
+    } else if (r < 0.70) {
       m.type = 'symbol_btc';
-      m.size = 12 + Math.random() * 4;
+      m.size = 18 + Math.random() * 5;
+    } else if (r < 0.85) {
+      m.type = 'symbol_usd';
+      m.size = 16 + Math.random() * 4;
     } else {
       m.type = 'ember';
-      m.size = 2.5 + Math.random() * 3.5;
+      m.size = 4 + Math.random() * 4;
     }
   }
 
-  // Mouse Move Event Listener (Distance accumulator mechanism)
   window.addEventListener('mousemove', (e) => {
     const px = e.clientX;
     const py = e.clientY;
@@ -119,12 +111,11 @@
     const moved = Math.hypot(dx, dy);
 
     if (moved > 0.5) {
-      E.idleTimer = 0; // Reset idle breath
+      E.idleTimer = 0;
       E.acc += moved;
 
-      // Sub-segment placement: motes laid along the line segment travelled
       let guard = 0;
-      while (E.acc >= STEP && guard++ < 14) {
+      while (E.acc >= STEP && guard++ < 16) {
         E.acc -= STEP;
         const t = Math.min(1, (guard * STEP) / moved);
         const subX = E.lx + dx * t;
@@ -137,7 +128,6 @@
     }
   }, { passive: true });
 
-  // Touch Support
   window.addEventListener('touchmove', (e) => {
     if (e.touches.length > 0) {
       const t = e.touches[0];
@@ -152,19 +142,16 @@
     }
   }, { passive: true });
 
-  // Animation Loop with Idle Breath & Decaying Coast
   function update() {
     requestAnimationFrame(update);
 
     ctx.clearRect(0, 0, width, height);
 
-    // Idle Breath: If pointer is resting, occasionally emit a tiny gold wisp
     E.idleTimer++;
     if (E.hasMoved && E.idleTimer > 20 && E.idleTimer % 18 === 0) {
       spawnMote(E.lx, E.ly, (Math.random() - 0.5) * 1.5, -0.6);
     }
 
-    // Render & Physics Loop
     for (let i = 0; i < N; i++) {
       const m = pool[i];
       if (!m.active) continue;
@@ -175,10 +162,9 @@
         continue;
       }
 
-      // Physics update
       m.x += m.vx;
       m.y += m.vy;
-      m.vx *= 0.95; // Air drag
+      m.vx *= 0.95;
       m.vy *= 0.95;
       m.rot += m.rotSpeed;
 
@@ -190,56 +176,55 @@
       ctx.rotate(m.rot);
 
       if (m.type === 'candle_green') {
-        ctx.strokeStyle = `rgba(16, 185, 129, ${alpha * 0.8})`;
-        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = `rgba(0, 255, 136, ${alpha * 0.95})`;
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
         ctx.moveTo(0, -m.size - m.wickTop);
         ctx.lineTo(0, m.size + m.wickBottom);
         ctx.stroke();
 
-        ctx.fillStyle = `rgba(16, 185, 129, ${alpha})`;
-        ctx.shadowColor = '#10b981';
-        ctx.shadowBlur = 8;
-        ctx.fillRect(-2.5, -m.size, 5, m.size * 2);
+        ctx.fillStyle = `rgba(0, 255, 136, ${alpha})`;
+        ctx.shadowColor = '#00ff88';
+        ctx.shadowBlur = 12;
+        ctx.fillRect(-3.5, -m.size, 7, m.size * 2);
 
       } else if (m.type === 'candle_red') {
-        ctx.strokeStyle = `rgba(244, 63, 94, ${alpha * 0.8})`;
-        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = `rgba(255, 51, 102, ${alpha * 0.95})`;
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
         ctx.moveTo(0, -m.size - m.wickTop);
         ctx.lineTo(0, m.size + m.wickBottom);
         ctx.stroke();
 
-        ctx.fillStyle = `rgba(244, 63, 94, ${alpha})`;
-        ctx.shadowColor = '#f43f5e';
-        ctx.shadowBlur = 8;
-        ctx.fillRect(-2.5, -m.size, 5, m.size * 2);
-
-      } else if (m.type === 'symbol_usd') {
-        ctx.font = `900 ${m.size}px "JetBrains Mono", monospace`;
-        ctx.fillStyle = `rgba(245, 158, 11, ${alpha * 0.95})`;
-        ctx.shadowColor = '#f59e0b';
-        ctx.shadowBlur = 10;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('$', 0, 0);
+        ctx.fillStyle = `rgba(255, 51, 102, ${alpha})`;
+        ctx.shadowColor = '#ff3366';
+        ctx.shadowBlur = 12;
+        ctx.fillRect(-3.5, -m.size, 7, m.size * 2);
 
       } else if (m.type === 'symbol_btc') {
         ctx.font = `900 ${m.size}px "JetBrains Mono", monospace`;
-        ctx.fillStyle = `rgba(251, 191, 36, ${alpha * 0.95})`;
-        ctx.shadowColor = '#fbbf24';
-        ctx.shadowBlur = 10;
+        ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
+        ctx.shadowColor = '#ffd700';
+        ctx.shadowBlur = 16;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('₿', 0, 0);
 
+      } else if (m.type === 'symbol_usd') {
+        ctx.font = `900 ${m.size}px "JetBrains Mono", monospace`;
+        ctx.fillStyle = `rgba(255, 204, 0, ${alpha})`;
+        ctx.shadowColor = '#ffaa00';
+        ctx.shadowBlur = 14;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('$', 0, 0);
+
       } else {
-        // Glowing Ember Spark
         ctx.beginPath();
-        ctx.arc(0, 0, m.size * (1 - progress * 0.4), 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(245, 158, 11, ${alpha})`;
-        ctx.shadowColor = '#f59e0b';
-        ctx.shadowBlur = 12;
+        ctx.arc(0, 0, m.size * (1 - progress * 0.35), 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 170, 0, ${alpha})`;
+        ctx.shadowColor = '#ffaa00';
+        ctx.shadowBlur = 14;
         ctx.fill();
       }
 

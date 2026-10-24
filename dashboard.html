@@ -22,7 +22,7 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Custom Cyber Styles -->
-  <link rel="stylesheet" href="css/style.css?v=20261024_1340">
+  <link rel="stylesheet" href="css/style.css?v=20261024_1400">
   <!-- Cyber Radar Animations & Transitions -->
   <style>
     /* ===== CYBER RADAR 3D PERSPECTIVE, GAME-LIKE TRAJECTORIES & POST-EFFECTS ===== */
@@ -212,26 +212,73 @@
       z-index: 25;
     }
 
-    /* 7. HIỆU ỨNG HẠT NĂNG LƯỢNG THEO CHUỘT (Interactive Cursor Sparks) */
+        /* 7. HIỆU ỨNG HẠT NĂNG LƯỢNG & NẾN THEO CHUỘT (Interactive Multi-Tier Sparks) */
+    .radar-spark-item {
+      position: absolute;
+      pointer-events: none;
+      z-index: 50;
+      user-select: none;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: center center;
+      animation: radarSparkFloat 0.85s cubic-bezier(0.16, 0.9, 0.3, 1) forwards;
+    }
+
+    @keyframes radarSparkFloat {
+      0% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(0.6) rotate(0deg);
+        filter: drop-shadow(0 0 6px var(--spark-glow, #fbbf24));
+      }
+      35% {
+        opacity: 1;
+        transform: translate3d(calc(var(--dx) * 0.4), calc(var(--dy) * 0.4), 0) scale(1.25) rotate(calc(var(--end-rot) * 0.5));
+        filter: drop-shadow(0 0 14px var(--spark-glow, #fbbf24));
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(var(--dx), var(--dy), 0) scale(0.3) rotate(var(--end-rot));
+        filter: drop-shadow(0 0 22px var(--spark-glow, #fbbf24));
+      }
+    }
+
+    .radar-mini-candle {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .radar-mini-candle .wick {
+      width: 1.5px;
+      height: 3px;
+    }
+    .radar-mini-candle .candle-body {
+      width: 5.5px;
+      height: 9px;
+      border-radius: 1px;
+    }
+    .radar-mini-candle.green .wick,
+    .radar-mini-candle.green .candle-body {
+      background: #00ff88;
+      box-shadow: 0 0 8px #00ff88, 0 0 16px rgba(0, 255, 136, 0.7);
+    }
+    .radar-mini-candle.red .wick,
+    .radar-mini-candle.red .candle-body {
+      background: #ff3366;
+      box-shadow: 0 0 8px #ff3366, 0 0 16px rgba(255, 51, 102, 0.7);
+    }
+
     .radar-cursor-spark {
       position: absolute;
-      width: 4.5px;
-      height: 4.5px;
+      width: 5.5px;
+      height: 5.5px;
       border-radius: 50%;
       pointer-events: none;
       z-index: 35;
       animation: sparkDisperse 0.65s cubic-bezier(0.12, 0.8, 0.3, 1) forwards;
-    }
-
-    @keyframes sparkDisperse {
-      0% {
-        opacity: 1;
-        transform: translate3d(0, 0, 0) scale(1.5);
-      }
-      100% {
-        opacity: 0;
-        transform: translate3d(var(--dx, 0px), var(--dy, -22px), 0) scale(0);
-      }
     }
 
     /* 8. Hào quang thở (Breathing Aura) 4 Đẳng Cấp */
@@ -316,7 +363,7 @@
   <canvas id="threeWorldCanvas" class="fixed inset-0 pointer-events-none z-0 opacity-40"></canvas>
   
   <!-- Interactive Trader Candlestick Trail Canvas (Meng To pointer-trail-emitter) -->
-  <canvas id="candleCursorCanvas" class="fixed inset-0 pointer-events-none z-20"></canvas>
+  <canvas id="candleCursorCanvas" class="fixed inset-0 pointer-events-none" style="position:fixed; inset:0; pointer-events:none; z-index:99999;"></canvas>
   
   <div class="fixed inset-0 bg-radial-vignette pointer-events-none z-0"></div>
 
@@ -1367,11 +1414,11 @@
 
   <!-- Meng To Three.js 3D World & Distance Emitter Modules -->
   <script src="js/three-world.js"></script>
-  <script src="js/pointer-trail.js"></script>
+  <script src="js/pointer-trail.js?v=20261024_1400"></script>
   <script src="js/matrix-rain.js"></script>
 
   <!-- App JavaScript Modules -->
-  <script type="module" src="js/dashboard_v2.js?v=20261024_1340"></script>
+  <script type="module" src="js/dashboard_v2.js?v=20261024_1400"></script>
   <script>
     lucide.createIcons();
   </script>
