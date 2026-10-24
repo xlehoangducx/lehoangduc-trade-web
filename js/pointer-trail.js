@@ -1,5 +1,5 @@
 // ============================================================================
-// Distance-Based Pointer Trail Emitter (Enhanced: Vivid Candles, BTC & Gold Sparks)
+// Distance-Based Pointer Trail Emitter (Original Delicate Sizing & Physics)
 // ============================================================================
 
 (function () {
@@ -21,7 +21,7 @@
     height = canvas.height = window.innerHeight;
   });
 
-  const N = 180;
+  const N = 120;
   const pool = new Array(N);
   for (let i = 0; i < N; i++) {
     pool[i] = {
@@ -31,8 +31,8 @@
       vx: 0,
       vy: 0,
       life: 0,
-      maxLife: 55,
-      type: 'ember', // 'candle_green', 'candle_red', 'symbol_usd', 'symbol_btc', 'ember'
+      maxLife: 45,
+      type: 'ember',
       size: 1,
       wickTop: 4,
       wickBottom: 4,
@@ -53,7 +53,7 @@
     hasMoved: false
   };
 
-  const STEP = 10; // Pixels between motes for dense, fluid trail
+  const STEP = 14;
 
   function spawnMote(x, y, vx, vy) {
     const i = E.slot;
@@ -61,37 +61,37 @@
 
     const m = pool[i];
     m.active = true;
-    m.x = x + (Math.random() - 0.5) * 5;
-    m.y = y + (Math.random() - 0.5) * 5;
+    m.x = x + (Math.random() - 0.5) * 4;
+    m.y = y + (Math.random() - 0.5) * 4;
 
-    m.vx = vx * 0.22 + (Math.random() - 0.5) * 1.4;
-    m.vy = vy * 0.22 - (0.5 + Math.random() * 1.0);
+    m.vx = vx * 0.22 + (Math.random() - 0.5) * 1.2;
+    m.vy = vy * 0.22 - (0.4 + Math.random() * 0.8);
 
     m.life = 0;
-    m.maxLife = 45 + Math.floor(Math.random() * 30);
+    m.maxLife = 38 + Math.floor(Math.random() * 24);
     m.rot = (Math.random() - 0.5) * 0.4;
     m.rotSpeed = (Math.random() - 0.5) * 0.04;
 
     const r = Math.random();
-    if (r < 0.25) {
+    if (r < 0.22) {
       m.type = 'candle_green';
-      m.size = 7 + Math.random() * 4;
-      m.wickTop = 4 + Math.random() * 3;
-      m.wickBottom = 4 + Math.random() * 3;
-    } else if (r < 0.50) {
+      m.size = 5 + Math.random() * 3.5;
+      m.wickTop = 3 + Math.random() * 3;
+      m.wickBottom = 3 + Math.random() * 3;
+    } else if (r < 0.44) {
       m.type = 'candle_red';
-      m.size = 7 + Math.random() * 4;
-      m.wickTop = 4 + Math.random() * 3;
-      m.wickBottom = 4 + Math.random() * 3;
-    } else if (r < 0.70) {
-      m.type = 'symbol_btc';
-      m.size = 18 + Math.random() * 5;
-    } else if (r < 0.85) {
+      m.size = 5 + Math.random() * 3.5;
+      m.wickTop = 3 + Math.random() * 3;
+      m.wickBottom = 3 + Math.random() * 3;
+    } else if (r < 0.60) {
       m.type = 'symbol_usd';
-      m.size = 16 + Math.random() * 4;
+      m.size = 11 + Math.random() * 3.5;
+    } else if (r < 0.75) {
+      m.type = 'symbol_btc';
+      m.size = 12 + Math.random() * 3.5;
     } else {
       m.type = 'ember';
-      m.size = 4 + Math.random() * 4;
+      m.size = 2.5 + Math.random() * 3.5;
     }
   }
 
@@ -115,7 +115,7 @@
       E.acc += moved;
 
       let guard = 0;
-      while (E.acc >= STEP && guard++ < 16) {
+      while (E.acc >= STEP && guard++ < 14) {
         E.acc -= STEP;
         const t = Math.min(1, (guard * STEP) / moved);
         const subX = E.lx + dx * t;
@@ -176,55 +176,55 @@
       ctx.rotate(m.rot);
 
       if (m.type === 'candle_green') {
-        ctx.strokeStyle = `rgba(0, 255, 136, ${alpha * 0.95})`;
-        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = `rgba(16, 185, 129, ${alpha * 0.8})`;
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.moveTo(0, -m.size - m.wickTop);
         ctx.lineTo(0, m.size + m.wickBottom);
         ctx.stroke();
 
-        ctx.fillStyle = `rgba(0, 255, 136, ${alpha})`;
-        ctx.shadowColor = '#00ff88';
-        ctx.shadowBlur = 12;
-        ctx.fillRect(-3.5, -m.size, 7, m.size * 2);
+        ctx.fillStyle = `rgba(16, 185, 129, ${alpha})`;
+        ctx.shadowColor = '#10b981';
+        ctx.shadowBlur = 8;
+        ctx.fillRect(-2.5, -m.size, 5, m.size * 2);
 
       } else if (m.type === 'candle_red') {
-        ctx.strokeStyle = `rgba(255, 51, 102, ${alpha * 0.95})`;
-        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = `rgba(244, 63, 94, ${alpha * 0.8})`;
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.moveTo(0, -m.size - m.wickTop);
         ctx.lineTo(0, m.size + m.wickBottom);
         ctx.stroke();
 
-        ctx.fillStyle = `rgba(255, 51, 102, ${alpha})`;
-        ctx.shadowColor = '#ff3366';
-        ctx.shadowBlur = 12;
-        ctx.fillRect(-3.5, -m.size, 7, m.size * 2);
+        ctx.fillStyle = `rgba(244, 63, 94, ${alpha})`;
+        ctx.shadowColor = '#f43f5e';
+        ctx.shadowBlur = 8;
+        ctx.fillRect(-2.5, -m.size, 5, m.size * 2);
 
       } else if (m.type === 'symbol_btc') {
         ctx.font = `900 ${m.size}px "JetBrains Mono", monospace`;
-        ctx.fillStyle = `rgba(255, 215, 0, ${alpha})`;
-        ctx.shadowColor = '#ffd700';
-        ctx.shadowBlur = 16;
+        ctx.fillStyle = `rgba(251, 191, 36, ${alpha * 0.95})`;
+        ctx.shadowColor = '#fbbf24';
+        ctx.shadowBlur = 10;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('₿', 0, 0);
 
       } else if (m.type === 'symbol_usd') {
         ctx.font = `900 ${m.size}px "JetBrains Mono", monospace`;
-        ctx.fillStyle = `rgba(255, 204, 0, ${alpha})`;
-        ctx.shadowColor = '#ffaa00';
-        ctx.shadowBlur = 14;
+        ctx.fillStyle = `rgba(245, 158, 11, ${alpha * 0.95})`;
+        ctx.shadowColor = '#f59e0b';
+        ctx.shadowBlur = 10;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('$', 0, 0);
 
       } else {
         ctx.beginPath();
-        ctx.arc(0, 0, m.size * (1 - progress * 0.35), 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 170, 0, ${alpha})`;
-        ctx.shadowColor = '#ffaa00';
-        ctx.shadowBlur = 14;
+        ctx.arc(0, 0, m.size * (1 - progress * 0.4), 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(245, 158, 11, ${alpha})`;
+        ctx.shadowColor = '#f59e0b';
+        ctx.shadowBlur = 12;
         ctx.fill();
       }
 

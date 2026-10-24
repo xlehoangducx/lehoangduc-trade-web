@@ -22,7 +22,7 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Custom Cyber Styles -->
-  <link rel="stylesheet" href="css/style.css?v=20261024_1410">
+  <link rel="stylesheet" href="css/style.css?v=20261024_1420">
   <!-- Cyber Radar Animations & Transitions -->
   <style>
     /* ===== CYBER RADAR 3D PERSPECTIVE, GAME-LIKE TRAJECTORIES & POST-EFFECTS ===== */
@@ -36,7 +36,7 @@
       transform-style: preserve-3d;
       will-change: transform, box-shadow, filter;
       transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.3s ease;
-      overflow: hidden;
+      overflow: visible !important;
     }
 
     .radar-holo-glare {
@@ -282,15 +282,24 @@
     }
 
     
-    /* Sóng xung kích bùng nổ theo 4 cạnh viền khi thẻ khớp vị trí */
+    /* Cho phép hiệu ứng nổ viền tỏa ra ngoài không bị cắt */
+    .radar-holo-card {
+      position: relative;
+      transform-style: preserve-3d;
+      will-change: transform, box-shadow, filter;
+      transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.4, 1), box-shadow 0.3s ease;
+      overflow: visible !important;
+    }
+
+    /* Sóng xung kích phát quang bùng nổ theo 4 cạnh viền khi thẻ khớp vị trí */
     .radar-border-shockwave {
       position: absolute;
-      inset: -2px;
+      inset: -3px;
       border-radius: inherit;
       border: 2px solid var(--wave-color, #fbbf24);
       pointer-events: none;
-      z-index: 30;
-      animation: borderShockwaveBurst 0.85s cubic-bezier(0.12, 0.9, 0.24, 1) forwards;
+      z-index: 40;
+      animation: borderShockwaveBurst 1.35s cubic-bezier(0.12, 0.9, 0.22, 1) forwards;
     }
 
     @keyframes borderShockwaveBurst {
@@ -299,44 +308,87 @@
         transform: scale(1);
         box-shadow: 0 0 0px var(--wave-color, #fbbf24), inset 0 0 0px var(--wave-color, #fbbf24);
       }
-      50% {
-        opacity: 0.9;
-        box-shadow: 0 0 25px var(--wave-color, #fbbf24), inset 0 0 15px var(--wave-color, #fbbf24);
+      35% {
+        opacity: 0.95;
+        box-shadow: 0 0 30px var(--wave-color, #fbbf24), inset 0 0 16px var(--wave-color, #fbbf24);
       }
       100% {
         opacity: 0;
-        transform: scale(1.06);
-        box-shadow: 0 0 40px var(--wave-color, #fbbf24), inset 0 0 20px transparent;
+        transform: scale(1.08);
+        box-shadow: 0 0 50px var(--wave-color, #fbbf24), inset 0 0 25px transparent;
       }
     }
 
-    /* Hạt năng lượng bùng nổ tỏa ra ngoài từ 4 cạnh viền thẻ */
-    .radar-border-spark {
+    /* Các hạt nến, Bitcoin, $, và tia sáng bùng nổ tỏa ra ngoài từ 4 cạnh viền thẻ */
+    .radar-border-mote {
       position: absolute;
+      pointer-events: none;
+      z-index: 50;
+      user-select: none;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transform-origin: center center;
+      animation: borderMoteBloom 1.35s cubic-bezier(0.12, 0.9, 0.22, 1) forwards;
+    }
+
+    @keyframes borderMoteBloom {
+      0% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(0.6) rotate(0deg);
+      }
+      30% {
+        opacity: 1;
+        transform: translate3d(calc(var(--dx) * 0.45), calc(var(--dy) * 0.45), 0) scale(1.2) rotate(calc(var(--rot) * 0.5));
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(var(--dx), var(--dy), 0) scale(0.4) rotate(var(--rot));
+      }
+    }
+
+    .radar-mote-dot {
       width: 5px;
       height: 5px;
       border-radius: 50%;
-      pointer-events: none;
-      z-index: 35;
-      animation: borderSparkFly 0.8s cubic-bezier(0.16, 0.9, 0.3, 1) forwards;
     }
 
-    @keyframes borderSparkFly {
-      0% {
-        opacity: 1;
-        transform: translate3d(0, 0, 0) scale(1.8);
-        filter: drop-shadow(0 0 8px var(--spark-color, #fbbf24));
-      }
-      40% {
-        opacity: 1;
-        transform: translate3d(calc(var(--dx) * 0.6), calc(var(--dy) * 0.6), 0) scale(1.4);
-        filter: drop-shadow(0 0 14px var(--spark-color, #fbbf24));
-      }
-      100% {
-        opacity: 0;
-        transform: translate3d(var(--dx), var(--dy), 0) scale(0.2);
-        filter: drop-shadow(0 0 20px var(--spark-color, #fbbf24));
-      }
+    .radar-mini-candle {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+    .radar-mini-candle .wick {
+      width: 1.2px;
+      height: 3px;
+    }
+    .radar-mini-candle .candle-body {
+      width: 5px;
+      height: 9px;
+      border-radius: 1px;
+    }
+    .radar-mini-candle.green .wick,
+    .radar-mini-candle.green .candle-body {
+      background: #00ff88;
+      box-shadow: 0 0 8px #00ff88, 0 0 14px rgba(0, 255, 136, 0.8);
+    }
+    .radar-mini-candle.red .wick,
+    .radar-mini-candle.red .candle-body {
+      background: #ff3366;
+      box-shadow: 0 0 8px #ff3366, 0 0 14px rgba(255, 51, 102, 0.8);
+    }
+
+    .radar-cursor-spark {
+      position: absolute;
+      width: 4.5px;
+      height: 4.5px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 35;
+      animation: sparkDisperse 0.65s cubic-bezier(0.12, 0.8, 0.3, 1) forwards;
     }
 
     /* 8. Hào quang thở (Breathing Aura) 4 Đẳng Cấp */
@@ -1476,7 +1528,7 @@
   <script src="js/matrix-rain.js"></script>
 
   <!-- App JavaScript Modules -->
-  <script type="module" src="js/dashboard_v2.js?v=20261024_1410"></script>
+  <script type="module" src="js/dashboard_v2.js?v=20261024_1420"></script>
   <script>
     lucide.createIcons();
   </script>

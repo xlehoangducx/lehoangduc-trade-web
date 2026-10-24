@@ -3151,11 +3151,13 @@ function renderRadarLeaderboard(rawCandidates) {
 
       return `
         <div class="radar-holo-card ${rankThemeClass} ${movementClass} p-3 sm:p-3.5 rounded-2xl ${rankBg} border ${rankBorder} shadow-2xl relative select-none group cursor-pointer" data-rank="${idx + 1}" data-spark-color="${sparkColorHex}" style="animation-delay: ${delaySec}s; --rank-glow-color: ${glowColorRgba};">
-          <!-- Hậu hiệu ứng 3D: Vệt phản quang tương tác chuột (Holographic Glare) -->
-          <div class="radar-holo-glare"></div>
-          ${dockingBurstHtml}
-          <div class="radar-laser-line" style="${sweepBeam}"></div>
-          <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${glowBar}"></div>
+          <!-- Lớp cắt bo tròn bên trong cho tia Laser & Glare -->
+          <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none z-0">
+            <div class="radar-holo-glare"></div>
+            ${dockingBurstHtml}
+            <div class="radar-laser-line" style="${sweepBeam}"></div>
+            <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${glowBar}"></div>
+          </div>
 
           <div class="flex items-center justify-between gap-1.5 mb-2 relative z-10">
             <div class="flex items-center gap-1.5 flex-wrap">
@@ -3257,19 +3259,42 @@ renderRadarLeaderboard([]);
 
 
 
-// ===== BÙNG NỔ HẠT NĂNG LƯỢNG QUANH 4 VIỀN THẺ KHI KHỚP VỊ TRÍ THAY ĐỔI =====
-function spawnBorderSpark(container, x, y, dx, dy, color) {
-  const spark = document.createElement('div');
-  spark.className = 'radar-border-spark';
-  spark.style.left = `${x}px`;
-  spark.style.top = `${y}px`;
-  spark.style.backgroundColor = color;
-  spark.style.boxShadow = `0 0 8px ${color}, 0 0 16px ${color}`;
-  spark.style.setProperty('--dx', `${dx.toFixed(1)}px`);
-  spark.style.setProperty('--dy', `${dy.toFixed(1)}px`);
-  spark.style.setProperty('--spark-color', color);
-  container.appendChild(spark);
-  setTimeout(() => { if (spark.parentNode) spark.remove(); }, 800);
+// ===== BÙNG NỔ CỘT NẾN, BITCOIN, $ & HẠT NĂNG LƯỢNG QUANH 4 VIỀN THẺ KHI KHỚP VỊ TRÍ =====
+function spawnBorderMote(card, x, y, dx, dy, color) {
+  const mote = document.createElement('div');
+  mote.className = 'radar-border-mote';
+  mote.style.left = `${x}px`;
+  mote.style.top = `${y}px`;
+  mote.style.setProperty('--dx', `${dx.toFixed(1)}px`);
+  mote.style.setProperty('--dy', `${dy.toFixed(1)}px`);
+  const rot = (Math.random() - 0.5) * 45;
+  mote.style.setProperty('--rot', `${rot.toFixed(1)}deg`);
+
+  const r = Math.random();
+  if (r < 0.28) {
+    mote.innerHTML = '<div class="radar-mini-candle green"><div class="wick"></div><div class="candle-body"></div></div>';
+  } else if (r < 0.52) {
+    mote.innerHTML = '<div class="radar-mini-candle red"><div class="wick"></div><div class="candle-body"></div></div>';
+  } else if (r < 0.72) {
+    mote.innerHTML = '₿';
+    mote.style.color = '#ffd700';
+    mote.style.fontFamily = '"JetBrains Mono", monospace';
+    mote.style.fontWeight = '900';
+    mote.style.fontSize = '14px';
+    mote.style.textShadow = '0 0 10px #fbbf24, 0 0 20px #f59e0b';
+  } else if (r < 0.86) {
+    mote.innerHTML = '$';
+    mote.style.color = '#ffcc00';
+    mote.style.fontFamily = '"JetBrains Mono", monospace';
+    mote.style.fontWeight = '900';
+    mote.style.fontSize = '13px';
+    mote.style.textShadow = '0 0 8px #ffaa00';
+  } else {
+    mote.innerHTML = `<div class="radar-mote-dot" style="background-color:${color}; box-shadow:0 0 10px ${color}, 0 0 20px ${color}"></div>`;
+  }
+
+  card.appendChild(mote);
+  setTimeout(() => { if (mote.parentNode) mote.remove(); }, 1450);
 }
 
 function triggerCardBorderBurst(card) {
@@ -3283,37 +3308,37 @@ function triggerCardBorderBurst(card) {
   shockwave.className = 'radar-border-shockwave';
   shockwave.style.setProperty('--wave-color', color);
   card.appendChild(shockwave);
-  setTimeout(() => { if (shockwave.parentNode) shockwave.remove(); }, 900);
+  setTimeout(() => { if (shockwave.parentNode) shockwave.remove(); }, 1400);
 
-  // 2. Chùm hạt năng lượng bùng nổ tỏa ra ngoài từ 4 cạnh viền thẻ
-  const sideCount = 6;
-  // Cạnh trên (Bắn lên)
+  // 2. Chùm nến xanh/đỏ, Bitcoin ₿, Đô $, và hạt năng lượng bùng nổ tỏa ra ngoài từ 4 cạnh viền thẻ
+  const sideCount = 5;
+  // Cạnh trên (Bắn vút lên trên)
   for (let i = 0; i < sideCount; i++) {
     const px = (w / (sideCount + 1)) * (i + 1);
-    spawnBorderSpark(card, px, 0, (Math.random() - 0.5) * 20, -(Math.random() * 26 + 14), color);
+    spawnBorderMote(card, px, 0, (Math.random() - 0.5) * 25, -(Math.random() * 35 + 20), color);
   }
-  // Cạnh dưới (Bắn xuống)
+  // Cạnh dưới (Bắn tỏa xuống dưới)
   for (let i = 0; i < sideCount; i++) {
     const px = (w / (sideCount + 1)) * (i + 1);
-    spawnBorderSpark(card, px, h, (Math.random() - 0.5) * 20, (Math.random() * 26 + 14), color);
+    spawnBorderMote(card, px, h, (Math.random() - 0.5) * 25, (Math.random() * 35 + 20), color);
   }
-  // Cạnh trái (Bắn sang trái)
+  // Cạnh trái (Bắn tỏa sang trái)
   for (let i = 0; i < 4; i++) {
     const py = (h / 5) * (i + 1);
-    spawnBorderSpark(card, 0, py, -(Math.random() * 26 + 14), (Math.random() - 0.5) * 20, color);
+    spawnBorderMote(card, 0, py, -(Math.random() * 35 + 20), (Math.random() - 0.5) * 25, color);
   }
-  // Cạnh phải (Bắn sang phải)
+  // Cạnh phải (Bắn tỏa sang phải)
   for (let i = 0; i < 4; i++) {
     const py = (h / 5) * (i + 1);
-    spawnBorderSpark(card, w, py, (Math.random() * 26 + 14), (Math.random() - 0.5) * 20, color);
+    spawnBorderMote(card, w, py, (Math.random() * 35 + 20), (Math.random() - 0.5) * 25, color);
   }
 }
 
 function triggerAllCardsBorderBurst() {
   const cards = document.querySelectorAll('.radar-holo-card');
   cards.forEach((card, idx) => {
-    // Đợi thẻ bay ráp vào đúng vị trí rồi kích hoạt bùng nổ viền
-    const delay = (idx * 160) + 420;
+    // Đợi thẻ bay ráp vào đúng vị trí rồi kích hoạt bùng nổ viền tỏa rộng
+    const delay = (idx * 160) + 480;
     setTimeout(() => {
       triggerCardBorderBurst(card);
     }, delay);
@@ -3344,7 +3369,7 @@ function attachRadar3DInteraction() {
       card.style.setProperty('--mouse-y', `${y.toFixed(1)}px`);
       card.style.setProperty('--glare-opacity', '1');
 
-      // Tỏa chùm hạt năng lượng phát quang theo đường di chuột (như cũ)
+      // Tỏa chùm hạt năng lượng phát quang theo đường di chuột (nguyên bản mượt mà)
       const now = performance.now();
       if (now - lastSparkTime > 38) {
         lastSparkTime = now;
