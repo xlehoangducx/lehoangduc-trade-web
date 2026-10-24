@@ -23,6 +23,83 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Custom Cyber Styles -->
   <link rel="stylesheet" href="css/style.css?v=20261023_0137">
+  <!-- Cyber Radar Animations & Transitions -->
+  <style>
+    @keyframes radarSlideInLeft {
+      0% {
+        opacity: 0;
+        transform: translateX(-35px) scale(0.94);
+        filter: blur(3px);
+      }
+      70% {
+        opacity: 0.95;
+        transform: translateX(4px) scale(1.01);
+        filter: blur(0px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+        filter: none;
+      }
+    }
+    @keyframes radarSlideInRight {
+      0% {
+        opacity: 0;
+        transform: translateX(35px) scale(0.94);
+        filter: blur(3px);
+      }
+      70% {
+        opacity: 0.95;
+        transform: translateX(-4px) scale(1.01);
+        filter: blur(0px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+        filter: none;
+      }
+    }
+    @keyframes radarCyberSweep {
+      0% { left: -100%; opacity: 0; }
+      20% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { left: 160%; opacity: 0; }
+    }
+    @keyframes radarPulseGold {
+      0%, 100% { box-shadow: 0 0 10px rgba(251, 191, 36, 0.15); }
+      50% { box-shadow: 0 0 24px rgba(251, 191, 36, 0.45); }
+    }
+    .radar-card-left-anim {
+      animation: radarSlideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .radar-card-right-anim {
+      animation: radarSlideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .radar-card-gold-pulse {
+      animation: radarSlideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) both, radarPulseGold 4s infinite ease-in-out 0.6s;
+    }
+    .radar-card-sweep-line {
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 60%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.95), transparent);
+      animation: radarCyberSweep 3.5s infinite ease-in-out;
+      pointer-events: none;
+    }
+    .radar-card-gold-sweep {
+      background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.95), transparent);
+    }
+    .radar-card-container {
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform, opacity;
+    }
+    .radar-card-container:hover {
+      transform: translateY(-3px) scale(1.015);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 20px rgba(251, 191, 36, 0.25);
+    }
+  </style>
 </head>
 <body class="bg-[#07080d] text-gray-100 min-h-screen flex flex-col justify-between selection:bg-amber-400 selection:text-black overflow-x-hidden relative font-['Be_Vietnam_Pro',sans-serif]">
 

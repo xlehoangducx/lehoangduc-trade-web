@@ -1581,6 +1581,13 @@ function renderRadarLeaderboard(rawCandidates) {
       return hB - hA;
     });
 
+    // Kiểm tra state để chỉ kích hoạt hiệu ứng mượt khi có cập nhật tín hiệu
+    const currentKeys = candidates.map(c => (c.symbol || '') + '_' + (c.hit_count || 1) + '_' + (c.readiness_pct || 0)).join('|');
+    if (window._lastWebRadarKeys === currentKeys) {
+      return;
+    }
+    window._lastWebRadarKeys = currentKeys;
+
     const leftItems = candidates.slice(0, 2);
     const rightItems = candidates.slice(2, 4);
 
@@ -1629,8 +1636,14 @@ function renderRadarLeaderboard(rawCandidates) {
       const timeWindow = c.time_window_str || c.last_seen_str || "Gần đây";
       const bottleneckReason = c.bottleneck_reason || "Đang kiểm tra ngưỡng an toàn";
 
+      const isLeft = idx < 2;
+      const animClass = (idx === 0) ? 'radar-card-gold-pulse' : (isLeft ? 'radar-card-left-anim' : 'radar-card-right-anim');
+      const delaySec = isLeft ? (idx * 0.12).toFixed(2) : ((idx - 2) * 0.12).toFixed(2);
+      const sweepClass = (idx === 0) ? 'radar-card-gold-sweep' : '';
+
       return `
-        <div class="p-3 sm:p-3.5 rounded-2xl bg-[#090d16]/95 border ${rankBorder} hover:border-amber-400/60 transition-all duration-300 shadow-xl relative overflow-hidden group">
+        <div class="radar-card-container ${animClass} p-3 sm:p-3.5 rounded-2xl bg-[#090d16]/95 border ${rankBorder} hover:border-amber-400/60 transition-all duration-300 shadow-xl relative overflow-hidden group" style="animation-delay: ${delaySec}s;">
+          <div class="radar-card-sweep-line ${sweepClass}"></div>
           <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${glowBar}"></div>
 
           <div class="flex items-center justify-between gap-1.5 mb-2">
