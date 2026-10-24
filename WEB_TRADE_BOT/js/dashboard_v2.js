@@ -2954,9 +2954,7 @@ function renderRadarLeaderboard(rawCandidates) {
     const colRight = document.getElementById("radarColRight");
     if (!colLeft || !colRight) return;
 
-    // Luôn luôn dọn sạch nội dung cũ trước khi vẽ mới
-    colLeft.innerHTML = "";
-    colRight.innerHTML = "";
+    // Duy tri the hien tai, chi xoa & ve lai khi co du lieu tin hieu thay doi
 
     const normalizeSym = (s) => String(s || "").split(":")[0].replace(/\s+/g, "").toUpperCase();
 
@@ -2977,6 +2975,10 @@ function renderRadarLeaderboard(rawCandidates) {
 
     // 2. Nếu chưa có tín hiệu nào bị nghẽn, hiển thị trạng thái đang quét sạch đẹp (không dùng coin ảo)
     if (!candidates || candidates.length === 0) {
+      if (window._lastWebRadarKeys === "__EMPTY__") {
+        return;
+      }
+      window._lastWebRadarKeys = "__EMPTY__";
       colLeft.innerHTML = `
         <div class="p-5 rounded-2xl bg-[#090d16]/80 border border-white/10 text-center w-full min-h-[140px] flex flex-col items-center justify-center">
           <div class="text-2xl mb-1.5">📡</div>
