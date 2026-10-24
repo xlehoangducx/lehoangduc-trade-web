@@ -22,7 +22,7 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Custom Cyber Styles -->
-  <link rel="stylesheet" href="css/style.css?v=20261024_1430">
+  <link rel="stylesheet" href="css/style.css?v=20261024_1445">
   <!-- Cyber Radar Animations & Transitions -->
   <style>
     /* ===== CYBER RADAR 3D PERSPECTIVE, GAME-LIKE TRAJECTORIES & POST-EFFECTS ===== */
@@ -181,60 +181,32 @@
       }
     }
 
-    /* Sóng xung kích hào quang bùng nổ theo 4 cạnh viền khi thẻ khớp vị trí (1.8s) */
+        /* Sóng xung kích hào quang bùng nổ theo 4 cạnh viền khi thẻ khớp vị trí */
     .radar-border-shockwave {
       position: absolute;
-      inset: -4px;
+      inset: -3px;
       border-radius: inherit;
       border: 2px solid var(--wave-color, #fbbf24);
       pointer-events: none;
       z-index: 40;
-      animation: borderShockwaveBurst 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation: borderShockwaveBurst 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
     @keyframes borderShockwaveBurst {
       0% {
         opacity: 1;
-        transform: scale(1);
+        transform: scale(0.98);
         box-shadow: 0 0 0px var(--wave-color, #fbbf24);
-      }
-      30% {
-        opacity: 0.95;
-        box-shadow: 0 0 35px var(--wave-color, #fbbf24), 0 0 70px var(--wave-color, #fbbf24);
-      }
-      100% {
-        opacity: 0;
-        transform: scale(1.14);
-        box-shadow: 0 0 60px transparent;
-      }
-    }
-
-    /* Hạt năng lượng bùng nổ tỏa ra ngoài từ 4 cạnh viền thẻ (1.8s) */
-    .radar-border-spark {
-      position: absolute;
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 45;
-      animation: borderSparkFly 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    @keyframes borderSparkFly {
-      0% {
-        opacity: 1;
-        transform: translate3d(0, 0, 0) scale(1.6);
-        filter: drop-shadow(0 0 8px var(--spark-color, #fbbf24));
       }
       25% {
         opacity: 1;
-        transform: translate3d(calc(var(--dx) * 0.45), calc(var(--dy) * 0.45), 0) scale(1.3);
-        filter: drop-shadow(0 0 16px var(--spark-color, #fbbf24));
+        transform: scale(1.05);
+        box-shadow: 0 0 35px var(--wave-color, #fbbf24), 0 0 70px var(--wave-color, #fbbf24), inset 0 0 20px var(--wave-color, #fbbf24);
       }
       100% {
         opacity: 0;
-        transform: translate3d(var(--dx), var(--dy), 0) scale(0.2);
-        filter: drop-shadow(0 0 24px var(--spark-color, #fbbf24));
+        transform: scale(1.15);
+        box-shadow: 0 0 50px transparent, inset 0 0 0px transparent;
       }
     }
 
@@ -1375,7 +1347,7 @@
   <script src="js/matrix-rain.js"></script>
 
   <!-- App JavaScript Modules -->
-  <script type="module" src="js/dashboard_v2.js?v=20261024_1435"></script>
+  <script type="module" src="js/dashboard_v2.js?v=20261024_1450"></script>
   <script>
     lucide.createIcons();
   </script>

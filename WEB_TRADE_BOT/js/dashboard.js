@@ -3150,7 +3150,7 @@ function renderRadarLeaderboard(rawCandidates) {
       const dockingBurstHtml = isSnapDocking ? `<div class="radar-docking-burst-fx" style="--rank-glow-color: ${glowColorRgba};"></div>` : '';
 
       return `
-        <div class="radar-holo-card ${rankThemeClass} ${movementClass} p-3 sm:p-3.5 rounded-2xl ${rankBg} border ${rankBorder} shadow-2xl relative select-none group cursor-pointer" data-rank="${idx + 1}" data-spark-color="${sparkColorHex}" style="animation-delay: ${delaySec}s; --rank-glow-color: ${glowColorRgba};">
+        <div class="radar-holo-card ${rankThemeClass} ${movementClass} p-3 sm:p-3.5 rounded-2xl ${rankBg} border ${rankBorder} shadow-2xl relative group cursor-pointer select-text" data-rank="${idx + 1}" data-spark-color="${sparkColorHex}" style="animation-delay: ${delaySec}s; --rank-glow-color: ${glowColorRgba};">
           <!-- Lớp cắt bo tròn bên trong cho tia Laser & Glare -->
           <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none z-0">
             <div class="radar-holo-glare"></div>
@@ -3164,9 +3164,13 @@ function renderRadarLeaderboard(rawCandidates) {
               <span class="px-2 py-0.5 rounded-md text-xs font-black mono-font bg-white/[0.08] ${textRankColor} border border-white/10 shadow-sm">
                 ${rankBadge}
               </span>
-              <span class="text-xs sm:text-sm mono-font ${symColor}">
-                ${c.symbol}
-              </span>
+              <a href="https://www.binance.com/en/futures/${(c.symbol || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}" target="_blank" rel="noopener noreferrer" 
+                 title="Bấm để mở biểu đồ ${(c.symbol || '')} trên Binance Futures"
+                 class="text-xs sm:text-sm mono-font font-black tracking-wider ${symColor} hover:underline hover:text-amber-300 inline-flex items-center gap-1 select-text cursor-pointer transition-colors z-20"
+                 onclick="event.stopPropagation();">
+                <span class="select-text">${c.symbol}</span>
+                <i data-lucide="external-link" class="w-3 h-3 opacity-60 hover:opacity-100 shrink-0"></i>
+              </a>
               <span class="px-1.5 py-0.5 rounded text-[10px] font-black mono-font border ${dirClass}">
                 ${dirText}
               </span>
@@ -3259,73 +3263,48 @@ renderRadarLeaderboard([]);
 
 
 
-// ===== BÙNG NỔ HẠT NĂNG LƯỢNG QUANH 4 VIỀN THẺ KHI KHỚP VỊ TRÍ (1.8s ĐIỆN ẢNH TỎA RỘNG) =====
-function spawnBorderSpark(container, x, y, dx, dy, color) {
-  const spark = document.createElement('div');
-  spark.className = 'radar-border-spark';
-  spark.style.left = `${x}px`;
-  spark.style.top = `${y}px`;
-  spark.style.backgroundColor = color;
-  spark.style.boxShadow = `0 0 10px ${color}, 0 0 20px ${color}`;
-  spark.style.setProperty('--dx', `${dx.toFixed(1)}px`);
-  spark.style.setProperty('--dy', `${dy.toFixed(1)}px`);
-  spark.style.setProperty('--spark-color', color);
-  container.appendChild(spark);
-  setTimeout(() => { if (spark.parentNode) spark.remove(); }, 1850);
-}
-
+// ===== SÓNG XUNG KÍCH HÀO QUANG BÙNG NỔ KHI KHỚP VỊ TRÍ (KHÔNG DÙNG CHẤM MÀU TRẺ CON) =====
 function triggerCardBorderBurst(card) {
   if (!card) return;
-  const w = card.offsetWidth || 300;
-  const h = card.offsetHeight || 160;
   const color = card.getAttribute('data-spark-color') || '#fbbf24';
 
-  // 1. Sóng xung kích phát quang bùng nổ theo hình chữ nhật viền thẻ (1.8s)
+  // Sóng xung kích phát quang bùng nổ theo hình chữ nhật viền thẻ (1.6s mượt mà)
   const shockwave = document.createElement('div');
   shockwave.className = 'radar-border-shockwave';
   shockwave.style.setProperty('--wave-color', color);
   card.appendChild(shockwave);
-  setTimeout(() => { if (shockwave.parentNode) shockwave.remove(); }, 1850);
-
-  // 2. Chùm hạt phát quang tỏa rộng ra ngoài 4 cạnh viền (30px - 65px)
-  const sideCount = 6;
-  // Cạnh trên (Tỏa lên trên)
-  for (let i = 0; i < sideCount; i++) {
-    const px = (w / (sideCount + 1)) * (i + 1);
-    spawnBorderSpark(card, px, 0, (Math.random() - 0.5) * 30, -(Math.random() * 40 + 25), color);
-  }
-  // Cạnh dưới (Tỏa xuống dưới)
-  for (let i = 0; i < sideCount; i++) {
-    const px = (w / (sideCount + 1)) * (i + 1);
-    spawnBorderSpark(card, px, h, (Math.random() - 0.5) * 30, (Math.random() * 40 + 25), color);
-  }
-  // Cạnh trái (Tỏa sang trái)
-  for (let i = 0; i < 4; i++) {
-    const py = (h / 5) * (i + 1);
-    spawnBorderSpark(card, 0, py, -(Math.random() * 40 + 25), (Math.random() - 0.5) * 30, color);
-  }
-  // Cạnh phải (Tỏa sang phải)
-  for (let i = 0; i < 4; i++) {
-    const py = (h / 5) * (i + 1);
-    spawnBorderSpark(card, w, py, (Math.random() * 40 + 25), (Math.random() - 0.5) * 30, color);
-  }
+  setTimeout(() => { if (shockwave.parentNode) shockwave.remove(); }, 1650);
 }
 
 function triggerAllCardsBorderBurst() {
   const cards = document.querySelectorAll('.radar-holo-card');
   cards.forEach((card, idx) => {
-    // Đợi thẻ bay mượt mà vào đúng vị trí rồi kích hoạt bùng nổ viền tỏa rộng
-    const delay = (idx * 220) + 700;
+    // Kích hoạt sóng xung kích viền ngay khi thẻ chạm mốc hạ cánh (0.65s)
+    const delay = (idx * 180) + 650;
     setTimeout(() => {
       triggerCardBorderBurst(card);
     }, delay);
   });
 }
 
-// ===== BỘ ĐIỀU KHIỂN TƯƠNG TÁC 3D PARALLAX TILT & HÀO QUANG ÁNH SÁNG KHI RÊ CHUỘT (KHÔNG CÓ CHẤM ĐI THEO) =====
+// ===== BỘ ĐIỀU KHIỂN TƯƠNG TÁC 3D PARALLAX TILT & HÀO QUANG ÁNH SÁNG KHI RÊ CHUỘT (CHUẨN XÁC 100% 4 THẺ) =====
 function attachRadar3DInteraction() {
   const cards = document.querySelectorAll('.radar-holo-card');
-  cards.forEach(card => {
+  cards.forEach((card, idx) => {
+    // 1. Dọn dẹp movement class khi animation kết thúc để MỞ KHÓA style.transform 3D và kích hoạt Hào Quang Thở liên tục
+    const cleanupMovement = () => {
+      card.classList.remove(
+        'radar-anim-warp-left',
+        'radar-anim-warp-right',
+        'radar-anim-cross-ascend',
+        'radar-anim-cross-descend',
+        'radar-anim-3d-ascend',
+        'radar-anim-3d-descend'
+      );
+    };
+    card.addEventListener('animationend', cleanupMovement, { once: true });
+    setTimeout(cleanupMovement, (idx * 220) + 1600); // Safety fallback
+
     if (card._tiltAttached) return;
     card._tiltAttached = true;
 
@@ -3344,7 +3323,6 @@ function attachRadar3DInteraction() {
       card.style.setProperty('--mouse-x', `${x.toFixed(1)}px`);
       card.style.setProperty('--mouse-y', `${y.toFixed(1)}px`);
       card.style.setProperty('--glare-opacity', '1');
-      // Thẻ sáng rực rỡ khi rê chuột qua, hoàn toàn KHÔNG tạo hạt chấm theo chuột
     });
 
     card.addEventListener('mouseleave', () => {
