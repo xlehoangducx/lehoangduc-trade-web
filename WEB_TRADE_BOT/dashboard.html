@@ -25,79 +25,170 @@
   <link rel="stylesheet" href="css/style.css?v=20261023_0137">
   <!-- Cyber Radar Animations & Transitions -->
   <style>
-    @keyframes radarSlideInLeft {
+    /* ===== NÂNG CẤP HIỆU ỨNG RA-ĐA: 4 THỨ HẠNG ĐỘC BẢN & HOÁN ĐỔI VỊ TRÍ SIÊU MƯỢT ===== */
+    @keyframes radarSwapAscend {
       0% {
-        opacity: 0;
-        transform: translateX(-35px) scale(0.94);
+        opacity: 0.15;
+        transform: translateY(38px) scale(0.92);
+        filter: blur(4px);
+      }
+      65% {
+        opacity: 1;
+        transform: translateY(-5px) scale(1.025);
+        filter: blur(0px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes radarSwapDescend {
+      0% {
+        opacity: 0.25;
+        transform: translateY(-28px) scale(1.02);
         filter: blur(3px);
       }
       70% {
         opacity: 0.95;
-        transform: translateX(4px) scale(1.01);
+        transform: translateY(4px) scale(0.985);
+        filter: blur(0px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes radarSwapEnterLeft {
+      0% {
+        opacity: 0;
+        transform: translateX(-40px) scale(0.90);
+        filter: blur(4px);
+      }
+      70% {
+        opacity: 0.95;
+        transform: translateX(4px) scale(1.015);
         filter: blur(0px);
       }
       100% {
         opacity: 1;
         transform: translateX(0) scale(1);
-        filter: none;
       }
     }
-    @keyframes radarSlideInRight {
+
+    @keyframes radarSwapEnterRight {
       0% {
         opacity: 0;
-        transform: translateX(35px) scale(0.94);
-        filter: blur(3px);
+        transform: translateX(40px) scale(0.90);
+        filter: blur(4px);
       }
       70% {
         opacity: 0.95;
-        transform: translateX(-4px) scale(1.01);
+        transform: translateX(-4px) scale(1.015);
         filter: blur(0px);
       }
       100% {
         opacity: 1;
         transform: translateX(0) scale(1);
-        filter: none;
       }
     }
-    @keyframes radarCyberSweep {
+
+    /* Hiệu ứng Hào quang thở (Breathing Aura) đặc trưng riêng từng Top */
+    @keyframes radarAuraTop1Gold {
+      0%, 100% {
+        box-shadow: 0 0 14px rgba(251, 191, 36, 0.20), inset 0 0 12px rgba(251, 191, 36, 0.06);
+        border-color: rgba(251, 191, 36, 0.50);
+      }
+      50% {
+        box-shadow: 0 0 28px rgba(251, 191, 36, 0.48), inset 0 0 18px rgba(251, 191, 36, 0.16);
+        border-color: rgba(251, 191, 36, 0.95);
+      }
+    }
+
+    @keyframes radarAuraTop2Cyan {
+      0%, 100% {
+        box-shadow: 0 0 12px rgba(56, 189, 248, 0.18), inset 0 0 10px rgba(56, 189, 248, 0.05);
+        border-color: rgba(56, 189, 248, 0.40);
+      }
+      50% {
+        box-shadow: 0 0 24px rgba(56, 189, 248, 0.40), inset 0 0 16px rgba(56, 189, 248, 0.12);
+        border-color: rgba(56, 189, 248, 0.85);
+      }
+    }
+
+    @keyframes radarAuraTop3Amber {
+      0%, 100% {
+        box-shadow: 0 0 10px rgba(249, 115, 22, 0.16), inset 0 0 8px rgba(249, 115, 22, 0.04);
+        border-color: rgba(249, 115, 22, 0.35);
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(249, 115, 22, 0.36), inset 0 0 14px rgba(249, 115, 22, 0.10);
+        border-color: rgba(249, 115, 22, 0.80);
+      }
+    }
+
+    @keyframes radarAuraTop4Emerald {
+      0%, 100% {
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.15), inset 0 0 8px rgba(16, 185, 129, 0.04);
+        border-color: rgba(16, 185, 129, 0.35);
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.35), inset 0 0 14px rgba(16, 185, 129, 0.10);
+        border-color: rgba(16, 185, 129, 0.75);
+      }
+    }
+
+    @keyframes radarLaserSweep {
       0% { left: -100%; opacity: 0; }
-      20% { opacity: 1; }
-      80% { opacity: 1; }
+      15% { opacity: 1; }
+      85% { opacity: 1; }
       100% { left: 160%; opacity: 0; }
     }
-    @keyframes radarPulseGold {
-      0%, 100% { box-shadow: 0 0 10px rgba(251, 191, 36, 0.15); }
-      50% { box-shadow: 0 0 24px rgba(251, 191, 36, 0.45); }
+
+    .radar-card-top-1 {
+      animation: radarAuraTop1Gold 3.6s infinite ease-in-out;
     }
-    .radar-card-left-anim {
-      animation: radarSlideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    .radar-card-top-2 {
+      animation: radarAuraTop2Cyan 3.8s infinite ease-in-out 0.4s;
     }
-    .radar-card-right-anim {
-      animation: radarSlideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    .radar-card-top-3 {
+      animation: radarAuraTop3Amber 4.0s infinite ease-in-out 0.8s;
     }
-    .radar-card-gold-pulse {
-      animation: radarSlideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) both, radarPulseGold 4s infinite ease-in-out 0.6s;
+    .radar-card-top-4 {
+      animation: radarAuraTop4Emerald 4.2s infinite ease-in-out 1.2s;
     }
-    .radar-card-sweep-line {
+
+    .radar-anim-ascend {
+      animation: radarSwapAscend 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .radar-anim-descend {
+      animation: radarSwapDescend 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .radar-anim-enter-left {
+      animation: radarSwapEnterLeft 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .radar-anim-enter-right {
+      animation: radarSwapEnterRight 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    .radar-laser-line {
       position: absolute;
       top: 0;
       left: -100%;
-      width: 60%;
+      width: 70%;
       height: 2px;
-      background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.95), transparent);
-      animation: radarCyberSweep 3.5s infinite ease-in-out;
+      animation: radarLaserSweep 4s infinite ease-in-out;
       pointer-events: none;
     }
-    .radar-card-gold-sweep {
-      background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.95), transparent);
-    }
+
     .radar-card-container {
-      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
       will-change: transform, opacity;
     }
     .radar-card-container:hover {
-      transform: translateY(-3px) scale(1.015);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5), 0 0 20px rgba(251, 191, 36, 0.25);
+      transform: translateY(-4px) scale(1.018);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6), 0 0 24px rgba(251, 191, 36, 0.30);
     }
   </style>
 </head>

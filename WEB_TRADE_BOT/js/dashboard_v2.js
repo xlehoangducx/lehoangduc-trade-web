@@ -3025,35 +3025,91 @@ function renderRadarLeaderboard(rawCandidates) {
         ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
         : "bg-rose-500/20 text-rose-400 border-rose-500/40";
       const dirText = isLong ? "LONG" : "SHORT";
+
+      // 1. Phân loại hiệu ứng Hoán Đổi Vị Trí (Rank Swap & Movement Dynamics)
+      const prevRank = (window._prevRadarRankMap && window._prevRadarRankMap[c.symbol]) ? window._prevRadarRankMap[c.symbol] : null;
+      const currRank = idx + 1;
       
-      let rankBadge = (idx === 0 ? "🥇 #1" : idx === 1 ? "🥈 #2" : idx === 2 ? "🥉 #3" : "🎖️ #4");
-      let rankBorder = "border-white/10";
-      let glowBar = "from-cyan-400 via-blue-500 to-transparent";
-      let barGradient = "from-cyan-500 via-blue-400 to-cyan-300";
-      let textRankColor = "text-cyan-400";
+      let movementClass = (idx < 2) ? 'radar-anim-enter-left' : 'radar-anim-enter-right';
+      let rankChangeBadge = '';
       
-      if (idx === 0) {
-        rankBorder = "border-amber-400/50 shadow-amber-400/10";
-        glowBar = "from-amber-400 via-yellow-500 to-transparent";
-        barGradient = "from-amber-500 via-yellow-400 to-amber-300";
-        textRankColor = "text-amber-400";
-      } else if (idx === 1) {
-        rankBorder = "border-slate-300/40 shadow-slate-300/10";
-        glowBar = "from-slate-200 via-gray-400 to-transparent";
-        barGradient = "from-slate-400 via-gray-300 to-slate-200";
-        textRankColor = "text-slate-300";
-      } else if (idx === 2) {
-        rankBorder = "border-amber-600/40 shadow-amber-600/10";
-        glowBar = "from-amber-600 via-yellow-700 to-transparent";
-        barGradient = "from-amber-700 via-amber-600 to-yellow-600";
-        textRankColor = "text-amber-500";
+      if (prevRank) {
+        if (currRank < prevRank) {
+          // Bứt phá ngoạn mục soán ngôi lên hạng cao hơn!
+          movementClass = 'radar-anim-ascend';
+          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-0.5 animate-pulse">🚀 +${prevRank - currRank} Bứt phá</span>`;
+        } else if (currRank > prevRank) {
+          // Tụt hạng nhường chỗ
+          movementClass = 'radar-anim-descend';
+          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-rose-500/15 text-rose-300 border border-rose-500/30 flex items-center gap-0.5">🔻 -${currRank - prevRank} Hạng</span>`;
+        } else {
+          // Giữ vững ngôi vị
+          rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-white/[0.06] text-gray-400 border border-white/10 flex items-center gap-0.5">⚓ Giữ Top</span>`;
+        }
       } else {
-        rankBorder = "border-cyan-500/40 shadow-cyan-500/10";
-        glowBar = "from-cyan-400 via-teal-500 to-transparent";
-        barGradient = "from-cyan-500 via-teal-400 to-emerald-300";
-        textRankColor = "text-cyan-400";
+        // Tân binh mới lọt vào Top 4 Ra-đa
+        rankChangeBadge = `<span class="px-1.5 py-0.5 rounded text-[9px] font-black mono-font bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-0.5">⚡ Mới vào</span>`;
       }
 
+      // 2. Thiết lập 4 ĐẶC TRƯNG HÌNH ẢNH HOÀN TOÀN KHÁC BIỆT CHO 4 THẺ
+      let rankThemeClass = '';
+      let rankBadge = '';
+      let rankBg = '';
+      let rankBorder = '';
+      let glowBar = '';
+      let barGradient = '';
+      let textRankColor = '';
+      let symColor = '';
+      let sweepBeam = '';
+
+      if (idx === 0) {
+        // 🥇 TOP 1: QUÁN QUÂN RA-ĐA LƯỢNG TỬ (GOLD TITAN)
+        rankThemeClass = 'radar-card-top-1';
+        rankBadge = '🥇 #1 QUÁN QUÂN';
+        rankBg = 'bg-gradient-to-br from-amber-500/[0.16] via-yellow-500/[0.06] to-[#080d1a]';
+        rankBorder = 'border-amber-400/60 shadow-amber-400/20';
+        glowBar = 'from-amber-400 via-yellow-400 to-amber-200';
+        barGradient = 'from-amber-500 via-yellow-400 to-amber-200';
+        textRankColor = 'text-amber-400';
+        symColor = 'text-amber-300';
+        sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.95), transparent);';
+      } else if (idx === 1) {
+        // 🥈 TOP 2: Á QUÂN CHIẾN THUẬT (TITANIUM CYAN LASER)
+        rankThemeClass = 'radar-card-top-2';
+        rankBadge = '🥈 #2 Á QUÂN';
+        rankBg = 'bg-gradient-to-br from-cyan-500/[0.13] via-sky-500/[0.05] to-[#080d1a]';
+        rankBorder = 'border-cyan-400/50 shadow-cyan-400/15';
+        glowBar = 'from-cyan-400 via-sky-400 to-blue-300';
+        barGradient = 'from-sky-500 via-cyan-400 to-teal-300';
+        textRankColor = 'text-cyan-400';
+        symColor = 'text-cyan-200';
+        sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.90), transparent);';
+      } else if (idx === 2) {
+        // 🥉 TOP 3: RÌNH MỒI HỔ PHÁCH (WARM AMBER FLAME)
+        rankThemeClass = 'radar-card-top-3';
+        rankBadge = '🥉 #3 HỔ PHÁCH';
+        rankBg = 'bg-gradient-to-br from-orange-500/[0.11] via-amber-600/[0.04] to-[#080d1a]';
+        rankBorder = 'border-orange-500/45 shadow-orange-500/15';
+        glowBar = 'from-orange-500 via-amber-500 to-yellow-500';
+        barGradient = 'from-orange-600 via-amber-500 to-yellow-400';
+        textRankColor = 'text-orange-400';
+        symColor = 'text-orange-200';
+        sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.85), transparent);';
+      } else {
+        // 🎖️ TOP 4: TRINH SÁT LỤC BẢO (STEALTH MATRIX EMERALD)
+        rankThemeClass = 'radar-card-top-4';
+        rankBadge = '🎖️ #4 TRINH SÁT';
+        rankBg = 'bg-gradient-to-br from-emerald-500/[0.10] via-teal-600/[0.03] to-[#080d1a]';
+        rankBorder = 'border-emerald-500/40 shadow-emerald-500/15';
+        glowBar = 'from-emerald-500 via-teal-400 to-cyan-400';
+        barGradient = 'from-emerald-600 via-teal-400 to-emerald-300';
+        textRankColor = 'text-emerald-400';
+        symColor = 'text-emerald-200';
+        sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.80), transparent);';
+      }
+
+      // 3. Bậc thang thời gian chuyển động (Cascading Staggered Timing: 0.00s, 0.16s, 0.32s, 0.48s)
+      const delaySec = (idx * 0.16).toFixed(2);
       const readiness = Math.min(99, Math.max(10, Number(c.readiness_pct) || 75));
       const hitCount = (c.hit_count !== undefined && c.hit_count !== null && Number(c.hit_count) > 0)
         ? Number(c.hit_count)
@@ -3064,27 +3120,23 @@ function renderRadarLeaderboard(rawCandidates) {
       const timeWindow = c.time_window_str || c.last_seen_str || "Gần đây";
       const bottleneckReason = c.bottleneck_reason || "Đang kiểm tra ngưỡng an toàn";
 
-      const isLeft = idx < 2;
-      const animClass = (idx === 0) ? 'radar-card-gold-pulse' : (isLeft ? 'radar-card-left-anim' : 'radar-card-right-anim');
-      const delaySec = isLeft ? (idx * 0.12).toFixed(2) : ((idx - 2) * 0.12).toFixed(2);
-      const sweepClass = (idx === 0) ? 'radar-card-gold-sweep' : '';
-
       return `
-        <div class="radar-card-container ${animClass} p-3 sm:p-3.5 rounded-2xl bg-[#090d16]/95 border ${rankBorder} hover:border-amber-400/60 transition-all duration-300 shadow-xl relative overflow-hidden group" style="animation-delay: ${delaySec}s;">
-          <div class="radar-card-sweep-line ${sweepClass}"></div>
+        <div class="radar-card-container ${rankThemeClass} ${movementClass} p-3 sm:p-3.5 rounded-2xl ${rankBg} border ${rankBorder} transition-all duration-400 shadow-xl relative overflow-hidden group" style="animation-delay: ${delaySec}s;">
+          <div class="radar-laser-line" style="${sweepBeam}"></div>
           <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r ${glowBar}"></div>
 
           <div class="flex items-center justify-between gap-1.5 mb-2">
             <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="px-1.5 py-0.5 rounded-md text-xs font-black mono-font bg-white/[0.06] ${textRankColor} border border-white/10">
+              <span class="px-2 py-0.5 rounded-md text-xs font-black mono-font bg-white/[0.08] ${textRankColor} border border-white/10 shadow-sm">
                 ${rankBadge}
               </span>
-              <span class="text-xs sm:text-sm font-black text-white mono-font tracking-wide">
+              <span class="text-xs sm:text-sm font-black ${symColor} mono-font tracking-wider">
                 ${c.symbol}
               </span>
               <span class="px-1.5 py-0.5 rounded text-[10px] font-black mono-font border ${dirClass}">
                 ${dirText}
               </span>
+              ${rankChangeBadge}
             </div>
             <div class="shrink-0">
               ${hitTag}
@@ -3105,7 +3157,7 @@ function renderRadarLeaderboard(rawCandidates) {
               <span class="${textRankColor} font-black">${readiness.toFixed(1)}%</span>
             </div>
             <div class="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden p-0.5 border border-white/10">
-              <div class="h-full rounded-full bg-gradient-to-r ${barGradient} transition-all duration-500 shadow-sm" style="width: ${readiness}%"></div>
+              <div class="h-full rounded-full bg-gradient-to-r ${barGradient} transition-all duration-700 shadow-sm" style="width: ${readiness}%"></div>
             </div>
           </div>
 
@@ -3120,7 +3172,7 @@ function renderRadarLeaderboard(rawCandidates) {
             </div>
             <div class="p-1 rounded-lg bg-black/50 border border-white/5">
               <div class="text-[9px] text-gray-400">Đòn Bẩy</div>
-              <div class="font-bold text-amber-400 text-[10px] mt-0.5">${c.dynamic_leverage || '5x'}</div>
+              <div class="font-bold ${textRankColor} text-[10px] mt-0.5">${c.dynamic_leverage || '5x'}</div>
             </div>
           </div>
 
@@ -3148,6 +3200,13 @@ function renderRadarLeaderboard(rawCandidates) {
         </div>
       `;
     }
+
+    // Lưu lại vị trí xếp hạng để so sánh chuyển động hoán đổi trong chu kỳ sau
+    const newRankMap = {};
+    candidates.slice(0, 4).forEach((c, i) => {
+      newRankMap[c.symbol] = i + 1;
+    });
+    window._prevRadarRankMap = newRankMap;
 
     if (window.lucide) {
       lucide.createIcons();
