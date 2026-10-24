@@ -3256,38 +3256,6 @@ renderRadarLeaderboard([]);
 
 
 
-// ===== BỘ ĐIỀU KHIỂN TƯƠNG TÁC 3D PARALLAX TILT & HOLOGRAM REFLECTION =====
-function attachRadar3DInteraction() {
-  const cards = document.querySelectorAll('.radar-holo-card');
-  cards.forEach(card => {
-    if (card._tiltAttached) return;
-    card._tiltAttached = true;
-
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
-
-      // Góc nghiêng 3D tối đa +-10 độ
-      const rotateX = ((y - centerY) / centerY) * -9;
-      const rotateY = ((x - centerX) / centerX) * 11;
-
-      card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(16px) scale3d(1.025, 1.025, 1.025)`;
-      card.style.setProperty('--mouse-x', `${x.toFixed(1)}px`);
-      card.style.setProperty('--mouse-y', `${y.toFixed(1)}px`);
-      card.style.setProperty('--glare-opacity', '1');
-    });
-
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0) scale3d(1, 1, 1)`;
-      card.style.setProperty('--glare-opacity', '0');
-    });
-  });
-}
-
-
 // ===== BỘ ĐIỀU KHIỂN TƯƠNG TÁC 3D PARALLAX TILT & HẠT NĂNG LƯỢNG THEO CHUỘT =====
 function attachRadar3DInteraction() {
   const cards = document.querySelectorAll('.radar-holo-card');

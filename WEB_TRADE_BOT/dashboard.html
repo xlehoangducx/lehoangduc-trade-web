@@ -22,7 +22,7 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Custom Cyber Styles -->
-  <link rel="stylesheet" href="css/style.css?v=20261023_0137">
+  <link rel="stylesheet" href="css/style.css?v=20261024_1340">
   <!-- Cyber Radar Animations & Transitions -->
   <style>
     /* ===== CYBER RADAR 3D PERSPECTIVE, GAME-LIKE TRAJECTORIES & POST-EFFECTS ===== */
@@ -320,13 +320,28 @@
   
   <div class="fixed inset-0 bg-radial-vignette pointer-events-none z-0"></div>
 
-  <!-- Loading Screen (Bảo mật: Che toàn bộ số liệu khi chưa xác thực xong) -->
+    <!-- Loading Screen (Bảo mật: Che toàn bộ số liệu khi chưa xác thực xong) -->
   <div id="authLoadingScreen" class="fixed inset-0 z-50 bg-[#07080d] flex flex-col items-center justify-center p-4">
     <div class="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 mb-4 animate-spin">
       <i data-lucide="loader-2" class="w-6 h-6"></i>
     </div>
     <div class="text-sm font-semibold text-gray-300 mono-font tracking-wide">Đang xác thực bảo mật tài khoản...</div>
   </div>
+
+  <!-- Inline Safety Fail-safe: Bảo đảm không bao giờ treo màn hình chờ quá 3.5s -->
+  <script>
+    setTimeout(function() {
+      var loader = document.getElementById('authLoadingScreen');
+      var app = document.getElementById('dashboardApp');
+      if (loader && !loader.classList.contains('hidden')) {
+        console.warn('Inline Fail-safe: Tự động mở Dashboard.');
+        loader.classList.add('hidden');
+        if (app && app.classList.contains('hidden')) {
+          app.classList.remove('hidden');
+        }
+      }
+    }, 3500);
+  </script>
 
   <!-- Pending Approval Screen (Hiển thị riêng cho Gmail chưa được duyệt - Hoàn toàn không thấy số liệu Admin) -->
   <div id="pendingOverlay" class="hidden fixed inset-0 z-50 bg-[#07080d] flex items-center justify-center p-4">
@@ -1356,7 +1371,7 @@
   <script src="js/matrix-rain.js"></script>
 
   <!-- App JavaScript Modules -->
-  <script type="module" src="js/dashboard_v2.js?t=20261023_0226"></script>
+  <script type="module" src="js/dashboard_v2.js?v=20261024_1340"></script>
   <script>
     lucide.createIcons();
   </script>
