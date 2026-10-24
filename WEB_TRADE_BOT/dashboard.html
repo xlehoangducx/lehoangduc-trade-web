@@ -22,7 +22,7 @@
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Custom Cyber Styles -->
-  <link rel="stylesheet" href="css/style.css?v=20261024_1400">
+  <link rel="stylesheet" href="css/style.css?v=20261024_1410">
   <!-- Cyber Radar Animations & Transitions -->
   <style>
     /* ===== CYBER RADAR 3D PERSPECTIVE, GAME-LIKE TRAJECTORIES & POST-EFFECTS ===== */
@@ -279,6 +279,64 @@
       pointer-events: none;
       z-index: 35;
       animation: sparkDisperse 0.65s cubic-bezier(0.12, 0.8, 0.3, 1) forwards;
+    }
+
+    
+    /* Sóng xung kích bùng nổ theo 4 cạnh viền khi thẻ khớp vị trí */
+    .radar-border-shockwave {
+      position: absolute;
+      inset: -2px;
+      border-radius: inherit;
+      border: 2px solid var(--wave-color, #fbbf24);
+      pointer-events: none;
+      z-index: 30;
+      animation: borderShockwaveBurst 0.85s cubic-bezier(0.12, 0.9, 0.24, 1) forwards;
+    }
+
+    @keyframes borderShockwaveBurst {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 0 0px var(--wave-color, #fbbf24), inset 0 0 0px var(--wave-color, #fbbf24);
+      }
+      50% {
+        opacity: 0.9;
+        box-shadow: 0 0 25px var(--wave-color, #fbbf24), inset 0 0 15px var(--wave-color, #fbbf24);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(1.06);
+        box-shadow: 0 0 40px var(--wave-color, #fbbf24), inset 0 0 20px transparent;
+      }
+    }
+
+    /* Hạt năng lượng bùng nổ tỏa ra ngoài từ 4 cạnh viền thẻ */
+    .radar-border-spark {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 35;
+      animation: borderSparkFly 0.8s cubic-bezier(0.16, 0.9, 0.3, 1) forwards;
+    }
+
+    @keyframes borderSparkFly {
+      0% {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1.8);
+        filter: drop-shadow(0 0 8px var(--spark-color, #fbbf24));
+      }
+      40% {
+        opacity: 1;
+        transform: translate3d(calc(var(--dx) * 0.6), calc(var(--dy) * 0.6), 0) scale(1.4);
+        filter: drop-shadow(0 0 14px var(--spark-color, #fbbf24));
+      }
+      100% {
+        opacity: 0;
+        transform: translate3d(var(--dx), var(--dy), 0) scale(0.2);
+        filter: drop-shadow(0 0 20px var(--spark-color, #fbbf24));
+      }
     }
 
     /* 8. Hào quang thở (Breathing Aura) 4 Đẳng Cấp */
@@ -1418,7 +1476,7 @@
   <script src="js/matrix-rain.js"></script>
 
   <!-- App JavaScript Modules -->
-  <script type="module" src="js/dashboard_v2.js?v=20261024_1400"></script>
+  <script type="module" src="js/dashboard_v2.js?v=20261024_1410"></script>
   <script>
     lucide.createIcons();
   </script>

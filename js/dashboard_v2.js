@@ -3141,7 +3141,7 @@ function renderRadarLeaderboard(rawCandidates) {
         ? Number(c.hit_count)
         : 1;
 
-      const hitTag = "";
+      const hitTag = `<span class="px-2 py-0.5 rounded-md text-[10px] font-black mono-font bg-amber-400/15 text-amber-300 border border-amber-400/35 flex items-center gap-1 shrink-0 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>🔥 ${hitCount} lần</span>`;
 
       const timeWindow = c.time_window_str || c.last_seen_str || "Gần đây";
       const bottleneckReason = c.bottleneck_reason || "Đang kiểm tra ngưỡng an toàn";
@@ -3171,7 +3171,7 @@ function renderRadarLeaderboard(rawCandidates) {
               
             </div>
             <div class="shrink-0">
-              
+              ${hitTag}
             </div>
           </div>
 
@@ -3242,6 +3242,7 @@ function renderRadarLeaderboard(rawCandidates) {
 
     // Gắn bộ điều khiển tương tác 3D Parallax Tilt & Hạt Năng Lượng theo chuột
     attachRadar3DInteraction();
+    triggerAllCardsBorderBurst();
 
     if (window.lucide) {
       lucide.createIcons();
@@ -3256,7 +3257,70 @@ renderRadarLeaderboard([]);
 
 
 
-// ===== BỘ ĐIỀU KHIỂN TƯƠNG TÁC 3D PARALLAX TILT & HẠT NĂNG LƯỢNG ĐA ĐẲNG CẤP =====
+// ===== BÙNG NỔ HẠT NĂNG LƯỢNG QUANH 4 VIỀN THẺ KHI KHỚP VỊ TRÍ THAY ĐỔI =====
+function spawnBorderSpark(container, x, y, dx, dy, color) {
+  const spark = document.createElement('div');
+  spark.className = 'radar-border-spark';
+  spark.style.left = `${x}px`;
+  spark.style.top = `${y}px`;
+  spark.style.backgroundColor = color;
+  spark.style.boxShadow = `0 0 8px ${color}, 0 0 16px ${color}`;
+  spark.style.setProperty('--dx', `${dx.toFixed(1)}px`);
+  spark.style.setProperty('--dy', `${dy.toFixed(1)}px`);
+  spark.style.setProperty('--spark-color', color);
+  container.appendChild(spark);
+  setTimeout(() => { if (spark.parentNode) spark.remove(); }, 800);
+}
+
+function triggerCardBorderBurst(card) {
+  if (!card) return;
+  const w = card.offsetWidth || 300;
+  const h = card.offsetHeight || 160;
+  const color = card.getAttribute('data-spark-color') || '#fbbf24';
+
+  // 1. Sóng xung kích phát quang bùng nổ theo hình chữ nhật viền thẻ
+  const shockwave = document.createElement('div');
+  shockwave.className = 'radar-border-shockwave';
+  shockwave.style.setProperty('--wave-color', color);
+  card.appendChild(shockwave);
+  setTimeout(() => { if (shockwave.parentNode) shockwave.remove(); }, 900);
+
+  // 2. Chùm hạt năng lượng bùng nổ tỏa ra ngoài từ 4 cạnh viền thẻ
+  const sideCount = 6;
+  // Cạnh trên (Bắn lên)
+  for (let i = 0; i < sideCount; i++) {
+    const px = (w / (sideCount + 1)) * (i + 1);
+    spawnBorderSpark(card, px, 0, (Math.random() - 0.5) * 20, -(Math.random() * 26 + 14), color);
+  }
+  // Cạnh dưới (Bắn xuống)
+  for (let i = 0; i < sideCount; i++) {
+    const px = (w / (sideCount + 1)) * (i + 1);
+    spawnBorderSpark(card, px, h, (Math.random() - 0.5) * 20, (Math.random() * 26 + 14), color);
+  }
+  // Cạnh trái (Bắn sang trái)
+  for (let i = 0; i < 4; i++) {
+    const py = (h / 5) * (i + 1);
+    spawnBorderSpark(card, 0, py, -(Math.random() * 26 + 14), (Math.random() - 0.5) * 20, color);
+  }
+  // Cạnh phải (Bắn sang phải)
+  for (let i = 0; i < 4; i++) {
+    const py = (h / 5) * (i + 1);
+    spawnBorderSpark(card, w, py, (Math.random() * 26 + 14), (Math.random() - 0.5) * 20, color);
+  }
+}
+
+function triggerAllCardsBorderBurst() {
+  const cards = document.querySelectorAll('.radar-holo-card');
+  cards.forEach((card, idx) => {
+    // Đợi thẻ bay ráp vào đúng vị trí rồi kích hoạt bùng nổ viền
+    const delay = (idx * 160) + 420;
+    setTimeout(() => {
+      triggerCardBorderBurst(card);
+    }, delay);
+  });
+}
+
+// ===== BỘ ĐIỀU KHIỂN TƯƠNG TÁC 3D PARALLAX TILT & HẠT NĂNG LƯỢNG THEO CHUỘT (NGUYÊN BẢN MƯỢT MÀ) =====
 function attachRadar3DInteraction() {
   const cards = document.querySelectorAll('.radar-holo-card');
   cards.forEach(card => {
@@ -3280,79 +3344,25 @@ function attachRadar3DInteraction() {
       card.style.setProperty('--mouse-y', `${y.toFixed(1)}px`);
       card.style.setProperty('--glare-opacity', '1');
 
-      // Tỏa chùm hạt năng lượng phát quang theo đường di chuột (Đa dạng 4 đẳng cấp)
+      // Tỏa chùm hạt năng lượng phát quang theo đường di chuột (như cũ)
       const now = performance.now();
-      if (now - lastSparkTime > 35) {
+      if (now - lastSparkTime > 38) {
         lastSparkTime = now;
         const spark = document.createElement('div');
-        spark.className = 'radar-spark-item';
+        spark.className = 'radar-cursor-spark';
+        const color = card.getAttribute('data-spark-color') || '#fbbf24';
         spark.style.left = `${x}px`;
         spark.style.top = `${y}px`;
+        spark.style.backgroundColor = color;
+        spark.style.boxShadow = `0 0 8px ${color}, 0 0 16px ${color}`;
 
-        const dx = (Math.random() - 0.5) * 44;
-        const dy = -(Math.random() * 32 + 12);
-        const rot = (Math.random() - 0.5) * 40;
+        const dx = (Math.random() - 0.5) * 35;
+        const dy = (Math.random() - 0.5) * 35 - 12;
         spark.style.setProperty('--dx', `${dx.toFixed(1)}px`);
         spark.style.setProperty('--dy', `${dy.toFixed(1)}px`);
-        spark.style.setProperty('--end-rot', `${rot.toFixed(1)}deg`);
-
-        const rank = card.getAttribute('data-rank') || (card.classList.contains('radar-card-top-1') ? '1' : (card.classList.contains('radar-card-top-2') ? '2' : (card.classList.contains('radar-card-top-3') ? '3' : '4')));
-
-        if (rank === '1') {
-          // 🥇 TOP 1: Golden BTC, Nến Xanh/Đỏ mini, Dollar, Sao vàng
-          spark.style.setProperty('--spark-glow', '#fbbf24');
-          const r = Math.random();
-          if (r < 0.28) {
-            spark.innerHTML = '₿';
-            spark.style.color = '#ffd700';
-            spark.style.fontSize = '18px';
-            spark.style.fontWeight = '900';
-            spark.style.textShadow = '0 0 10px #fbbf24, 0 0 20px #f59e0b';
-          } else if (r < 0.50) {
-            spark.innerHTML = '<div class="radar-mini-candle green"><div class="wick"></div><div class="candle-body"></div></div>';
-          } else if (r < 0.70) {
-            spark.innerHTML = '<div class="radar-mini-candle red"><div class="wick"></div><div class="candle-body"></div></div>';
-          } else if (r < 0.86) {
-            spark.innerHTML = '$';
-            spark.style.color = '#fef08a';
-            spark.style.fontSize = '16px';
-            spark.style.fontWeight = '900';
-            spark.style.textShadow = '0 0 10px #eab308, 0 0 18px #ca8a04';
-          } else {
-            spark.innerHTML = '✨';
-            spark.style.fontSize = '15px';
-            spark.style.filter = 'drop-shadow(0 0 8px #fbbf24)';
-          }
-        } else if (rank === '2') {
-          // 🥈 TOP 2: Cyan Plasma Crystals & Laser Bolts
-          spark.style.setProperty('--spark-glow', '#00e5ff');
-          const icons = ['💠', '⚡', '✦', '🔷', '❄️'];
-          spark.innerHTML = icons[Math.floor(Math.random() * icons.length)];
-          spark.style.color = '#00e5ff';
-          spark.style.fontSize = '15px';
-          spark.style.filter = 'drop-shadow(0 0 10px #00e5ff) drop-shadow(0 0 20px #0284c7)';
-        } else if (rank === '3') {
-          // 🥉 TOP 3: Flame Amber Phoenix & Hot Embers
-          spark.style.setProperty('--spark-glow', '#ea580c');
-          const icons = ['🔥', '💥', '✴️', '🟠', '✨'];
-          spark.innerHTML = icons[Math.floor(Math.random() * icons.length)];
-          spark.style.fontSize = '15px';
-          spark.style.filter = 'drop-shadow(0 0 10px #f97316) drop-shadow(0 0 20px #dc2626)';
-        } else {
-          // 🎖️ TOP 4: Emerald Matrix Binary Streams & Quantum Shards
-          spark.style.setProperty('--spark-glow', '#00ff88');
-          const icons = ['1', '0', '⟠', '❇️', '💎'];
-          const chosen = icons[Math.floor(Math.random() * icons.length)];
-          spark.innerHTML = chosen;
-          spark.style.color = '#00ff88';
-          spark.style.fontSize = (chosen === '1' || chosen === '0') ? '17px' : '14px';
-          spark.style.fontWeight = '900';
-          spark.style.fontFamily = '"JetBrains Mono", monospace';
-          spark.style.textShadow = '0 0 8px #00ff88, 0 0 16px #059669';
-        }
 
         card.appendChild(spark);
-        setTimeout(() => { if (spark && spark.parentNode) spark.remove(); }, 850);
+        setTimeout(() => { if (spark && spark.parentNode) spark.remove(); }, 650);
       }
     });
 
