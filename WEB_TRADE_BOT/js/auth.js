@@ -109,9 +109,7 @@ export async function syncUserProfile(user) {
 // Listen to Auth State
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    const profile = await syncUserProfile(user);
-
-    // Không tự động chuyển hướng - Cho phép người dùng đọc trang chủ và xem phần tác giả
+    // 1. CẬP NHẬT UI NGAY TỨC THÌ (Zero Delay)
     const floatingBtn = document.getElementById("floatingDashboardBtn");
     if (floatingBtn) {
       floatingBtn.classList.remove("hidden");
@@ -120,15 +118,33 @@ onAuthStateChanged(auth, async (user) => {
     if (btnLogin && userProfile) {
       btnLogin.classList.add("hidden");
       userProfile.classList.remove("hidden");
-      if (userAvatar) userAvatar.src = user.photoURL || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.displayName);
-      if (userName) userName.textContent = user.displayName;
+      if (userAvatar) userAvatar.src = user.photoURL || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.displayName || "Trader");
+      if (userName) userName.textContent = user.displayName || "Trader";
+    }
+
+    const heroCtaBtn = document.getElementById("heroCtaBtn");
+    const heroCtaText = document.getElementById("heroCtaText");
+    const heroCtaIcon = document.getElementById("heroCtaIcon");
+    if (heroCtaBtn) {
+      heroCtaBtn.onclick = () => { window.location.href = "dashboard.html"; };
+      if (heroCtaText) heroCtaText.textContent = "Vào Bảng Điều Khiển";
+      if (heroCtaIcon) heroCtaIcon.setAttribute("data-lucide", "layout-dashboard");
+    }
+
+    // 2. Chạy syncUserProfile trong background với try/catch an toàn
+    try {
+      const profile = await syncUserProfile(user);
       if (userRoleBadge) {
         userRoleBadge.textContent = profile?.role === "admin" ? "ADMIN" : (profile?.status === "approved" ? "MEMBER" : "CHỜ DUYỆT");
         userRoleBadge.className = profile?.role === "admin" 
-          ? "text-[10px] px-2 py-0.5 rounded-full badge-admin mono-font uppercase"
-          : (profile?.status === "approved" ? "text-[10px] px-2 py-0.5 rounded-full badge-live mono-font uppercase" : "text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 mono-font uppercase");
+          ? "text-[10px] px-2 py-0.5 rounded-full badge-admin mono-font uppercase font-bold"
+          : (profile?.status === "approved" ? "text-[10px] px-2 py-0.5 rounded-full badge-live mono-font uppercase font-bold" : "text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 mono-font uppercase font-bold");
       }
+    } catch (err) {
+      console.warn("Background profile sync warning:", err);
     }
+
+    if (window.lucide) lucide.createIcons();
   } else {
     const floatingBtn = document.getElementById("floatingDashboardBtn");
     if (floatingBtn) {
@@ -138,5 +154,14 @@ onAuthStateChanged(auth, async (user) => {
       btnLogin.classList.remove("hidden");
       userProfile.classList.add("hidden");
     }
+    const heroCtaBtn = document.getElementById("heroCtaBtn");
+    const heroCtaText = document.getElementById("heroCtaText");
+    const heroCtaIcon = document.getElementById("heroCtaIcon");
+    if (heroCtaBtn) {
+      heroCtaBtn.onclick = () => { document.getElementById("btnLogin")?.click(); };
+      if (heroCtaText) heroCtaText.textContent = "Đăng Nhập Google Để Truy Cập";
+      if (heroCtaIcon) heroCtaIcon.setAttribute("data-lucide", "log-in");
+    }
+    if (window.lucide) lucide.createIcons();
   }
 });

@@ -21,6 +21,8 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Custom Cyber Styles -->
   <link rel="stylesheet" href="css/style.css?v=20261016_1925">
+  <!-- Preload Auth Module Early (Zero Login Delay) -->
+  <script type="module" src="js/auth.js"></script>
 </head>
 <body class="bg-[#07080d] text-gray-100 min-h-screen flex flex-col justify-between selection:bg-amber-400 selection:text-black overflow-x-hidden relative font-['Be_Vietnam_Pro',sans-serif]">
 
@@ -114,9 +116,9 @@
 
       <!-- Big CTA Buttons -->
       <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-        <button onclick="document.getElementById('btnLogin').click()" class="w-full sm:w-auto flex items-center justify-center space-x-3 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-extrabold px-10 py-4 rounded-full shadow-2xl shadow-amber-500/30 transition-all text-sm tracking-wide uppercase active:scale-95 group">
-          <i data-lucide="log-in" class="w-4 h-4 text-black"></i>
-          <span>Đăng Nhập Google Để Truy Cập</span>
+        <button id="heroCtaBtn" onclick="document.getElementById('btnLogin').click()" class="w-full sm:w-auto flex items-center justify-center space-x-3 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-extrabold px-10 py-4 rounded-full shadow-2xl shadow-amber-500/30 transition-all text-sm tracking-wide uppercase active:scale-95 group">
+          <i id="heroCtaIcon" data-lucide="log-in" class="w-4 h-4 text-black"></i>
+          <span id="heroCtaText">Đăng Nhập Google Để Truy Cập</span>
           <span class="text-lg font-bold group-hover:translate-x-1 transition-transform">›</span>
         </button>
         
@@ -753,7 +755,6 @@
   <script src="js/gear-engine-canvas.js"></script>
 
   <!-- Firebase & App Script -->
-  <script type="module" src="js/auth.js"></script>
   <script>
     lucide.createIcons();
   </script>
