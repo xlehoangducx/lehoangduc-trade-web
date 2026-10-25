@@ -106,8 +106,9 @@ export async function syncUserProfile(user) {
   }
 }
 
-// Listen to Auth State
-onAuthStateChanged(auth, async (user) => {
+// Listen to Auth State (Only for Index / Landing Page navigation)
+if (btnLogin || document.getElementById("heroCtaBtn") || document.getElementById("authNavContainer")) {
+  onAuthStateChanged(auth, async (user) => {
   if (user) {
     // 1. CẬP NHẬT UI NGAY TỨC THÌ (Zero Delay)
     const floatingBtn = document.getElementById("floatingDashboardBtn");
@@ -165,3 +166,4 @@ onAuthStateChanged(auth, async (user) => {
     if (window.lucide) lucide.createIcons();
   }
 });
+}
