@@ -2059,6 +2059,7 @@ function listenToBotTelemetry(userId, isAdmin) {
 
       if (specLev) specLev.textContent = `${maxLev}x`;
 
+      const freeRollEnabled = data.free_roll_recycling !== false;
       const specTrades = document.getElementById("specMaxTrades");
 
       if (specTrades) {
@@ -2144,7 +2145,6 @@ function listenToBotTelemetry(userId, isAdmin) {
 
       
       // Sync Free-Roll Recycling Status
-      const freeRollEnabled = data.free_roll_recycling !== false;
       const btnFreeRollOff = document.getElementById("btnFreeRollOff");
       const btnFreeRollOn = document.getElementById("btnFreeRollOn");
       const freeRollBadge = document.getElementById("freeRollBadge");
