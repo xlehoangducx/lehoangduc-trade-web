@@ -978,6 +978,7 @@ async function sendBotCommand(command, extraData = {}, btnEl = null) {
 
     else if (command === 'stop') label = "TẠM DỪNG BOT";
 
+    else if (command === 'toggle_free_roll_recycling') label = extraData.enabled ? 'BẬT GIA TĂNG VỊ THẾ' : 'TẮT GIA TĂNG VỊ THẾ';
     else if (command === 'toggle_tradfi') label = extraData.only_tradfi ? 'CHỈ CỔ PHIẾU' : (extraData.enabled ? 'CẢ HAI (CRYPTO + CỔ PHIẾU)' : 'TẮT CỔ PHIẾU');
 
     else if (command === 'update_config') label = `ĐÒN BẨY ${extraData.max_leverage || ''}X & ${extraData.max_open_trades || ''} LỆNH`;
@@ -1084,6 +1085,14 @@ document.getElementById("btnManualAdoptOff")?.addEventListener("click", (e) => {
 });
 document.getElementById("btnManualAdoptOn")?.addEventListener("click", (e) => {
   sendBotCommand("toggle_manual_adopt", { enabled: true }, e.currentTarget);
+});
+
+// Free-Roll Recycling Toggle Buttons
+document.getElementById("btnFreeRollOff")?.addEventListener("click", (e) => {
+  sendBotCommand("toggle_free_roll_recycling", { enabled: false }, e.currentTarget);
+});
+document.getElementById("btnFreeRollOn")?.addEventListener("click", (e) => {
+  sendBotCommand("toggle_free_roll_recycling", { enabled: true }, e.currentTarget);
 });
 
 // TradFi US Stocks Mode Toggle Buttons
@@ -2052,7 +2061,14 @@ function listenToBotTelemetry(userId, isAdmin) {
 
       const specTrades = document.getElementById("specMaxTrades");
 
-      if (specTrades) specTrades.textContent = `${maxTrades} lệnh`;
+      if (specTrades) {
+        const freeRollCnt = Number(data.free_roll_positions_count || 0);
+        if (freeRollEnabled && freeRollCnt > 0) {
+          specTrades.textContent = `${maxTrades} lệnh (+${freeRollCnt} bảo toàn)`;
+        } else {
+          specTrades.textContent = `${maxTrades} lệnh`;
+        }
+      }
 
       const botModeBadge = document.getElementById("botModeBadge");
 
@@ -2125,6 +2141,31 @@ function listenToBotTelemetry(userId, isAdmin) {
       const btnManualAdoptOff = document.getElementById("btnManualAdoptOff");
       const btnManualAdoptOn = document.getElementById("btnManualAdoptOn");
       const manualAdoptBadge = document.getElementById("manualAdoptBadge");
+
+      
+      // Sync Free-Roll Recycling Status
+      const freeRollEnabled = data.free_roll_recycling !== false;
+      const btnFreeRollOff = document.getElementById("btnFreeRollOff");
+      const btnFreeRollOn = document.getElementById("btnFreeRollOn");
+      const freeRollBadge = document.getElementById("freeRollBadge");
+
+      if (btnFreeRollOff && btnFreeRollOn) {
+        if (freeRollEnabled) {
+          btnFreeRollOn.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition bg-cyan-500/20 text-cyan-400 border border-cyan-500/40";
+          btnFreeRollOff.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition text-gray-400 hover:text-white border border-transparent";
+          if (freeRollBadge) {
+            freeRollBadge.textContent = "BẬT (GIA TĂNG LÃI)";
+            freeRollBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold mono-font bg-cyan-500/10 text-cyan-400 border border-cyan-500/30";
+          }
+        } else {
+          btnFreeRollOff.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition bg-white/10 text-white border border-white/20";
+          btnFreeRollOn.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition text-gray-400 hover:text-white border border-transparent";
+          if (freeRollBadge) {
+            freeRollBadge.textContent = "TẮT";
+            freeRollBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold mono-font bg-white/5 text-gray-400 border border-white/10";
+          }
+        }
+      }
 
       if (btnManualAdoptOff && btnManualAdoptOn) {
         if (manualAdoptEnabled) {
