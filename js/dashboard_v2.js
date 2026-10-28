@@ -3171,6 +3171,9 @@ function renderRadarLeaderboard(rawCandidates) {
         : radarStatus === 'WAITING_RESOURCE'
           ? 'Tín hiệu đạt điều kiện; bot đang chờ slot/ký quỹ, chưa gửi lệnh Binance.'
           : 'Ứng viên đã được phân tích nhưng bị chặn; chưa có lệnh gửi Binance.';
+      const priorityValue = Number(c.readiness_pct);
+      const radarPriority = Number.isFinite(priorityValue)
+        ? Math.max(0, Math.min(100, priorityValue)) : null;
 
       // 1. Phân loại hiệu ứng Hoán Đổi Vị Trí Game-like & Quỹ đạo bay 3D
       const prevRank = (window._prevRadarRankMap && window._prevRadarRankMap[c.symbol]) ? window._prevRadarRankMap[c.symbol] : null;
@@ -3326,6 +3329,17 @@ function renderRadarLeaderboard(rawCandidates) {
           <div class="flex items-center justify-between text-[10px] mono-font mb-2 relative z-10">
             <span class="text-gray-400">Trạng thái:</span>
             <strong class="${radarStatus === 'BLOCKED' ? 'text-rose-400' : textRankColor}">${statusLabel} · ${gateLabel}</strong>
+          </div>
+
+          <div class="mb-2 relative z-10 min-w-0" title="Điểm heuristic dùng để xếp hạng ứng viên; không phải tiến độ khớp lệnh hay xác suất thắng.">
+            <div class="flex items-center justify-between gap-2 text-[9px] sm:text-[10px] mono-font mb-1">
+              <span class="text-gray-300 font-bold">ĐIỂM ƯU TIÊN RADAR</span>
+              <span class="${textRankColor} font-black shrink-0">${radarPriority === null ? '—' : `${radarPriority.toFixed(1)}/100`}</span>
+            </div>
+            <div class="w-full h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500" style="width:${radarPriority ?? 0}%; background:${sparkColorHex};"></div>
+            </div>
+            <div class="text-[8px] text-gray-500 mt-1">Điểm xếp hạng ứng viên, không phải tiến độ lệnh.</div>
           </div>
 
           <div class="mb-2 relative z-10 min-w-0">
