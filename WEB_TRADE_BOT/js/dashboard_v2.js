@@ -1866,7 +1866,15 @@ function listenToBotTelemetry(userId, isAdmin) {
         if (statWinRate && cached.win_rate !== undefined) statWinRate.textContent = `${Number(cached.win_rate).toFixed(1)}%`;
         const statTotalTrades = document.getElementById("statTotalTrades");
         if (statTotalTrades && cached.total_trades !== undefined) {
-          statTotalTrades.textContent = `${cached.total_trades} lệnh lịch sử`;
+          // [SỔ VỐN] PnL TOÀN BỘ TÀI KHOẢN = equity - tổng nạp/rút thật từ sàn. Khác ô
+          // "TỔNG PNL LỊCH SỬ" (chỉ realized PnL của các lệnh đã ghi trong DB): con số này còn
+          // gồm funding fee + lịch sử trước khi DB bắt đầu ghi. Chỉ nối thêm khi backend cung cấp.
+          let subTotalTrades = `${cached.total_trades} lệnh lịch sử`;
+          if (cached.session_pnl !== undefined && cached.session_pnl !== null) {
+            const spAll = Number(cached.session_pnl);
+            if (Number.isFinite(spAll)) subTotalTrades += ` · Cả TK: ${spAll >= 0 ? '+' : ''}${spAll.toFixed(4)}`;
+          }
+          statTotalTrades.textContent = subTotalTrades;
           window._lastValidTotalTrades = cached.total_trades;
         }
         const statFeesSub = document.getElementById("statFeesSub");
@@ -2013,7 +2021,15 @@ function listenToBotTelemetry(userId, isAdmin) {
 
       const statTotalTrades = document.getElementById("statTotalTrades");
 
-      if (statTotalTrades) statTotalTrades.textContent = `${totalTrades} lệnh lịch sử`;
+      if (statTotalTrades) {
+        // [SỔ VỐN] Nối thêm PnL toàn bộ tài khoản (equity - tổng nạp/rút thật) nếu backend cung cấp.
+        let subTotalTradesLive = `${totalTrades} lệnh lịch sử`;
+        if (data.session_pnl !== undefined && data.session_pnl !== null) {
+          const spAllLive = Number(data.session_pnl);
+          if (Number.isFinite(spAllLive)) subTotalTradesLive += ` · Cả TK: ${spAllLive >= 0 ? '+' : ''}${spAllLive.toFixed(4)}`;
+        }
+        statTotalTrades.textContent = subTotalTradesLive;
+      }
 
 
 
