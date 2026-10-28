@@ -3160,6 +3160,17 @@ function renderRadarLeaderboard(rawCandidates) {
         : radarStatus === 'WAITING_RESOURCE' ? 'TÍN HIỆU ĐẠT · CHỜ SLOT'
         : 'BỊ CHẶN';
       const gateLabel = escapeHtml(c.bottleneck_gate || 'PRE_TRADE_GATE');
+      const processOutcome = radarStatus === 'STALKING' ? 'RÌNH MAKER'
+        : radarStatus === 'WAITING_RESOURCE' ? 'CHỜ SLOT' : 'BỊ CHẶN';
+      const processColor = radarStatus === 'STALKING' ? '#6ee7b7'
+        : radarStatus === 'WAITING_RESOURCE' ? '#fcd34d' : '#fda4af';
+      const processBackground = radarStatus === 'STALKING' ? 'rgba(52,211,153,0.07)'
+        : radarStatus === 'WAITING_RESOURCE' ? 'rgba(251,191,36,0.07)' : 'rgba(251,113,133,0.07)';
+      const processNote = radarStatus === 'STALKING'
+        ? 'Lệnh Maker đang rình trong RAM; chưa gửi lên Binance.'
+        : radarStatus === 'WAITING_RESOURCE'
+          ? 'Tín hiệu đạt điều kiện; bot đang chờ slot/ký quỹ, chưa gửi lệnh Binance.'
+          : 'Ứng viên đã được phân tích nhưng bị chặn; chưa có lệnh gửi Binance.';
 
       // 1. Phân loại hiệu ứng Hoán Đổi Vị Trí Game-like & Quỹ đạo bay 3D
       const prevRank = (window._prevRadarRankMap && window._prevRadarRankMap[c.symbol]) ? window._prevRadarRankMap[c.symbol] : null;
@@ -3208,7 +3219,6 @@ function renderRadarLeaderboard(rawCandidates) {
       let rankBg = '';
       let rankBorder = '';
       let glowBar = '';
-      let barGradient = '';
       let textRankColor = '';
       let symColor = '';
       let sweepBeam = '';
@@ -3222,7 +3232,6 @@ function renderRadarLeaderboard(rawCandidates) {
         rankBg = 'bg-gradient-to-br from-amber-500/[0.18] via-yellow-500/[0.06] to-[#070b14]';
         rankBorder = 'border-amber-400/65 shadow-amber-400/20';
         glowBar = 'from-amber-400 via-yellow-400 to-amber-200';
-        barGradient = 'from-amber-500 via-yellow-400 to-amber-200';
         textRankColor = 'text-amber-400';
         symColor = 'text-amber-300 font-black tracking-wider drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.95), transparent);';
@@ -3235,7 +3244,6 @@ function renderRadarLeaderboard(rawCandidates) {
         rankBg = 'bg-gradient-to-br from-cyan-500/[0.14] via-sky-500/[0.05] to-[#070b14]';
         rankBorder = 'border-cyan-400/55 shadow-cyan-400/15';
         glowBar = 'from-cyan-400 via-sky-400 to-blue-300';
-        barGradient = 'from-sky-500 via-cyan-400 to-teal-300';
         textRankColor = 'text-cyan-400';
         symColor = 'text-cyan-200 font-black tracking-wide drop-shadow-[0_0_8px_rgba(56,189,248,0.35)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.90), transparent);';
@@ -3248,7 +3256,6 @@ function renderRadarLeaderboard(rawCandidates) {
         rankBg = 'bg-gradient-to-br from-orange-500/[0.12] via-amber-600/[0.04] to-[#070b14]';
         rankBorder = 'border-orange-500/50 shadow-orange-500/15';
         glowBar = 'from-orange-500 via-amber-500 to-yellow-500';
-        barGradient = 'from-orange-600 via-amber-500 to-yellow-400';
         textRankColor = 'text-orange-400';
         symColor = 'text-orange-200 font-bold drop-shadow-[0_0_6px_rgba(249,115,22,0.3)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.85), transparent);';
@@ -3261,7 +3268,6 @@ function renderRadarLeaderboard(rawCandidates) {
         rankBg = 'bg-gradient-to-br from-emerald-500/[0.11] via-teal-600/[0.03] to-[#070b14]';
         rankBorder = 'border-emerald-500/45 shadow-emerald-500/15';
         glowBar = 'from-emerald-500 via-teal-400 to-cyan-400';
-        barGradient = 'from-emerald-600 via-teal-400 to-emerald-300';
         textRankColor = 'text-emerald-400';
         symColor = 'text-emerald-200 font-bold drop-shadow-[0_0_6px_rgba(16,185,129,0.3)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.80), transparent);';
@@ -3271,7 +3277,6 @@ function renderRadarLeaderboard(rawCandidates) {
 
       // 3. Bậc thang thời gian chuyển động (Cascading Staggered Timing: 0.00s, 0.16s, 0.32s, 0.48s)
       const delaySec = (idx * 0.16).toFixed(2);
-      const readiness = Math.min(99, Math.max(10, Number(c.readiness_pct) || 75));
       const hitCount = (c.hit_count !== undefined && c.hit_count !== null && Number(c.hit_count) > 0)
         ? Number(c.hit_count)
         : 1;
@@ -3323,29 +3328,32 @@ function renderRadarLeaderboard(rawCandidates) {
             <strong class="${radarStatus === 'BLOCKED' ? 'text-rose-400' : textRankColor}">${statusLabel} · ${gateLabel}</strong>
           </div>
 
-          <div class="mb-2 relative z-10">
-            <div class="flex items-center justify-between text-[10px] sm:text-[11px] mono-font mb-1">
-              <span class="text-gray-300 font-semibold flex items-center gap-1">
-                <i data-lucide="crosshair" class="w-3.5 h-3.5 ${textRankColor}"></i>
-                <span>Điểm ưu tiên Radar:</span>
-              </span>
-              <span class="${textRankColor} font-black">${readiness.toFixed(1)}/100</span>
+          <div class="mb-2 relative z-10 min-w-0">
+            <div class="text-[9px] sm:text-[10px] text-gray-300 font-bold mono-font mb-1">TIẾN TRÌNH ỨNG VIÊN</div>
+            <div class="grid grid-cols-3 gap-1 min-w-0 text-center mono-font">
+              <div class="min-w-0 p-1 rounded-lg border border-emerald-400/30 bg-emerald-400/[0.06] overflow-hidden">
+                <div class="text-[8px] text-gray-500">BƯỚC 1</div><div class="text-[9px] text-emerald-300 font-black break-words">QUÉT ✓</div>
+              </div>
+              <div class="min-w-0 p-1 rounded-lg border border-emerald-400/30 bg-emerald-400/[0.06] overflow-hidden">
+                <div class="text-[8px] text-gray-500">BƯỚC 2</div><div class="text-[9px] text-emerald-300 font-black break-words">ĐÁNH GIÁ ✓</div>
+              </div>
+              <div class="min-w-0 p-1 rounded-lg border border-white/10 overflow-hidden" style="border-color:${processColor}66; background:${processBackground};">
+                <div class="text-[8px] text-gray-500">BƯỚC 3</div><div class="text-[9px] font-black break-words" style="color:${processColor};">${processOutcome}</div>
+              </div>
             </div>
-            <div class="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden p-0.5 border border-white/10">
-              <div class="h-full rounded-full bg-gradient-to-r ${barGradient} transition-all duration-700 shadow-sm" style="width: ${readiness}%"></div>
-            </div>
+            <div class="text-[9px] leading-snug text-gray-500 mt-1 break-words">${processNote}</div>
           </div>
 
-          <div class="grid grid-cols-3 gap-1 mb-2 text-[10px] mono-font text-center relative z-10">
-            <div class="p-1 rounded-lg bg-black/60 border border-white/5">
+          <div class="grid grid-cols-3 gap-1 mb-2 text-[10px] mono-font text-center relative z-10 min-w-0">
+            <div class="min-w-0 overflow-hidden p-1 rounded-lg bg-black/60 border border-white/5">
               <div class="text-[9px] text-gray-400">Độ tin cậy tín hiệu</div>
               <div class="font-bold text-white text-[10px] mt-0.5 truncate">${dirText} ${safeConfidence}%${safeScore}</div>
             </div>
-            <div class="p-1 rounded-lg bg-black/60 border border-white/5">
+            <div class="min-w-0 overflow-hidden p-1 rounded-lg bg-black/60 border border-white/5">
               <div class="text-[9px] text-gray-400">Nguồn đồng chiều</div>
               <div class="font-bold text-white text-[10px] mt-0.5 truncate" title="${safeAgreement}">${safeAgreement}</div>
             </div>
-            <div class="p-1 rounded-lg bg-black/60 border border-white/5">
+            <div class="min-w-0 overflow-hidden p-1 rounded-lg bg-black/60 border border-white/5">
               <div class="text-[9px] text-gray-400">Đòn Bẩy</div>
               <div class="font-bold ${textRankColor} text-[10px] mt-0.5">${safeLeverage}</div>
             </div>
