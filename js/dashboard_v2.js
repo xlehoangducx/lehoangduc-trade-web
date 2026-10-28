@@ -3059,6 +3059,16 @@ function renderRadarLeaderboard(rawCandidates) {
     // Duy tri the hien tai, chi xoa & ve lai khi co du lieu tin hieu thay doi
 
     const normalizeSym = (s) => String(s || "").split(":")[0].replace(/\s+/g, "").toUpperCase();
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>\"']/g, (char) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;'
+    }[char]));
+    const statusFor = (candidate) => {
+      const gate = String(candidate.bottleneck_gate || '').toUpperCase();
+      if (gate === 'M1_SNIPER_STALKING') return 'STALKING';
+      if (['SLOT_CAPACITY', 'RISK_CAPACITY', 'MARGIN_CAPACITY'].includes(gate)) return 'WAITING_RESOURCE';
+      return 'BLOCKED';
+    };
+    const statusRank = { STALKING: 3, WAITING_RESOURCE: 2, BLOCKED: 0 };
 
     // 1. Khử trùng lặp tuyệt đối (Strict Deduplication) từ dữ liệu bot gửi lên
     const seen = new Set();
@@ -3070,7 +3080,7 @@ function renderRadarLeaderboard(rawCandidates) {
         const base = normalizeSym(c.symbol);
         if (!seen.has(base)) {
           seen.add(base);
-          candidates.push({ ...c, symbol: base });
+          candidates.push({ ...c, symbol: base, radar_status: c.radar_status || statusFor(c) });
         }
       }
     }
@@ -3085,7 +3095,7 @@ function renderRadarLeaderboard(rawCandidates) {
         <div class="p-5 rounded-2xl bg-[#090d16]/80 border border-white/10 text-center w-full min-h-[140px] flex flex-col items-center justify-center">
           <div class="text-2xl mb-1.5">📡</div>
           <div class="text-xs sm:text-sm font-bold text-white mono-font">Ra-đa Lượng Tử Đang Quét 50+ Cặp Tiền...</div>
-          <div class="text-[11px] text-gray-400 mt-1">Các chốt chặn vi mô đang bảo vệ an toàn vốn tuyệt đối. Chưa có tín hiệu nào bị nghẽn ở bước cuối.</div>
+          <div class="text-[11px] text-gray-400 mt-1">Không có ứng viên mới trong cửa sổ ra-đa 5 phút gần nhất.</div>
         </div>
       `;
       colRight.innerHTML = `
@@ -3098,8 +3108,11 @@ function renderRadarLeaderboard(rawCandidates) {
       return;
     }
 
-    // 3. Sắp xếp thứ hạng CHUẨN XÁC theo Tiềm Năng Khớp Lệnh (Readiness % giảm dần -> Confidence % -> Hit count)
+    // 3. Ưu tiên lệnh đang rình/đã qua tín hiệu trước ứng viên đang bị chặn.
     candidates.sort((a, b) => {
+      const sA = statusRank[a.radar_status] || 0;
+      const sB = statusRank[b.radar_status] || 0;
+      if (sB !== sA) return sB - sA;
       const rA = Number(a.readiness_pct) || 0;
       const rB = Number(b.readiness_pct) || 0;
       if (rB !== rA) return rB - rA;
@@ -3112,7 +3125,11 @@ function renderRadarLeaderboard(rawCandidates) {
     });
 
     // Kiểm tra state để chỉ kích hoạt hiệu ứng mượt khi có cập nhật tín hiệu
-    const currentKeys = candidates.map(c => (c.symbol || '') + '_' + (c.hit_count || 1) + '_' + (c.readiness_pct || 0)).join('|');
+    const currentKeys = JSON.stringify(candidates.map(c => [
+      c.symbol, c.side, c.radar_status, c.bottleneck_gate, c.bottleneck_reason,
+      c.hit_count, c.readiness_pct, c.confidence_pct, c.score,
+      c.strategies_agreed, c.dynamic_leverage, c.last_seen_str
+    ]));
     if (window._lastWebRadarKeys === currentKeys) {
       return;
     }
@@ -3127,6 +3144,22 @@ function renderRadarLeaderboard(rawCandidates) {
         ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
         : "bg-rose-500/20 text-rose-400 border-rose-500/40";
       const dirText = isLong ? "LONG" : "SHORT";
+      const safeSymbol = escapeHtml(c.symbol);
+      const safeTimeWindow = escapeHtml(c.time_window_str || c.last_seen_str || 'Gần đây');
+      const safeLastSeen = escapeHtml(c.last_seen_str || '--');
+      const safeReason = escapeHtml(c.bottleneck_reason || 'Đang kiểm tra ngưỡng an toàn');
+      const safeAgreement = escapeHtml(c.strategies_agreed || '—');
+      const safeLeverage = String(c.bottleneck_gate || '').toUpperCase() === 'M1_SNIPER_STALKING'
+        ? escapeHtml(c.dynamic_leverage || '—') : '—';
+      const confidenceValue = Number(c.confidence_pct);
+      const safeConfidence = Number.isFinite(confidenceValue) ? Math.max(0, Math.min(100, confidenceValue)).toFixed(1) : '--';
+      const scoreValue = Number(c.score);
+      const safeScore = Number.isFinite(scoreValue) && scoreValue !== 0 ? ` · ${scoreValue >= 0 ? '+' : ''}${scoreValue.toFixed(2)}` : '';
+      const radarStatus = c.radar_status || statusFor(c);
+      const statusLabel = radarStatus === 'STALKING' ? 'ĐANG RÌNH MAKER'
+        : radarStatus === 'WAITING_RESOURCE' ? 'TÍN HIỆU ĐẠT · CHỜ SLOT'
+        : 'BỊ CHẶN';
+      const gateLabel = escapeHtml(c.bottleneck_gate || 'PRE_TRADE_GATE');
 
       // 1. Phân loại hiệu ứng Hoán Đổi Vị Trí Game-like & Quỹ đạo bay 3D
       const prevRank = (window._prevRadarRankMap && window._prevRadarRankMap[c.symbol]) ? window._prevRadarRankMap[c.symbol] : null;
@@ -3245,9 +3278,6 @@ function renderRadarLeaderboard(rawCandidates) {
 
       const hitTag = `<span class="px-2 py-0.5 rounded-md text-[10px] font-black mono-font bg-amber-400/15 text-amber-300 border border-amber-400/35 flex items-center gap-1 shrink-0 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>🔥 ${hitCount} lần</span>`;
 
-      const timeWindow = c.time_window_str || c.last_seen_str || "Gần đây";
-      const bottleneckReason = c.bottleneck_reason || "Đang kiểm tra ngưỡng an toàn";
-
       // Hậu hiệu ứng: Sóng xung kích nổ khóa snap khi ráp vào vị trí
       const dockingBurstHtml = isSnapDocking ? `<div class="radar-docking-burst-fx" style="--rank-glow-color: ${glowColorRgba};"></div>` : '';
 
@@ -3266,11 +3296,11 @@ function renderRadarLeaderboard(rawCandidates) {
               <span class="px-2 py-0.5 rounded-md text-xs font-black mono-font bg-white/[0.08] ${textRankColor} border border-white/10 shadow-sm">
                 ${rankBadge}
               </span>
-              <a href="https://www.binance.com/en/futures/${(c.symbol || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}" target="_blank" rel="noopener noreferrer" 
-                 title="Bấm để mở biểu đồ ${(c.symbol || '')} trên Binance Futures"
+              <a href="https://www.binance.com/en/futures/${c.symbol.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}" target="_blank" rel="noopener noreferrer"
+                 title="Bấm để mở biểu đồ ${safeSymbol} trên Binance Futures"
                  class="text-xs sm:text-sm mono-font font-black tracking-wider ${symColor} hover:underline hover:text-amber-300 inline-flex items-center gap-1 select-text cursor-pointer transition-colors z-20"
                  onclick="event.stopPropagation();">
-                <span class="select-text">${c.symbol}</span>
+                <span class="select-text">${safeSymbol}</span>
                 <i data-lucide="external-link" class="w-3 h-3 opacity-60 hover:opacity-100 shrink-0"></i>
               </a>
               <span class="px-1.5 py-0.5 rounded text-[10px] font-black mono-font border ${dirClass}">
@@ -3284,17 +3314,22 @@ function renderRadarLeaderboard(rawCandidates) {
           </div>
 
           <div class="flex items-center justify-between text-[10px] text-gray-400 mono-font mb-2 relative z-10">
-            <span>Thời điểm: <strong class="text-gray-300">${timeWindow}</strong></span>
-            <span>Cập nhật: <strong class="text-gray-300">${c.last_seen_str || '--'}</strong></span>
+            <span>Thời điểm: <strong class="text-gray-300">${safeTimeWindow}</strong></span>
+            <span>Cập nhật: <strong class="text-gray-300">${safeLastSeen}</strong></span>
+          </div>
+
+          <div class="flex items-center justify-between text-[10px] mono-font mb-2 relative z-10">
+            <span class="text-gray-400">Trạng thái:</span>
+            <strong class="${radarStatus === 'BLOCKED' ? 'text-rose-400' : textRankColor}">${statusLabel} · ${gateLabel}</strong>
           </div>
 
           <div class="mb-2 relative z-10">
             <div class="flex items-center justify-between text-[10px] sm:text-[11px] mono-font mb-1">
               <span class="text-gray-300 font-semibold flex items-center gap-1">
                 <i data-lucide="crosshair" class="w-3.5 h-3.5 ${textRankColor}"></i>
-                <span>Độ Sẵn Sàng:</span>
+                <span>Điểm ưu tiên Radar:</span>
               </span>
-              <span class="${textRankColor} font-black">${readiness.toFixed(1)}%</span>
+              <span class="${textRankColor} font-black">${readiness.toFixed(1)}/100</span>
             </div>
             <div class="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden p-0.5 border border-white/10">
               <div class="h-full rounded-full bg-gradient-to-r ${barGradient} transition-all duration-700 shadow-sm" style="width: ${readiness}%"></div>
@@ -3303,24 +3338,24 @@ function renderRadarLeaderboard(rawCandidates) {
 
           <div class="grid grid-cols-3 gap-1 mb-2 text-[10px] mono-font text-center relative z-10">
             <div class="p-1 rounded-lg bg-black/60 border border-white/5">
-              <div class="text-[9px] text-gray-400">AI Ensemble</div>
-              <div class="font-bold text-white text-[10px] mt-0.5 truncate">${c.side === 'LONG' || c.side === 'BUY' ? 'BUY' : 'SELL'} ${c.confidence_pct || '--'}%</div>
+              <div class="text-[9px] text-gray-400">Độ tin cậy tín hiệu</div>
+              <div class="font-bold text-white text-[10px] mt-0.5 truncate">${dirText} ${safeConfidence}%${safeScore}</div>
             </div>
             <div class="p-1 rounded-lg bg-black/60 border border-white/5">
-              <div class="text-[9px] text-gray-400">Đồng Thuận</div>
-              <div class="font-bold text-white text-[10px] mt-0.5 truncate" title="${c.strategies_agreed || '--'}">${c.strategies_agreed || '2/2'}</div>
+              <div class="text-[9px] text-gray-400">Nguồn đồng chiều</div>
+              <div class="font-bold text-white text-[10px] mt-0.5 truncate" title="${safeAgreement}">${safeAgreement}</div>
             </div>
             <div class="p-1 rounded-lg bg-black/60 border border-white/5">
               <div class="text-[9px] text-gray-400">Đòn Bẩy</div>
-              <div class="font-bold ${textRankColor} text-[10px] mt-0.5">${c.dynamic_leverage || '5x'}</div>
+              <div class="font-bold ${textRankColor} text-[10px] mt-0.5">${safeLeverage}</div>
             </div>
           </div>
 
           <div class="p-2 rounded-xl bg-amber-500/[0.07] border border-amber-500/20 flex items-start gap-1.5 relative z-10">
             <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5"></i>
             <div class="text-[10px] sm:text-[11px] text-gray-300 leading-snug">
-              <span class="text-amber-400 font-bold">Lý do chặn:</span>
-              <span>${bottleneckReason}</span>
+              <span class="text-amber-400 font-bold">${radarStatus === 'STALKING' ? 'Lệnh đang rình:' : radarStatus === 'BLOCKED' ? 'Lý do chặn:' : 'Điều kiện còn chờ:'}</span>
+              <span>${safeReason}</span>
             </div>
           </div>
         </div>
@@ -3336,7 +3371,7 @@ function renderRadarLeaderboard(rawCandidates) {
         <div class="p-5 rounded-2xl bg-[#090d16]/50 border border-white/5 text-center flex flex-col items-center justify-center min-h-[140px]">
           <div class="text-lg mb-1 text-gray-500">⏳</div>
           <div class="text-xs text-gray-400 mono-font">Đang rà soát Top 3 & 4...</div>
-          <div class="text-[10px] text-gray-500 mt-1">Chỉ những coin đạt độ sẵn sàng cao mới được hiển thị.</div>
+          <div class="text-[10px] text-gray-500 mt-1">Ứng viên mới sẽ xuất hiện khi dữ liệu được cập nhật.</div>
         </div>
       `;
     }
