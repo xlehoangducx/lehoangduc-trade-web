@@ -40,7 +40,13 @@ import {
 
 
 
-} from "./auth.js";
+} from "./auth.js?v=20261029_tokenfix";
+import { ADMIN_EMAILS } from "./firebase-config.js";
+
+function isCurrentUserSuperAdmin() {
+  const email = String(currentUser?.email || "").toLowerCase();
+  return ADMIN_EMAILS.includes(email) && currentProfile?.role === "admin" && currentProfile?.status === "approved";
+}
 
 
 
@@ -1590,6 +1596,10 @@ function listenToAdminFleet() {
 
 
 window.toggleUserStatus = async function(userId, newStatus) {
+  if (!isCurrentUserSuperAdmin()) {
+    alert("Chỉ Super Admin mới được duyệt/khóa thành viên.");
+    return;
+  }
 
 
 
@@ -1676,6 +1686,10 @@ window.toggleUserStatus = async function(userId, newStatus) {
 
 
 window.toggleFeePaid = async function(userId, newFeeState) {
+  if (!isCurrentUserSuperAdmin()) {
+    alert("Chỉ Super Admin mới được xác nhận/hủy thu phí.");
+    return;
+  }
 
 
 
@@ -1752,6 +1766,10 @@ window.toggleFeePaid = async function(userId, newFeeState) {
 
 
 window.deleteMember = async function(userId, memberName) {
+  if (!isCurrentUserSuperAdmin()) {
+    alert("Chỉ Super Admin mới được xóa thành viên.");
+    return;
+  }
 
 
 
@@ -2951,9 +2969,7 @@ onAuthStateChanged(auth, async (user) => {
 
     console.warn("syncUserProfile fallback:", err);
 
-    const adminEmails = ["xlehoangducx@gmail.com", "lehoangduc@gmail.com"];
-
-    const isUserAdmin = adminEmails.includes((user.email || "").toLowerCase());
+    const isUserAdmin = ADMIN_EMAILS.includes((user.email || "").toLowerCase());
 
     currentProfile = {
 
@@ -2965,7 +2981,7 @@ onAuthStateChanged(auth, async (user) => {
 
       role: isUserAdmin ? "admin" : "member",
 
-      status: "approved"
+      status: isUserAdmin ? "approved" : "pending"
 
     };
 
@@ -2977,7 +2993,7 @@ onAuthStateChanged(auth, async (user) => {
 
 
 
-  const isAdmin = currentProfile?.role === "admin" || (user.email && user.email.toLowerCase().includes("lehoangduc"));
+  const isAdmin = isCurrentUserSuperAdmin();
 
   const isApproved = currentProfile?.status === "approved" || isAdmin;
 

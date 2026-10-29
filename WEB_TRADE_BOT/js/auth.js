@@ -100,6 +100,11 @@ export async function syncUserProfile(user) {
       await setDoc(userRef, { role: "admin", status: "approved" }, { merge: true });
       currentData.role = "admin";
       currentData.status = "approved";
+    } else if (!isAdmin && currentData.role === "admin") {
+      // Gmail khác không được giữ quyền admin dù từng bị gán nhầm.
+      await setDoc(userRef, { role: "member", status: "pending" }, { merge: true });
+      currentData.role = "member";
+      currentData.status = "pending";
     }
     await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
     return currentData;
