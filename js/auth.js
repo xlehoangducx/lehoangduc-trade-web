@@ -106,7 +106,10 @@ export async function syncUserProfile(user) {
       currentData.role = "member";
       currentData.status = "pending";
     }
-    await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
+    // Không chặn quyết định approved chỉ vì ghi lastLogin chậm/bị Rules từ chối.
+    // Trả profile đã đọc được ngay; cập nhật lastLogin ở nền và không đổi status.
+    setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true })
+      .catch((err) => console.warn("lastLogin sync warning:", err));
     return currentData;
   }
 }

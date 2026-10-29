@@ -40,7 +40,7 @@ import {
 
 
 
-} from "./auth.js?v=20261029_tokenfix";
+} from "./auth.js?v=20261029_pendingfix";
 import { ADMIN_EMAILS } from "./firebase-config.js";
 
 function isCurrentUserSuperAdmin() {
@@ -68,7 +68,8 @@ import {
 
 import { 
 
-  doc, 
+  doc,
+  getDoc, 
 
   setDoc, 
 
@@ -2930,6 +2931,20 @@ onAuthStateChanged(auth, async (user) => {
 
     const isUserAdmin = ADMIN_EMAILS.includes((user.email || "").toLowerCase());
 
+    let fallbackStatus = isUserAdmin ? "approved" : "pending";
+    if (!isUserAdmin) {
+      try {
+        // users/{uid} có thể chậm hoặc bị Rules chặn, nhưng kênh license chính thức
+        // bot_commands vẫn xác nhận approved. Không khóa oan tài khoản đã được duyệt.
+        const cmdSnap = await getDoc(doc(db, "bot_commands", user.uid));
+        if (cmdSnap.exists() && cmdSnap.data().license_status === "approved") {
+          fallbackStatus = "approved";
+        }
+      } catch (licenseErr) {
+        console.warn("bot_commands license fallback warning:", licenseErr);
+      }
+    }
+
     currentProfile = {
 
       uid: user.uid,
@@ -2940,7 +2955,7 @@ onAuthStateChanged(auth, async (user) => {
 
       role: isUserAdmin ? "admin" : "member",
 
-      status: isUserAdmin ? "approved" : "pending"
+      status: fallbackStatus
 
     };
 
