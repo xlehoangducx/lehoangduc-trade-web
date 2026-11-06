@@ -572,7 +572,7 @@
               </span>
             </div>
             <div class="p-4 rounded-xl bg-black/40 border border-white/5 text-xs text-gray-300 leading-relaxed mono-font space-y-1.5">
-              <div>• <span class="text-amber-400 font-bold">Lệnh đóng Net PnL &lt; 0</span> (SL, DOA 15m/25m/35m, hoặc đóng tay): Tự động khóa cặp tiền <span class="text-white font-bold">180 phút (3 tiếng)</span>.</div>
+              <div>• <span class="text-amber-400 font-bold">Lệnh đóng Net PnL &lt; 0</span> (SL, Mode 7 Giảm Tải, Cushion SL, hoặc đóng tay): Tự động khóa cặp tiền <span class="text-white font-bold">180 phút (3 tiếng)</span>.</div>
               <div>• <span class="text-rose-400 font-bold">Chuỗi thua lần 2 cùng cặp (Streak &ge; 2):</span> Nhân đôi thời gian khóa lên <span class="text-rose-300 font-bold">360 phút (6 tiếng)</span>.</div>
               <div>• <span class="text-emerald-400 font-bold">Lưu trữ SQLite vĩnh viễn:</span> Khởi động lại bot hay reload máy tính đều giữ nguyên lệnh khóa, không bao giờ vào lệnh trả thù (Revenge Trading).</div>
             </div>
@@ -666,16 +666,16 @@
             </p>
           </div>
 
-          <!-- Card 3: DOA Dynamic Exit & Breakeven (3D Flip Up Reveal) -->
+          <!-- Card 3: Mode 7 Telemetry Gate & Cushion SL (3D Flip Up Reveal) -->
           <div class="kenzo-card p-7 relative overflow-hidden group scroll-item reveal-flip-up border-rose-400/20 hover:border-rose-400/50">
             <div class="w-12 h-12 rounded-2xl bg-rose-400/10 border border-rose-400/30 flex items-center justify-center text-rose-400 mb-5 group-hover:scale-110 transition-transform">
               <i data-lucide="timer" class="w-6 h-6"></i>
             </div>
             <div class="flex items-center space-x-2 mb-2">
-              <span class="text-[10px] text-rose-300 mono-font font-bold uppercase tracking-wider">DOA DYNAMIC EXIT</span>
+              <span class="text-[10px] text-rose-300 mono-font font-bold uppercase tracking-wider">MODE 7 TELEMETRY GATE</span>
               <span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping"></span>
             </div>
-            <h3 class="text-lg font-bold text-white mb-2">Cắt Lệnh Ứ Đọng DOA & Kéo SL Hòa Vốn</h3>
+            <h3 class="text-lg font-bold text-white mb-2">Mode 7 Telemetry Gate & Tam Tầng Bảo Vệ Vốn V3.0</h3>
             <p class="text-xs text-gray-400 leading-relaxed font-light">
               Tự động nhận diện các vị thế đi ngang ứ đọng không sinh lời sau 15m, 25m hoặc 35m để chủ động cắt sớm, giải phóng vốn cho các cơ hội mới. Tự động dời Stop Loss về điểm vào lệnh (Breakeven) ngay khi có lợi nhuận đệm.
             </p>
