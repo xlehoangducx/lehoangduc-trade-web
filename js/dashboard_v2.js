@@ -2565,7 +2565,7 @@ function listenToBotTelemetry(userId, isAdmin) {
 
                 <td class="text-right">
 
-                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}' }, this)" class="px-3.5 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1 ml-auto active:scale-95">
+                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}', direction: '${p.side}' }, this)" class="px-3.5 py-1.5 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition flex items-center gap-1 ml-auto active:scale-95">
 
                     <i data-lucide="x" class="w-3.5 h-3.5"></i>
 
@@ -2601,7 +2601,7 @@ function listenToBotTelemetry(userId, isAdmin) {
 
                   </div>
 
-                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}' }, this)" class="px-2.5 py-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1 active:scale-95">
+                  <button onclick="sendBotCommand('close_position', { symbol: '${p.symbol}', direction: '${p.side}' }, this)" class="px-2.5 py-1 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-bold transition flex items-center gap-1 active:scale-95">
 
                     <i data-lucide="x" class="w-3.5 h-3.5"></i>
 
