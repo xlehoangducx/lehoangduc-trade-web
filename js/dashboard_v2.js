@@ -927,143 +927,139 @@ function showToast(message, type = "success") {
 
 
 
-// Send Remote Commands to Bot via Firestore (Non-blocking & Instant Feedback)
+// Send Remote Commands to Bot via Firestore (Non-blocking & Sub-second Feedback)
+let currentPendingCmdId = null;
+let currentPendingBtn = null;
+let currentPendingOriginalHtml = "";
+let currentPendingTimeout = null;
 
 async function sendBotCommand(command, extraData = {}, btnEl = null) {
-
   if (!currentUser) {
-
     showToast("Bạn cần đăng nhập để điều khiển bot!", "error");
-
     return;
-
   }
-
-
-
-  let originalHtml = "";
 
   if (btnEl) {
-
-    originalHtml = btnEl.innerHTML;
-
+    if (currentPendingBtn && currentPendingBtn !== btnEl) {
+      currentPendingBtn.innerHTML = currentPendingOriginalHtml;
+      currentPendingBtn.disabled = false;
+      currentPendingBtn.style.opacity = "1";
+    }
+    currentPendingBtn = btnEl;
+    currentPendingOriginalHtml = btnEl.innerHTML;
     btnEl.disabled = true;
-
     btnEl.style.opacity = "0.7";
-
     btnEl.innerHTML = `<span class="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Đang gửi...`;
-
   }
 
-
+  const cmdId = `${command}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  currentPendingCmdId = cmdId;
 
   try {
-
     const cmdRef = doc(db, "bot_commands", currentUser.uid);
-
     await setDoc(cmdRef, {
-
+      command_id: cmdId,
       command: command,
-
       ...extraData,
-
       status: "pending",
-
       updatedAt: serverTimestamp()
-
     }, { merge: true });
 
-
-
     let label = command.toUpperCase();
-
     if (command === 'close_position') label = `Đóng ${extraData.symbol || 'vị thế'}`;
-
     else if (command === 'emergency_close') label = "ĐÓNG TOÀN BỘ VỊ THẾ";
-
     else if (command === 'start') label = "BẬT BOT";
-
     else if (command === 'stop') label = "TẠM DỪNG BOT";
-
+    else if (command === 'run_cycle') label = "QUÉT 1 CHU KỲ";
     else if (command === 'toggle_tradfi') label = extraData.only_tradfi ? 'CHỈ CỔ PHIẾU' : (extraData.enabled ? 'CẢ HAI (CRYPTO + CỔ PHIẾU)' : 'TẮT CỔ PHIẾU');
-
     else if (command === 'update_config') label = `ĐÒN BẨY ${extraData.max_leverage || ''}X & ${extraData.max_open_trades || ''} LỆNH`;
 
-
-
-    showToast(`⚡ Đã gửi lệnh [${label}]! Máy treo PC2 đang xử lý...`, "success");
-
-  } catch (err) {
-
-    console.error("Command error:", err);
-
-    showToast("Gửi lệnh thất bại: " + err.message, "error");
-
-  } finally {
+    showToast(`⚡ Đã gửi lệnh [${label}]! PC2 đang xử lý...`, "info");
 
     if (btnEl) {
-
-      setTimeout(() => {
-
-        btnEl.innerHTML = originalHtml;
-
-        btnEl.disabled = false;
-
-        btnEl.style.opacity = "1";
-
-      }, 2500);
-
+      btnEl.innerHTML = `<span class="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Đang thi hành...`;
     }
 
-  }
+    if (currentPendingTimeout) clearTimeout(currentPendingTimeout);
+    currentPendingTimeout = setTimeout(() => {
+      if (currentPendingBtn) {
+        currentPendingBtn.innerHTML = currentPendingOriginalHtml;
+        currentPendingBtn.disabled = false;
+        currentPendingBtn.style.opacity = "1";
+        currentPendingBtn = null;
+      }
+      currentPendingCmdId = null;
+    }, 9000);
 
+  } catch (err) {
+    console.error("Command error:", err);
+    showToast("Gửi lệnh thất bại: " + err.message, "error");
+    if (btnEl) {
+      btnEl.innerHTML = currentPendingOriginalHtml;
+      btnEl.disabled = false;
+      btnEl.style.opacity = "1";
+      currentPendingBtn = null;
+      currentPendingCmdId = null;
+    }
+  }
 }
 
 window.sendBotCommand = sendBotCommand;
 
+// Lắng nghe phản hồi trạng thái hoàn tất lệnh từ xa từ PC2
+let unsubBotCommands = null;
+function listenToBotCommands(userId) {
+  if (unsubBotCommands) unsubBotCommands();
+  try {
+    const cmdRef = doc(db, "bot_commands", userId);
+    unsubBotCommands = onSnapshot(cmdRef, (snap) => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      if (!data) return;
 
-
-
-
-
+      if (currentPendingCmdId && (data.command_id === currentPendingCmdId || !data.command_id)) {
+        if (data.status === 'completed') {
+          const cmdLabel = (data.command || '').toUpperCase();
+          showToast(`✅ Đã thi hành thành công [${cmdLabel}] trên PC2!`, "success");
+          if (currentPendingBtn) {
+            currentPendingBtn.innerHTML = currentPendingOriginalHtml;
+            currentPendingBtn.disabled = false;
+            currentPendingBtn.style.opacity = "1";
+            currentPendingBtn = null;
+          }
+          currentPendingCmdId = null;
+          if (currentPendingTimeout) clearTimeout(currentPendingTimeout);
+        } else if (data.status === 'failed') {
+          const cmdLabel = (data.command || '').toUpperCase();
+          showToast(`❌ Lệnh [${cmdLabel}] thất bại: ${data.result_message || 'Thất bại'}`, "error");
+          if (currentPendingBtn) {
+            currentPendingBtn.innerHTML = currentPendingOriginalHtml;
+            currentPendingBtn.disabled = false;
+            currentPendingBtn.style.opacity = "1";
+            currentPendingBtn = null;
+          }
+          currentPendingCmdId = null;
+          if (currentPendingTimeout) clearTimeout(currentPendingTimeout);
+        }
+      }
+    }, (err) => {
+      console.warn("Lỗi onSnapshot bot_commands:", err);
+    });
+  } catch (e) {
+    console.warn("Không thể thiết lập listenToBotCommands:", e);
+  }
+}
+window.listenToBotCommands = listenToBotCommands;
 
 // Button Listeners for Remote Controls
-
-
-
-document.getElementById("btnStartBot")?.addEventListener("click", () => sendBotCommand("start"));
-
-
-
-document.getElementById("btnStopBot")?.addEventListener("click", () => sendBotCommand("stop"));
-
-
-
-document.getElementById("btnTriggerCycle")?.addEventListener("click", () => sendBotCommand("run_cycle"));
-
-
-
-document.getElementById("btnEmergencyClose")?.addEventListener("click", () => {
-
-
-
+document.getElementById("btnStartBot")?.addEventListener("click", (e) => sendBotCommand("start", {}, e.currentTarget));
+document.getElementById("btnStopBot")?.addEventListener("click", (e) => sendBotCommand("stop", {}, e.currentTarget));
+document.getElementById("btnTriggerCycle")?.addEventListener("click", (e) => sendBotCommand("run_cycle", {}, e.currentTarget));
+document.getElementById("btnEmergencyClose")?.addEventListener("click", (e) => {
   if (confirm("CẢNH BÁO: Bạn có chắc chắn muốn ĐÓNG TẤT CẢ VỊ THẾ ngay lập tức?")) {
-
-
-
-    sendBotCommand("emergency_close");
-
-
-
+    sendBotCommand("emergency_close", {}, e.currentTarget);
   }
-
-
-
 });
-
-
-
-
 
 
 
@@ -3066,6 +3062,7 @@ onAuthStateChanged(auth, async (user) => {
 
 
   listenToBotTelemetry(user.uid, isAdmin);
+  listenToBotCommands(user.uid);
 
 
 
