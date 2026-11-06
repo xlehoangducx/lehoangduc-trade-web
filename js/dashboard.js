@@ -717,9 +717,9 @@ function updateCloudLiveSimulator() {
 
   
 
-  // 4. Cắt sớm DOA (sau 45p sideway/yếu, cắt chỉ -0.05%)
+  // 4. Mode 7 Telemetry Gate giảm tải 50% ở -0.65 ATR
 
-  const doaLossUSDT = altNotional * 0.0005;
+  const mode7LossUSDT = altNotional * 0.0065 * 0.5;
 
 
 
@@ -851,7 +851,7 @@ function updateCloudLiveSimulator() {
 
   if (lossSub) {
 
-    lossSub.innerHTML = `Mất -${maxLossAccountPct.toFixed(2)}% vốn · Cắt sớm DOA: <strong class="text-gray-300">-$${doaLossUSDT < 0.01 ? '0.01' : doaLossUSDT.toFixed(2)}</strong>`;
+    lossSub.innerHTML = `Mất -${maxLossAccountPct.toFixed(2)}% vốn · Mode 7 Giảm Tải: <strong class="text-gray-300">-$${mode7LossUSDT < 0.01 ? '0.01' : mode7LossUSDT.toFixed(2)}</strong>`;
 
   }
 
