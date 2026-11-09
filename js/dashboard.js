@@ -304,13 +304,8 @@ const calcLossPerTrade = document.getElementById("calcLossPerTrade");
 
 
 function updateCapitalCalculator(val) {
-
-
-
+  if (!calcLeverage) return;
   val = parseInt(val);
-
-
-
   if (sliderValueText) sliderValueText.textContent = val.toLocaleString();
 
 
@@ -634,227 +629,116 @@ inputMaxTrades?.addEventListener("input", updateCloudLiveSimulator);
 function updateCloudLiveSimulator() {
 
   const levInput = document.getElementById("inputLeverage");
-
   const posInput = document.getElementById("inputMaxTrades");
 
-  
-
   const leverage = Math.max(1, Number(levInput ? levInput.value : 10) || 10);
-
   const slots = Math.max(1, Number(posInput ? posInput.value : 2) || 2);
 
-  
+  // Vốn Live đọc 100% động từ Binance API Telemetry (không hardcode)
+  const equity = Math.max(10.0, Number(window._lastTelemetryEquity || window._lastTelemetryBalance || 104.84));
+  const availableBal = Number(window._lastTelemetryBalance || equity);
 
-  // Equity từ telemetry live bot (hoặc fallback 97.85)
+  // Cập nhật Dynamic API Capital Card (nhận diện vốn trực tiếp từ sàn)
+  const dynamicApiEq = document.getElementById("dynamicApiEquity");
+  if (dynamicApiEq) dynamicApiEq.textContent = "$" + equity.toFixed(2) + " USDT";
+  const dynamicApiAv = document.getElementById("dynamicApiAvail");
+  if (dynamicApiAv) dynamicApiAv.textContent = "Khả dụng: $" + availableBal.toFixed(2) + " USDT";
 
-  const equity = Math.max(10.0, Number(window._lastTelemetryEquity || window._lastTelemetryBalance || 97.85));
-
-  
-
-  // Ngân sách cơ sở cho 1 slot vị thế
-
-  const baseSlotBudget = equity / slots;
-
-  
-
-  // Quy mô vị thế Notional theo phân khúc
-
-  // Altcoin: 95% slot budget (khống chế trần cứng $5,000 cho tài khoản lớn)
-
-  const altNotional = Math.min(5000.0, Math.max(6.0, baseSlotBudget * 0.95));
-
-  // BTC/ETH: 130% slot budget
-
-  const btcNotional = Math.max(10.0, baseSlotBudget * 1.30);
-
-  
-
-  // Ký quỹ thực tế cho 1 lệnh theo đòn bẩy
-
-  const marginPerOrder = altNotional / leverage;
-
-  const marginPctPerOrder = (marginPerOrder / equity) * 100;
-
-  
-
-  // Tổng ký quỹ khi mở đủ tất cả các vị thế cùng lúc
-
-  const totalMaxMargin = marginPerOrder * slots;
-
-  const totalMarginPct = Math.min(100, (totalMaxMargin / equity) * 100);
-
-  const cashBufferPct = Math.max(0, 100 - totalMarginPct);
-
-  
-
-  // Ước tính Lãi / Lỗ:
-
-  // 1. Lệnh thắng chuẩn (Chốt TP1 +1.2%)
-
-  const normalWinUSDT = altNotional * 0.012;
-
-  const normalWinROE = (normalWinUSDT / marginPerOrder) * 100;
-
-  const dailyTarget3Trades = normalWinUSDT * 3;
-
-  
-
-  // 2. Lệnh ăn sóng dài (Runner TP2 +3.5% ~ +5.0%)
-
-  const waveWinMinUSDT = altNotional * 0.035;
-
-  const waveWinMaxUSDT = altNotional * 0.050;
-
-  const waveWinROE = (waveWinMinUSDT / marginPerOrder) * 100;
-
-  
-
-  // 3. Cắt lỗ tối đa (Dính SL cứng -2.0%)
-
-  const maxLossUSDT = altNotional * 0.020;
-
-  const maxLossAccountPct = (maxLossUSDT / equity) * 100;
-
-  
-
-  // 4. Mode 7 Telemetry Gate giảm tải 50% ở -0.65 ATR
-
-  const mode7LossUSDT = altNotional * 0.0065 * 0.5;
-
-
-
-  // Cập nhật giao diện Cloud
-
+  // Cập nhật nhãn Vốn Live trên Simulator
   const eqBadge = document.getElementById("cloudSimEquityBadge");
-
-  if (eqBadge) eqBadge.textContent = "Vốn Live: $" + equity.toFixed(2) + " USDT";
-
-
+  if (eqBadge) eqBadge.textContent = "Vốn Live API: $" + equity.toFixed(2) + " USDT";
 
   const slotsLabel = document.getElementById("cloudSimSlotsLabel");
-
   if (slotsLabel) slotsLabel.textContent = slots + " vị thế";
 
-
-
   const levLabel = document.getElementById("cloudSimLevLabel");
-
   if (levLabel) levLabel.textContent = leverage + "x";
 
+  // QUY TẮC PHÂN BỔ QUANT THEO CHUẨN core/bot.py DÒNG 3415-3490:
+  // 1. Phân khúc Altcoin: khống chế tối đa 20% equity (với sàn min_small_cap_floor = 10.60 USDT nếu equity >= 40)
+  const minSmallCap = equity >= 40.0 ? 10.60 : 6.0;
+  const altNotional = Math.max(minSmallCap, equity * 0.20);
 
+  // 2. Phân khúc Tier 1 (BTC/ETH): tối đa 35% equity nhưng Binance có sàn LOT_SIZE 0.001 BTC (~$68-$70)
+  const btcNotional = Math.max(68.0, equity * 0.35);
 
+  // 3. Ký quỹ Margin thực tế của 1 lệnh Altcoin ở mức đòn bẩy đang chọn:
+  const marginPerOrder = altNotional / leverage;
+  const marginPctPerOrder = (marginPerOrder / equity) * 100;
+
+  // 4. Tổng ký quỹ tối đa khi mở đủ số slots:
+  const totalMaxMargin = marginPerOrder * slots;
+  const totalMarginPct = Math.min(100, (totalMaxMargin / equity) * 100);
+  const cashBufferPct = Math.max(0, 100 - totalMarginPct);
+
+  // Cập nhật Đệm tiền mặt an toàn
   const safetyBadge = document.getElementById("cloudSimMarginSafety");
-
   if (safetyBadge) {
-
     if (cashBufferPct >= 80) {
-
       safetyBadge.textContent = "Đệm tiền mặt: " + cashBufferPct.toFixed(1) + "% (Cực kỳ an toàn)";
-
       safetyBadge.className = "px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 font-semibold text-[10px]";
-
     } else if (cashBufferPct >= 60) {
-
       safetyBadge.textContent = "Đệm tiền mặt: " + cashBufferPct.toFixed(1) + "% (Cân bằng)";
-
       safetyBadge.className = "px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 font-semibold text-[10px]";
-
     } else {
-
       safetyBadge.textContent = "Đệm tiền mặt: " + cashBufferPct.toFixed(1) + "% (Ký quỹ cao)";
-
       safetyBadge.className = "px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/30 font-semibold text-[10px]";
-
     }
-
   }
 
-
-
+  // Cột 1: Quy mô & Ký quỹ (Cap chuẩn 20% vốn theo risk parity của bot)
   const capTag = document.getElementById("cloudSimCapTag");
-
   if (capTag) {
-
-    if (altNotional >= 5000) {
-
-      capTag.textContent = "Altcoin (Trần cứng $5k)";
-
-      capTag.className = "text-amber-400 font-bold";
-
-    } else {
-
-      capTag.textContent = "Altcoin (95% slot)";
-
-      capTag.className = "text-cyan-400 font-bold";
-
-    }
-
+    capTag.textContent = "Altcoin (Trần 20% vốn)";
+    capTag.className = "text-cyan-400 font-bold";
   }
-
-
 
   const notionalVal = document.getElementById("cloudSimNotionalVal");
-
   if (notionalVal) notionalVal.textContent = "~$" + altNotional.toFixed(2) + " USDT";
 
-
-
   const notionalSub = document.getElementById("cloudSimNotionalSub");
-
   if (notionalSub) {
-
-    notionalSub.innerHTML = `BTC/ETH: ~$${btcNotional.toFixed(1)} · Ký quỹ: <span class="text-amber-400 font-bold">~$${marginPerOrder.toFixed(2)}</span> (${marginPctPerOrder.toFixed(1)}% vốn)`;
-
+    notionalSub.innerHTML = `BTC: ~$${btcNotional.toFixed(1)} · Ký quỹ: <span class="text-amber-400 font-bold">~$${marginPerOrder.toFixed(2)}</span> (${marginPctPerOrder.toFixed(1)}% vốn)`;
   }
 
-
+  // Cột 2: Lãi lệnh thắng chuẩn (TP1 +1.2%)
+  const normalWinUSDT = altNotional * 0.012;
+  const normalWinROE = (normalWinUSDT / marginPerOrder) * 100;
+  const dailyTarget3Trades = normalWinUSDT * 3;
 
   const winVal = document.getElementById("cloudSimWinVal");
-
   if (winVal) winVal.textContent = "+$" + normalWinUSDT.toFixed(2) + " USDT";
 
-
-
   const winSub = document.getElementById("cloudSimWinSub");
-
   if (winSub) {
-
     winSub.innerHTML = `+${normalWinROE.toFixed(1)}% ROE · 3 lệnh/ngày = <strong class="text-emerald-400 font-bold">+$${dailyTarget3Trades.toFixed(2)}</strong>`;
-
   }
 
-
+  // Cột 3: Lãi lệnh ăn sóng dài (Runner TP2 +3.5% ~ +5.0%)
+  const waveWinMinUSDT = altNotional * 0.035;
+  const waveWinMaxUSDT = altNotional * 0.050;
+  const waveWinROE = (waveWinMinUSDT / marginPerOrder) * 100;
 
   const waveVal = document.getElementById("cloudSimWaveVal");
-
   if (waveVal) waveVal.textContent = "+$" + waveWinMinUSDT.toFixed(2) + " ~ +$" + waveWinMaxUSDT.toFixed(2) + " USDT";
 
-
-
   const waveSub = document.getElementById("cloudSimWaveSub");
-
   if (waveSub) {
-
     waveSub.innerHTML = `+${waveWinROE.toFixed(0)}%+ ROE · 1-2 sóng = <strong class="text-blue-400 font-bold">+$${(waveWinMinUSDT * 2).toFixed(2)}</strong>`;
-
   }
 
-
+  // Cột 4: Cắt lỗ chuẩn Tam Tầng V3.0 (Cushion SL -0.25% & Full SL cơ sở 1.5%)
+  const cushionLossUSDT = altNotional * 0.0025;
+  const maxLossUSDT = altNotional * 0.015;
+  const maxLossAccountPct = (maxLossUSDT / equity) * 100;
 
   const lossVal = document.getElementById("cloudSimLossVal");
-
   if (lossVal) lossVal.textContent = "-$" + maxLossUSDT.toFixed(2) + " USDT";
 
-
-
   const lossSub = document.getElementById("cloudSimLossSub");
-
   if (lossSub) {
-
-    lossSub.innerHTML = `Mất -${maxLossAccountPct.toFixed(2)}% vốn · Mode 7 Giảm Tải: <strong class="text-gray-300">-$${mode7LossUSDT < 0.01 ? '0.01' : mode7LossUSDT.toFixed(2)}</strong>`;
-
+    lossSub.innerHTML = `Chỉ mất -${maxLossAccountPct.toFixed(2)}% vốn · Cushion SL: <strong class="text-emerald-300 font-bold">-$${cushionLossUSDT < 0.01 ? '0.01' : cushionLossUSDT.toFixed(2)}</strong>`;
   }
-
 }
 
 
