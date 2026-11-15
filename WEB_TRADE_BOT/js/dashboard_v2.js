@@ -4517,6 +4517,13 @@ async function loadPortfolioChart(symbol, interval) {
 
     const smartFormat = getSmartPriceFormat(lastClose);
 
+    const curP = lastClose || 1.0;
+    const rawSym = String(symbol || '').toUpperCase();
+    const cleanSymKey = rawSym.replace('/', '');
+    const radarInfo = window._radarItemMap ? (window._radarItemMap.get(cleanSymKey) || window._radarItemMap.get(rawSym)) : null;
+    const isVetoed = radarInfo ? (radarInfo.status === "BLOCKED") : false;
+    const isShort = radarInfo ? (radarInfo.side === "SHORT" || radarInfo.side === "SELL") : false;
+
     portfolioCandleSeries = portfolioChart.addCandlestickSeries({
       upColor: '#10b981',
       downColor: '#f43f5e',
@@ -4606,13 +4613,6 @@ async function loadPortfolioChart(symbol, interval) {
 
     // Cuộn mượt đến nến thời gian thực mới nhất hôm nay
     portfolioChart.timeScale().scrollToRealTime();
-
-    const curP = lastClose || 1.0;
-    const rawSym = String(symbol || '').toUpperCase();
-    const cleanSymKey = rawSym.replace('/', '');
-    const radarInfo = window._radarItemMap ? (window._radarItemMap.get(cleanSymKey) || window._radarItemMap.get(rawSym)) : null;
-    const isVetoed = radarInfo ? (radarInfo.status === "BLOCKED") : false;
-    const isShort = radarInfo ? (radarInfo.side === "SHORT" || radarInfo.side === "SELL") : false;
 
     let entryP, slP, tp1P, trailingP;
     if (isShort) {
