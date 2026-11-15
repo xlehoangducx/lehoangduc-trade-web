@@ -1191,27 +1191,62 @@
             </div>
           </div>
 
-          <!-- Legend Chỉ Dẫn 4 Con Số Vàng & Bộ Nút Ẩn/Hiện -->
+          <!-- Legend Chỉ Dẫn 4 Con Số Vàng & Khuyến Nghị -->
           <div class="flex flex-wrap items-center justify-between gap-3 text-xs pt-1 pb-2 font-mono">
             <div class="flex flex-wrap items-center gap-3">
-              <span id="chartLegendEntrySpan" class="inline-flex items-center gap-1.5 text-emerald-400"><span id="chartLegendEntryDot" class="w-3 h-1.5 rounded-sm bg-emerald-500 inline-block"></span> <span id="chartLegendEntryLabel">Vùng Mua Gom:</span> <strong id="chartEntryVal">184.80$ - 185.20$</strong></span>
-              <span class="inline-flex items-center gap-1.5 text-rose-400"><span class="w-3 h-1.5 rounded-sm bg-rose-500 inline-block"></span> <span id="chartLegendSlLabel">Cắt Lỗ:</span> <strong id="chartSlVal">182.10$ (-1.5%)</strong></span>
-              <span class="inline-flex items-center gap-1.5 text-amber-400"><span class="w-3 h-1.5 rounded-sm bg-amber-500 inline-block"></span> <span id="chartLegendTpLabel">Chốt Lời TP1:</span> <strong id="chartTpVal">189.90$ (+2.4%)</strong></span>
-              <span class="inline-flex items-center gap-1.5 text-purple-400"><span class="w-3 h-1.5 rounded-sm bg-purple-500 border border-purple-300 inline-block"></span> Chặn Lãi Hôm Nay: <strong id="chartTrailingVal">184.20$</strong></span>
-              <span class="inline-flex items-center gap-1.5 text-cyan-400"><span class="w-3 h-0.5 bg-cyan-400 inline-block"></span> Đường Chỉ Báo AI: <strong id="chartAiLineVal">--</strong></span>
+              <span id="chartLegendEntrySpan" class="inline-flex items-center gap-1.5 text-emerald-400 cursor-pointer hover:opacity-80 transition select-none" title="Bấm để Ẩn/Hiện Vùng Entry trên biểu đồ"><span id="chartLegendEntryDot" class="w-3 h-1.5 rounded-sm bg-emerald-500 inline-block"></span> <span id="chartLegendEntryLabel">Vùng Mua Gom:</span> <strong id="chartEntryVal">184.80$ - 185.20$</strong></span>
+              <span id="chartLegendSlSpan" class="inline-flex items-center gap-1.5 text-rose-400 cursor-pointer hover:opacity-80 transition select-none" title="Bấm để Ẩn/Hiện Cắt Lỗ (SL) trên biểu đồ"><span class="w-3 h-1.5 rounded-sm bg-rose-500 inline-block"></span> <span id="chartLegendSlLabel">Cắt Lỗ:</span> <strong id="chartSlVal">182.10$ (-1.5%)</strong></span>
+              <span id="chartLegendTpSpan" class="inline-flex items-center gap-1.5 text-amber-400 cursor-pointer hover:opacity-80 transition select-none" title="Bấm để Ẩn/Hiện Chốt Lời (TP1) trên biểu đồ"><span class="w-3 h-1.5 rounded-sm bg-amber-500 inline-block"></span> <span id="chartLegendTpLabel">Chốt Lời TP1:</span> <strong id="chartTpVal">189.90$ (+2.4%)</strong></span>
+              <span id="chartLegendTrailingSpan" class="inline-flex items-center gap-1.5 text-purple-400 cursor-pointer hover:opacity-80 transition select-none" title="Bấm để Ẩn/Hiện Chặn Lãi trên biểu đồ"><span class="w-3 h-1.5 rounded-sm bg-purple-500 border border-purple-300 inline-block"></span> Chặn Lãi Hôm Nay: <strong id="chartTrailingVal">184.20$</strong></span>
+              <span id="chartLegendAiSpan" class="inline-flex items-center gap-1.5 text-cyan-400 cursor-pointer hover:opacity-80 transition select-none" title="Bấm để Ẩn/Hiện Đường Chỉ Báo AI"><span class="w-3 h-0.5 bg-cyan-400 inline-block"></span> Đường Chỉ Báo AI: <strong id="chartAiLineVal">--</strong></span>
               <span id="chartActionAdviceBadge" class="px-2.5 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono">⏳ Đang phân tích vị thế</span>
             </div>
+          </div>
 
-            <!-- Bộ Nút Ẩn/Hiện Biểu Tượng & Đường AI -->
-            <div class="flex items-center gap-1.5 flex-wrap ml-auto">
-              <button id="btnToggleMarkers" type="button" class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px] font-mono font-bold hover:bg-cyan-500/30 transition flex items-center gap-1 shadow-sm" title="Bật/Tắt Biểu tượng & Tín hiệu quét trên nến">
-                <span id="btnToggleMarkersIcon">🏷️</span> <span id="btnToggleMarkersText">Ẩn Tín Hiệu</span>
+          <!-- Thanh Công Cụ Bộ Lọc Lớp Vẽ Chi Tiết (Layer Visibility Controls) -->
+          <div class="flex items-center justify-between flex-wrap gap-2 py-1.5 px-3 mb-2 rounded-lg bg-black/50 border border-white/10 text-xs font-mono">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="text-[11px] text-gray-400 flex items-center gap-1 mr-1">
+                <i data-lucide="layers" class="w-3.5 h-3.5 text-cyan-400"></i> Lớp vẽ chi tiết:
+              </span>
+              <!-- Nút Ẩn/Hiện Riêng TP1 -->
+              <button id="btnToggleTp" type="button" class="px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30" title="Ẩn/Hiện riêng Mức Chốt Lời (TP1)">
+                <span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> <span>TP1</span>
               </button>
-              <button id="btnToggleAiLine" type="button" class="px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[11px] font-mono font-bold hover:bg-purple-500/30 transition flex items-center gap-1 shadow-sm" title="Bật/Tắt Đường kết nối Entry AI">
-                <span id="btnToggleAiLineIcon">🔮</span> <span id="btnToggleAiLineText">Ẩn Đường AI</span>
+              <!-- Nút Ẩn/Hiện Riêng SL -->
+              <button id="btnToggleSl" type="button" class="px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30" title="Ẩn/Hiện riêng Mức Cắt Lỗ (SL)">
+                <span class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span> <span>SL</span>
               </button>
-              <button id="btnToggleForecast" type="button" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-mono font-bold hover:bg-amber-500/30 transition flex items-center gap-1 shadow-sm" title="Bật/Tắt Đường dự phóng tương lai">
-                <span id="btnToggleForecastIcon">🎯</span> <span id="btnToggleForecastText">Ẩn Dự Phóng</span>
+              <!-- Nút Ẩn/Hiện Riêng Entry -->
+              <button id="btnToggleEntry" type="button" class="px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30" title="Ẩn/Hiện riêng Vùng Vào Lệnh (Entry)">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span> <span>Entry</span>
+              </button>
+              <!-- Nút Ẩn/Hiện Riêng Chặn Lãi -->
+              <button id="btnToggleTrailing" type="button" class="px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-purple-500/20 text-purple-300 border-purple-500/40 hover:bg-purple-500/30" title="Ẩn/Hiện riêng Mức Chặn Lãi (Trailing Stop)">
+                <span class="w-2 h-2 rounded-full bg-purple-400 inline-block"></span> <span>Chặn Lãi</span>
+              </button>
+              <!-- Nút Ẩn/Hiện Riêng Tín Hiệu Quét Cá Mập -->
+              <button id="btnToggleMarkers" type="button" class="px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/30" title="Ẩn/Hiện riêng Biểu tượng & Tín hiệu quét trên nến">
+                <span>🏷️</span> <span>Tín Hiệu</span>
+              </button>
+              <!-- Nút Ẩn/Hiện Riêng Đường AI -->
+              <button id="btnToggleAiLine" type="button" class="px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30" title="Ẩn/Hiện riêng Đường kết nối trục Entry AI">
+                <span>🔮</span> <span>Đường AI</span>
+              </button>
+              <!-- Nút Ẩn/Hiện Riêng Dự Phóng -->
+              <button id="btnToggleForecast" type="button" class="px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-teal-500/20 text-teal-300 border-teal-500/40 hover:bg-teal-500/30" title="Ẩn/Hiện riêng Đường dự phóng tương lai">
+                <span>🎯</span> <span>Dự Phóng</span>
+              </button>
+              <!-- Nút Ẩn/Hiện Riêng Bảng Soi HUD -->
+              <button id="btnToggleHud" type="button" class="px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-gray-700/50 text-gray-300 border-gray-600 hover:bg-gray-700" title="Ẩn/Hiện riêng Bảng soi nến khi rê chuột">
+                <span>📋</span> <span>Bảng Soi</span>
+              </button>
+            </div>
+
+            <!-- Nút Master: Ẩn Hết / Hiện Hết -->
+            <div class="flex items-center gap-2 ml-auto">
+              <button id="btnToggleAll" type="button" class="px-2.5 py-0.5 rounded text-[11px] font-mono font-bold transition cursor-pointer flex items-center gap-1 border bg-white/10 text-white border-white/20 hover:bg-white/20" title="1-Click: Ẩn toàn bộ để xem nến trần hoặc Hiện lại toàn bộ lớp vẽ">
+                <span id="btnToggleAllIcon">👁️</span> <span id="btnToggleAllText">Ẩn Hết</span>
               </button>
             </div>
           </div>
@@ -1708,7 +1743,7 @@
   <!-- App JavaScript Modules -->
     <!-- TradingView Lightweight Charts (Standalone Local + CDN Fallback) -->
   <script src="js/lightweight-charts.standalone.production.js"></script>
-  <script type="module" src="js/dashboard_v2.js?v=20261115_bulletproof_exact_entry_v13"></script>
+  <script type="module" src="js/dashboard_v2.js?v=20261115_custom_visibility_v14"></script>
   <script>
     lucide.createIcons();
   </script>

@@ -4257,78 +4257,285 @@ async function renderPortfolioLeaderboard(rawCandidates, capital, category = 'al
 
 // Tải & Vẽ Biểu Đồ TradingView Lightweight Charts (Nạp 600 nến đầy đủ nhiều ngày + Cập nhật Real-Time)
 // Quản lý trạng thái Ẩn/Hiện của Biểu tượng, Đường AI và Dự Phóng
-window._chartVisibility = window._chartVisibility || {
-  markers: true,
-  aiLine: true,
-  forecast: true
-};
+// Quản lý trạng thái Ẩn/Hiện đa tầng chi tiết (TP, SL, Entry, Trailing, Tín hiệu, AI, Dự phóng, HUD)
+function getChartVisibilityState() {
+  const defaults = {
+    tp: true,
+    sl: true,
+    entry: true,
+    trailing: true,
+    markers: true,
+    aiLine: true,
+    forecast: true,
+    hud: true
+  };
+  try {
+    const raw = localStorage.getItem("tradematrix_chart_visibility");
+    if (raw) return { ...defaults, ...JSON.parse(raw) };
+  } catch (e) {}
+  return defaults;
+}
+
+function saveChartVisibilityState(state) {
+  try {
+    localStorage.setItem("tradematrix_chart_visibility", JSON.stringify(state));
+  } catch (e) {}
+}
+
+window._chartVisibility = getChartVisibilityState();
+window._activePriceLines = { entry: null, sl: null, tp: null, trailing: null };
+window._activeChartPriceOptions = null;
+
+function removePriceLineSafely(series, lineRef) {
+  if (series && lineRef) {
+    try {
+      series.removePriceLine(lineRef);
+    } catch (e) {}
+  }
+  return null;
+}
+
+function createPriceLineSafely(series, opts) {
+  if (series && opts) {
+    try {
+      return series.createPriceLine(opts);
+    } catch (e) {
+      console.warn("createPriceLine error:", e);
+    }
+  }
+  return null;
+}
+
+function syncChartVisibility() {
+  const vis = window._chartVisibility;
+
+  // 1. Đồng bộ Price Lines (TP1, SL, Entry, Trailing)
+  if (portfolioCandleSeries && window._activeChartPriceOptions) {
+    const opts = window._activeChartPriceOptions;
+
+    // TP1 Line (Chốt Lời Riêng Biệt)
+    if (vis.tp) {
+      if (!window._activePriceLines.tp && opts.tp) {
+        window._activePriceLines.tp = createPriceLineSafely(portfolioCandleSeries, opts.tp);
+      }
+    } else {
+      window._activePriceLines.tp = removePriceLineSafely(portfolioCandleSeries, window._activePriceLines.tp);
+    }
+
+    // SL Line (Cắt Lỗ Riêng Biệt)
+    if (vis.sl) {
+      if (!window._activePriceLines.sl && opts.sl) {
+        window._activePriceLines.sl = createPriceLineSafely(portfolioCandleSeries, opts.sl);
+      }
+    } else {
+      window._activePriceLines.sl = removePriceLineSafely(portfolioCandleSeries, window._activePriceLines.sl);
+    }
+
+    // Entry Line (Vùng Vào Lệnh)
+    if (vis.entry) {
+      if (!window._activePriceLines.entry && opts.entry) {
+        window._activePriceLines.entry = createPriceLineSafely(portfolioCandleSeries, opts.entry);
+      }
+    } else {
+      window._activePriceLines.entry = removePriceLineSafely(portfolioCandleSeries, window._activePriceLines.entry);
+    }
+
+    // Trailing Line (Chặn Lãi)
+    if (vis.trailing) {
+      if (!window._activePriceLines.trailing && opts.trailing) {
+        window._activePriceLines.trailing = createPriceLineSafely(portfolioCandleSeries, opts.trailing);
+      }
+    } else {
+      window._activePriceLines.trailing = removePriceLineSafely(portfolioCandleSeries, window._activePriceLines.trailing);
+    }
+  }
+
+  // 2. Tín Hiệu Quét Cá Mập (Markers)
+  if (portfolioCandleSeries && window._activeChartMarkers) {
+    try {
+      portfolioCandleSeries.setMarkers(vis.markers ? window._activeChartMarkers : []);
+    } catch (e) {}
+  }
+
+  // 3. Đường Chỉ Báo AI Trục Entry
+  if (window._activeAiTrajectorySeries) {
+    try {
+      window._activeAiTrajectorySeries.applyOptions({ visible: vis.aiLine });
+    } catch (e) {}
+  }
+
+  // 4. Đường Dự Phóng Kịch Bản Tương Lai
+  if (window._activeForecastSeries) {
+    try {
+      window._activeForecastSeries.applyOptions({ visible: vis.forecast });
+    } catch (e) {}
+  }
+
+  // 5. Bảng Soi Nến (HUD Hover)
+  const hudBox = document.getElementById("chartHoverHud");
+  if (hudBox) {
+    if (vis.hud) {
+      hudBox.classList.remove("hidden");
+    } else {
+      hudBox.classList.add("hidden");
+    }
+  }
+
+  // 6. Cập nhật Style cho các nhãn trong Legend (Khi ẩn thì làm mờ & gạch ngang)
+  const entrySpan = document.getElementById("chartLegendEntrySpan");
+  if (entrySpan) {
+    if (vis.entry) entrySpan.classList.remove("opacity-30", "line-through");
+    else entrySpan.classList.add("opacity-30", "line-through");
+  }
+
+  const slSpan = document.getElementById("chartLegendSlSpan");
+  if (slSpan) {
+    if (vis.sl) slSpan.classList.remove("opacity-30", "line-through");
+    else slSpan.classList.add("opacity-30", "line-through");
+  }
+
+  const tpSpan = document.getElementById("chartLegendTpSpan");
+  if (tpSpan) {
+    if (vis.tp) tpSpan.classList.remove("opacity-30", "line-through");
+    else tpSpan.classList.add("opacity-30", "line-through");
+  }
+
+  const trailingSpan = document.getElementById("chartLegendTrailingSpan");
+  if (trailingSpan) {
+    if (vis.trailing) trailingSpan.classList.remove("opacity-30", "line-through");
+    else trailingSpan.classList.add("opacity-30", "line-through");
+  }
+
+  const aiSpan = document.getElementById("chartLegendAiSpan");
+  if (aiSpan) {
+    if (vis.aiLine) aiSpan.classList.remove("opacity-30", "line-through");
+    else aiSpan.classList.add("opacity-30", "line-through");
+  }
+
+  // 7. Cập nhật Style cho các nút chip trên thanh công cụ
+  const btnTp = document.getElementById("btnToggleTp");
+  if (btnTp) {
+    btnTp.className = vis.tp
+      ? "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30"
+      : "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-gray-900/60 text-gray-500 border-gray-800 line-through opacity-60 hover:opacity-100 hover:text-gray-400";
+  }
+
+  const btnSl = document.getElementById("btnToggleSl");
+  if (btnSl) {
+    btnSl.className = vis.sl
+      ? "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30"
+      : "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-gray-900/60 text-gray-500 border-gray-800 line-through opacity-60 hover:opacity-100 hover:text-gray-400";
+  }
+
+  const btnEntry = document.getElementById("btnToggleEntry");
+  if (btnEntry) {
+    const isShort = window._activeChartPriceOptions ? window._activeChartPriceOptions.isShort : false;
+    btnEntry.className = vis.entry
+      ? (isShort
+          ? "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30"
+          : "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30")
+      : "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-gray-900/60 text-gray-500 border-gray-800 line-through opacity-60 hover:opacity-100 hover:text-gray-400";
+  }
+
+  const btnTrailing = document.getElementById("btnToggleTrailing");
+  if (btnTrailing) {
+    btnTrailing.className = vis.trailing
+      ? "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-purple-500/20 text-purple-300 border-purple-500/40 hover:bg-purple-500/30"
+      : "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-gray-900/60 text-gray-500 border-gray-800 line-through opacity-60 hover:opacity-100 hover:text-gray-400";
+  }
+
+  const btnMarkers = document.getElementById("btnToggleMarkers");
+  if (btnMarkers) {
+    btnMarkers.className = vis.markers
+      ? "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/30"
+      : "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-gray-900/60 text-gray-500 border-gray-800 line-through opacity-60 hover:opacity-100 hover:text-gray-400";
+  }
+
+  const btnAiLine = document.getElementById("btnToggleAiLine");
+  if (btnAiLine) {
+    btnAiLine.className = vis.aiLine
+      ? "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30"
+      : "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-gray-900/60 text-gray-500 border-gray-800 line-through opacity-60 hover:opacity-100 hover:text-gray-400";
+  }
+
+  const btnForecast = document.getElementById("btnToggleForecast");
+  if (btnForecast) {
+    btnForecast.className = vis.forecast
+      ? "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-teal-500/20 text-teal-300 border-teal-500/40 hover:bg-teal-500/30"
+      : "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-gray-900/60 text-gray-500 border-gray-800 line-through opacity-60 hover:opacity-100 hover:text-gray-400";
+  }
+
+  const btnHud = document.getElementById("btnToggleHud");
+  if (btnHud) {
+    btnHud.className = vis.hud
+      ? "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-gray-700/50 text-gray-300 border-gray-600 hover:bg-gray-700"
+      : "px-2 py-0.5 rounded text-[11px] font-mono font-medium transition cursor-pointer flex items-center gap-1 border bg-gray-900/60 text-gray-500 border-gray-800 line-through opacity-60 hover:opacity-100 hover:text-gray-400";
+  }
+
+  // 8. Cập nhật Nút Master: Ẩn Hết / Hiện Hết
+  const btnToggleAll = document.getElementById("btnToggleAll");
+  if (btnToggleAll) {
+    const isAnyActive = Object.values(vis).some(v => v === true);
+    const icon = document.getElementById("btnToggleAllIcon");
+    const txt = document.getElementById("btnToggleAllText");
+    if (isAnyActive) {
+      if (icon) icon.textContent = "👁️";
+      if (txt) txt.textContent = "Ẩn Hết";
+      btnToggleAll.className = "px-2.5 py-0.5 rounded text-[11px] font-mono font-bold transition cursor-pointer flex items-center gap-1 border bg-white/10 text-white border-white/20 hover:bg-white/20";
+    } else {
+      if (icon) icon.textContent = "👁️‍🗨️";
+      if (txt) txt.textContent = "Hiện Hết";
+      btnToggleAll.className = "px-2.5 py-0.5 rounded text-[11px] font-mono font-bold transition cursor-pointer flex items-center gap-1 border bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30";
+    }
+  }
+}
 
 function setupChartVisibilityButtons() {
-  const btnMarkers = document.getElementById("btnToggleMarkers");
-  const btnAiLine = document.getElementById("btnToggleAiLine");
-  const btnForecast = document.getElementById("btnToggleForecast");
-
-  const updateButtonsUI = () => {
-    if (btnMarkers) {
-      const active = window._chartVisibility.markers;
-      btnMarkers.className = active 
-        ? "px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px] font-mono font-bold hover:bg-cyan-500/30 transition flex items-center gap-1 shadow-sm"
-        : "px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-gray-700 text-[11px] font-mono font-bold hover:bg-gray-700 transition flex items-center gap-1 shadow-sm opacity-60";
-      const txt = document.getElementById("btnToggleMarkersText");
-      if (txt) txt.textContent = active ? "Ẩn Tín Hiệu" : "Hiện Tín Hiệu";
-    }
-    if (btnAiLine) {
-      const active = window._chartVisibility.aiLine;
-      btnAiLine.className = active 
-        ? "px-2.5 py-1 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[11px] font-mono font-bold hover:bg-purple-500/30 transition flex items-center gap-1 shadow-sm"
-        : "px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-gray-700 text-[11px] font-mono font-bold hover:bg-gray-700 transition flex items-center gap-1 shadow-sm opacity-60";
-      const txt = document.getElementById("btnToggleAiLineText");
-      if (txt) txt.textContent = active ? "Ẩn Đường AI" : "Hiện Đường AI";
-    }
-    if (btnForecast) {
-      const active = window._chartVisibility.forecast;
-      btnForecast.className = active 
-        ? "px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-mono font-bold hover:bg-amber-500/30 transition flex items-center gap-1 shadow-sm"
-        : "px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-gray-700 text-[11px] font-mono font-bold hover:bg-gray-700 transition flex items-center gap-1 shadow-sm opacity-60";
-      const txt = document.getElementById("btnToggleForecastText");
-      if (txt) txt.textContent = active ? "Ẩn Dự Phóng" : "Hiện Dự Phóng";
+  const bindToggle = (btnId, key) => {
+    const el = document.getElementById(btnId);
+    if (el && !el._bound) {
+      el._bound = true;
+      el.addEventListener("click", () => {
+        window._chartVisibility[key] = !window._chartVisibility[key];
+        saveChartVisibilityState(window._chartVisibility);
+        syncChartVisibility();
+      });
     }
   };
 
-  if (btnMarkers && !btnMarkers._bound) {
-    btnMarkers._bound = true;
-    btnMarkers.addEventListener("click", () => {
-      window._chartVisibility.markers = !window._chartVisibility.markers;
-      if (portfolioCandleSeries && window._activeChartMarkers) {
-        portfolioCandleSeries.setMarkers(window._chartVisibility.markers ? window._activeChartMarkers : []);
+  // Gắn sự kiện cho các nút Chip điều khiển chi tiết
+  bindToggle("btnToggleTp", "tp");
+  bindToggle("btnToggleSl", "sl");
+  bindToggle("btnToggleEntry", "entry");
+  bindToggle("btnToggleTrailing", "trailing");
+  bindToggle("btnToggleMarkers", "markers");
+  bindToggle("btnToggleAiLine", "aiLine");
+  bindToggle("btnToggleForecast", "forecast");
+  bindToggle("btnToggleHud", "hud");
+
+  // Gắn sự kiện tương tác trực tiếp lên từng nhãn của dòng Legend
+  bindToggle("chartLegendEntrySpan", "entry");
+  bindToggle("chartLegendSlSpan", "sl");
+  bindToggle("chartLegendTpSpan", "tp");
+  bindToggle("chartLegendTrailingSpan", "trailing");
+  bindToggle("chartLegendAiSpan", "aiLine");
+
+  // Gắn sự kiện cho Nút Master: Ẩn Hết / Hiện Hết
+  const btnToggleAll = document.getElementById("btnToggleAll");
+  if (btnToggleAll && !btnToggleAll._bound) {
+    btnToggleAll._bound = true;
+    btnToggleAll.addEventListener("click", () => {
+      const isAnyActive = Object.values(window._chartVisibility).some(v => v === true);
+      const nextState = !isAnyActive;
+      for (const k in window._chartVisibility) {
+        window._chartVisibility[k] = nextState;
       }
-      updateButtonsUI();
+      saveChartVisibilityState(window._chartVisibility);
+      syncChartVisibility();
     });
   }
 
-  if (btnAiLine && !btnAiLine._bound) {
-    btnAiLine._bound = true;
-    btnAiLine.addEventListener("click", () => {
-      window._chartVisibility.aiLine = !window._chartVisibility.aiLine;
-      if (window._activeAiTrajectorySeries) {
-        window._activeAiTrajectorySeries.applyOptions({ visible: window._chartVisibility.aiLine });
-      }
-      updateButtonsUI();
-    });
-  }
-
-  if (btnForecast && !btnForecast._bound) {
-    btnForecast._bound = true;
-    btnForecast.addEventListener("click", () => {
-      window._chartVisibility.forecast = !window._chartVisibility.forecast;
-      if (window._activeForecastSeries) {
-        window._activeForecastSeries.applyOptions({ visible: window._chartVisibility.forecast });
-      }
-      updateButtonsUI();
-    });
-  }
-
-  updateButtonsUI();
+  syncChartVisibility();
 }
 
 async function loadPortfolioChart(symbol, interval) {
@@ -4566,6 +4773,7 @@ async function loadPortfolioChart(symbol, interval) {
     window._activeChartMarkers = null;
     window._activeAiTrajectorySeries = null;
     window._activeForecastSeries = null;
+    window._activePriceLines = { entry: null, sl: null, tp: null, trailing: null };
 
     container.innerHTML = "";
     portfolioChart = LightweightCharts.createChart(container, {
@@ -4775,41 +4983,41 @@ async function loadPortfolioChart(symbol, interval) {
     // Cuộn mượt đến nến thời gian thực mới nhất hôm nay
     portfolioChart.timeScale().scrollToRealTime();
 
-    portfolioCandleSeries.createPriceLine({
-      price: entryP,
-      color: isShort ? '#f43f5e' : '#10b981',
-      lineWidth: 2,
-      lineStyle: LightweightCharts.LineStyle.Solid,
-      axisLabelVisible: true,
-      title: isShort ? '🔴 VÙNG BÁN XẢ (SHORT)' : '🟢 MUA GOM'
-    });
-
-    portfolioCandleSeries.createPriceLine({
-      price: slP,
-      color: '#f43f5e',
-      lineWidth: 2,
-      lineStyle: LightweightCharts.LineStyle.Solid,
-      axisLabelVisible: true,
-      title: isShort ? '🛡️ CẮT LỖ SHORT (SL)' : '🔴 CẮT LỖ (SL)'
-    });
-
-    portfolioCandleSeries.createPriceLine({
-      price: tp1P,
-      color: '#f59e0b',
-      lineWidth: 2,
-      lineStyle: LightweightCharts.LineStyle.Solid,
-      axisLabelVisible: true,
-      title: isShort ? '🟡 CHỐT LỜI SHORT (TP1)' : '🟡 CHỐT LỜI (TP1)'
-    });
-
-    portfolioCandleSeries.createPriceLine({
-      price: trailingP,
-      color: '#a855f7',
-      lineWidth: 2,
-      lineStyle: LightweightCharts.LineStyle.Dashed,
-      axisLabelVisible: true,
-      title: '🟣 CHẶN LÃI HÔM NAY'
-    });
+    window._activeChartPriceOptions = {
+      isShort,
+      entry: {
+        price: entryP,
+        color: isShort ? '#f43f5e' : '#10b981',
+        lineWidth: 2,
+        lineStyle: LightweightCharts.LineStyle.Solid,
+        axisLabelVisible: true,
+        title: isShort ? '🔴 VÙNG BÁN XẢ (SHORT)' : '🟢 MUA GOM'
+      },
+      sl: {
+        price: slP,
+        color: '#f43f5e',
+        lineWidth: 2,
+        lineStyle: LightweightCharts.LineStyle.Solid,
+        axisLabelVisible: true,
+        title: isShort ? '🛡️ CẮT LỖ SHORT (SL)' : '🔴 CẮT LỖ (SL)'
+      },
+      tp: {
+        price: tp1P,
+        color: '#f59e0b',
+        lineWidth: 2,
+        lineStyle: LightweightCharts.LineStyle.Solid,
+        axisLabelVisible: true,
+        title: isShort ? '🟡 CHỐT LỜI SHORT (TP1)' : '🟡 CHỐT LỜI (TP1)'
+      },
+      trailing: {
+        price: trailingP,
+        color: '#a855f7',
+        lineWidth: 2,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: true,
+        title: '🟣 CHẶN LÃI HÔM NAY'
+      }
+    };
 
     const chartEntryVal = document.getElementById("chartEntryVal");
     const chartSlVal = document.getElementById("chartSlVal");
