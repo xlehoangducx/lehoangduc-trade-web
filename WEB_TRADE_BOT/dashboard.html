@@ -1186,6 +1186,19 @@
                 <button type="button" class="btn-chart-tf px-2 py-1 rounded text-gray-400 hover:text-white" data-tf="4h">4H</button>
                 <button type="button" class="btn-chart-tf px-2 py-1 rounded text-gray-400 hover:text-white" data-tf="1d">1D (Ngày)</button>
               </div>
+
+              <!-- Bộ Nút Ẩn/Hiện Biểu Tượng & Đường AI -->
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <button id="btnToggleMarkers" type="button" class="px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px] font-mono font-bold hover:bg-cyan-500/30 transition flex items-center gap-1 shadow-sm" title="Bật/Tắt Biểu tượng & Tín hiệu quét trên nến">
+                  <span id="btnToggleMarkersIcon">🏷️</span> <span id="btnToggleMarkersText">Ẩn Tín Hiệu</span>
+                </button>
+                <button id="btnToggleAiLine" type="button" class="px-2.5 py-1 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[11px] font-mono font-bold hover:bg-purple-500/30 transition flex items-center gap-1 shadow-sm" title="Bật/Tắt Đường kết nối Entry AI">
+                  <span id="btnToggleAiLineIcon">🔮</span> <span id="btnToggleAiLineText">Ẩn Đường AI</span>
+                </button>
+                <button id="btnToggleForecast" type="button" class="px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-mono font-bold hover:bg-amber-500/30 transition flex items-center gap-1 shadow-sm" title="Bật/Tắt Đường dự phóng tương lai">
+                  <span id="btnToggleForecastIcon">🎯</span> <span id="btnToggleForecastText">Ẩn Dự Phóng</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -1691,7 +1704,7 @@
   <!-- App JavaScript Modules -->
     <!-- TradingView Lightweight Charts (Standalone Local + CDN Fallback) -->
   <script src="js/lightweight-charts.standalone.production.js"></script>
-  <script type="module" src="js/dashboard_v2.js?v=20261115_ai_trajectory_v9_fix_tdz"></script>
+  <script type="module" src="js/dashboard_v2.js?v=20261115_entry_anchors_and_toggles_v10"></script>
   <script>
     lucide.createIcons();
   </script>

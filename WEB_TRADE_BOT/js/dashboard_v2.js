@@ -4256,6 +4256,81 @@ async function renderPortfolioLeaderboard(rawCandidates, capital, category = 'al
 }
 
 // Tải & Vẽ Biểu Đồ TradingView Lightweight Charts (Nạp 600 nến đầy đủ nhiều ngày + Cập nhật Real-Time)
+// Quản lý trạng thái Ẩn/Hiện của Biểu tượng, Đường AI và Dự Phóng
+window._chartVisibility = window._chartVisibility || {
+  markers: true,
+  aiLine: true,
+  forecast: true
+};
+
+function setupChartVisibilityButtons() {
+  const btnMarkers = document.getElementById("btnToggleMarkers");
+  const btnAiLine = document.getElementById("btnToggleAiLine");
+  const btnForecast = document.getElementById("btnToggleForecast");
+
+  const updateButtonsUI = () => {
+    if (btnMarkers) {
+      const active = window._chartVisibility.markers;
+      btnMarkers.className = active 
+        ? "px-2.5 py-1 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-[11px] font-mono font-bold hover:bg-cyan-500/30 transition flex items-center gap-1 shadow-sm"
+        : "px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-gray-700 text-[11px] font-mono font-bold hover:bg-gray-700 transition flex items-center gap-1 shadow-sm opacity-60";
+      const txt = document.getElementById("btnToggleMarkersText");
+      if (txt) txt.textContent = active ? "Ẩn Tín Hiệu" : "Hiện Tín Hiệu";
+    }
+    if (btnAiLine) {
+      const active = window._chartVisibility.aiLine;
+      btnAiLine.className = active 
+        ? "px-2.5 py-1 rounded bg-purple-500/20 text-purple-300 border border-purple-500/40 text-[11px] font-mono font-bold hover:bg-purple-500/30 transition flex items-center gap-1 shadow-sm"
+        : "px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-gray-700 text-[11px] font-mono font-bold hover:bg-gray-700 transition flex items-center gap-1 shadow-sm opacity-60";
+      const txt = document.getElementById("btnToggleAiLineText");
+      if (txt) txt.textContent = active ? "Ẩn Đường AI" : "Hiện Đường AI";
+    }
+    if (btnForecast) {
+      const active = window._chartVisibility.forecast;
+      btnForecast.className = active 
+        ? "px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-mono font-bold hover:bg-amber-500/30 transition flex items-center gap-1 shadow-sm"
+        : "px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-gray-700 text-[11px] font-mono font-bold hover:bg-gray-700 transition flex items-center gap-1 shadow-sm opacity-60";
+      const txt = document.getElementById("btnToggleForecastText");
+      if (txt) txt.textContent = active ? "Ẩn Dự Phóng" : "Hiện Dự Phóng";
+    }
+  };
+
+  if (btnMarkers && !btnMarkers._bound) {
+    btnMarkers._bound = true;
+    btnMarkers.addEventListener("click", () => {
+      window._chartVisibility.markers = !window._chartVisibility.markers;
+      if (portfolioCandleSeries && window._activeChartMarkers) {
+        portfolioCandleSeries.setMarkers(window._chartVisibility.markers ? window._activeChartMarkers : []);
+      }
+      updateButtonsUI();
+    });
+  }
+
+  if (btnAiLine && !btnAiLine._bound) {
+    btnAiLine._bound = true;
+    btnAiLine.addEventListener("click", () => {
+      window._chartVisibility.aiLine = !window._chartVisibility.aiLine;
+      if (window._activeAiTrajectorySeries) {
+        window._activeAiTrajectorySeries.applyOptions({ visible: window._chartVisibility.aiLine });
+      }
+      updateButtonsUI();
+    });
+  }
+
+  if (btnForecast && !btnForecast._bound) {
+    btnForecast._bound = true;
+    btnForecast.addEventListener("click", () => {
+      window._chartVisibility.forecast = !window._chartVisibility.forecast;
+      if (window._activeForecastSeries) {
+        window._activeForecastSeries.applyOptions({ visible: window._chartVisibility.forecast });
+      }
+      updateButtonsUI();
+    });
+  }
+
+  updateButtonsUI();
+}
+
 async function loadPortfolioChart(symbol, interval) {
   const container = document.getElementById("portfolioChartContainer");
   const spinner = document.getElementById("chartLoadingSpinner");
@@ -4306,14 +4381,13 @@ async function loadPortfolioChart(symbol, interval) {
 
     const candleData = [];
     const markers = [];
-    const trajectoryData = [];
+    const signalAnchors = [];
     const candleMetaMap = new Map();
     let lastClose = 0;
     let lastMarkerIdx = -10;
     let histWinCount = 0;
     let histLossCount = 0;
     let histActiveCount = 0;
-    let emaVal = 0;
 
     // Tính mảng volume trung bình 20 kỳ để đo RVol chính xác chuẩn Quỹ
     const volArray = rawKlines.map(k => parseFloat(k[5]) || 0);
@@ -4338,13 +4412,6 @@ async function loadPortfolioChart(symbol, interval) {
       }
       const avgVol = lookback > 0 ? (sumVol / lookback) : (vol || 1);
       const rvol = avgVol > 0 ? (vol / avgVol) : 1.0;
-
-      // Tính Đường Chỉ Báo Cấu Trúc Lượng Tử AI (AI Quantum Trajectory) xuyên suốt từ quá khứ
-      const baseAlpha = 2 / (21 + 1);
-      const adaptiveAlpha = Math.min(0.25, Math.max(0.06, baseAlpha * Math.sqrt(rvol)));
-      emaVal = (i === 0) ? close : (close * adaptiveAlpha + emaVal * (1 - adaptiveAlpha));
-      trajectoryData.push({ time, value: emaVal });
-
       const range = (high - low) || 1e-9;
       const upperWick = (high - Math.max(open, close)) / range;
       const lowerWick = (Math.min(open, close) - low) / range;
@@ -4412,6 +4479,8 @@ async function loadPortfolioChart(symbol, interval) {
 
         if (sigType) {
           lastMarkerIdx = i;
+          // Điểm Entry chính xác của tín hiệu này (Long mua gom tại close*0.998, Short xả đỉnh tại close*1.002)
+          const entryPrice = sigSide === 'LONG' ? (close * 0.998) : (close * 1.002);
           const targetTp = sigSide === 'LONG' ? (close * 1.024) : (close * 0.976);
           const targetSl = sigSide === 'LONG' ? (close * 0.985) : (close * 1.015);
 
@@ -4471,6 +4540,14 @@ async function loadPortfolioChart(symbol, interval) {
             curMeta.targetSl = targetSl;
           }
 
+          signalAnchors.push({
+            idx: i,
+            time,
+            price: entryPrice,
+            sigSide,
+            sigType
+          });
+
           markers.push({
             time,
             position: markerPos,
@@ -4524,6 +4601,79 @@ async function loadPortfolioChart(symbol, interval) {
     const isVetoed = radarInfo ? (radarInfo.status === "BLOCKED") : false;
     const isShort = radarInfo ? (radarInfo.side === "SHORT" || radarInfo.side === "SELL") : false;
 
+    let entryP, slP, tp1P, trailingP;
+    if (isShort) {
+      entryP = curP * 1.002;
+      slP = curP * 1.015;
+      tp1P = curP * 0.976;
+      trailingP = curP * 1.007;
+    } else {
+      entryP = curP * 0.998;
+      slP = curP * 0.985;
+      tp1P = curP * 1.024;
+      trailingP = curP * 0.993;
+    }
+
+    // Xây dựng Mảng Anchor Points neo 100% CHÍNH XÁC tại các điểm Entry quá khứ nối thẳng tới Entry hiện tại
+    const allAnchors = [];
+    if (candleData.length > 0) {
+      allAnchors.push({
+        idx: 0,
+        time: candleData[0].time,
+        price: candleData[0].close
+      });
+    }
+    for (let s = 0; s < signalAnchors.length; s++) {
+      allAnchors.push({
+        idx: signalAnchors[s].idx,
+        time: signalAnchors[s].time,
+        price: signalAnchors[s].price
+      });
+    }
+    if (candleData.length > 0) {
+      const lastIdx = candleData.length - 1;
+      if (allAnchors.length === 1 || allAnchors[allAnchors.length - 1].idx !== lastIdx) {
+        allAnchors.push({
+          idx: lastIdx,
+          time: candleData[lastIdx].time,
+          price: entryP
+        });
+      } else {
+        allAnchors[allAnchors.length - 1].price = entryP;
+      }
+    }
+
+    // Tính toán trajectoryData: Neo chuẩn xác qua từng điểm Entry của cá mập
+    const trajectoryData = [];
+    let curAnchorIdx = 0;
+
+    for (let i = 0; i < candleData.length; i++) {
+      while (curAnchorIdx < allAnchors.length - 2 && i > allAnchors[curAnchorIdx + 1].idx) {
+        curAnchorIdx++;
+      }
+      const a1 = allAnchors[curAnchorIdx];
+      const a2 = allAnchors[Math.min(allAnchors.length - 1, curAnchorIdx + 1)];
+
+      let lineVal;
+      if (a1 && a2 && a2.idx > a1.idx) {
+        const span = a2.idx - a1.idx;
+        const frac = (i - a1.idx) / span;
+        lineVal = a1.price + (a2.price - a1.price) * frac;
+      } else {
+        lineVal = a1 ? a1.price : candleData[i].close;
+      }
+
+      trajectoryData.push({
+        time: candleData[i].time,
+        value: lineVal
+      });
+
+      const meta = candleMetaMap.get(candleData[i].time);
+      if (meta) {
+        meta.aiTrajVal = lineVal;
+      }
+    }
+
     portfolioCandleSeries = portfolioChart.addCandlestickSeries({
       upColor: '#10b981',
       downColor: '#f43f5e',
@@ -4535,19 +4685,20 @@ async function loadPortfolioChart(symbol, interval) {
     });
 
     portfolioCandleSeries.setData(candleData);
-    if (markers.length > 0) {
-      portfolioCandleSeries.setMarkers(markers);
-    }
 
-    // Vẽ Đường Chỉ Báo Cấu Trúc Lượng Tử AI (AI Quantum Trajectory Baseline) Xuyên Suốt Toàn Bộ Quá Khứ ➔ Hiện Tại
+    // Vẽ Đường Chỉ Báo Cấu Trúc Neo Trục Entry AI Xuyên Suốt Toàn Bộ Quá Khứ ➔ Hiện Tại
     const aiTrajectorySeries = portfolioChart.addLineSeries({
       color: isVetoed ? '#a855f7' : (isShort ? '#f59e0b' : '#06b6d4'),
       lineWidth: 2,
       lineStyle: LightweightCharts.LineStyle.Solid,
       priceFormat: smartFormat,
-      title: isVetoed ? '🟣 ĐƯỜNG CẤU TRÚC AI (VETO)' : (isShort ? '⚡ ĐƯỜNG CẤU TRÚC AI (SHORT)' : '🔮 ĐƯỜNG CẤU TRÚC AI (LONG)')
+      title: isVetoed ? '🟣 ĐƯỜNG ENTRY AI (VETO)' : (isShort ? '⚡ ĐƯỜNG ENTRY AI (SHORT)' : '🔮 ĐƯỜNG ENTRY AI (LONG)')
     });
     aiTrajectorySeries.setData(trajectoryData);
+
+    // Lưu trữ tham chiếu toàn cục để điều khiển Ẩn/Hiện bằng nút bấm
+    window._activeChartMarkers = markers;
+    window._activeAiTrajectorySeries = aiTrajectorySeries;
 
     // Lắng nghe sự kiện di chuột (Crosshair Move) để cập nhật HUD lịch sử quét từng nến quá khứ
     portfolioChart.subscribeCrosshairMove(param => {
@@ -4614,19 +4765,6 @@ async function loadPortfolioChart(symbol, interval) {
     // Cuộn mượt đến nến thời gian thực mới nhất hôm nay
     portfolioChart.timeScale().scrollToRealTime();
 
-    let entryP, slP, tp1P, trailingP;
-    if (isShort) {
-      entryP = curP * 1.002;
-      slP = curP * 1.015;
-      tp1P = curP * 0.976;
-      trailingP = curP * 1.007;
-    } else {
-      entryP = curP * 0.998;
-      slP = curP * 0.985;
-      tp1P = curP * 1.024;
-      trailingP = curP * 0.993;
-    }
-
     portfolioCandleSeries.createPriceLine({
       price: entryP,
       color: isShort ? '#f43f5e' : '#10b981',
@@ -4691,7 +4829,19 @@ async function loadPortfolioChart(symbol, interval) {
     if (chartTpVal) chartTpVal.textContent = isShort ? `${formatSmartPrice(tp1P)}$ (-2.4%)` : `${formatSmartPrice(tp1P)}$ (+2.4%)`;
     if (chartTrailingVal) chartTrailingVal.textContent = `${formatSmartPrice(trailingP)}$`;
     const chartAiLineVal = document.getElementById("chartAiLineVal");
-    if (chartAiLineVal) chartAiLineVal.textContent = `${formatSmartPrice(emaVal)}$`;
+    if (chartAiLineVal) chartAiLineVal.textContent = `${formatSmartPrice(entryP)}$`;
+
+    // Khởi tạo và đồng bộ trạng thái các nút Ẩn/Hiện Tín hiệu & Đường AI
+    if (portfolioCandleSeries && window._activeChartMarkers) {
+      portfolioCandleSeries.setMarkers(window._chartVisibility.markers ? window._activeChartMarkers : []);
+    }
+    if (aiTrajectorySeries) {
+      aiTrajectorySeries.applyOptions({ visible: window._chartVisibility.aiLine });
+    }
+    if (window._activeForecastSeries) {
+      window._activeForecastSeries.applyOptions({ visible: window._chartVisibility.forecast });
+    }
+    setupChartVisibilityButtons();
 
     const updateAdvice = (price) => {
       if (!adviceBadge) return;
@@ -4739,6 +4889,7 @@ async function loadPortfolioChart(symbol, interval) {
         priceFormat: smartFormat,
         title: isVetoed ? '🛑 ĐƯỜNG CẢNH BÁO VETO' : (isShort ? '⚡ ĐƯỜNG DỰ PHÓNG SHORT' : '🔮 ĐƯỜNG DỰ PHÓNG AI')
       });
+      window._activeForecastSeries = forecastSeries;
 
       if (isVetoed) {
         forecastSeries.setData([
