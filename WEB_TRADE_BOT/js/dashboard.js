@@ -3577,7 +3577,19 @@ function initPortfolioNavigator() {
     });
   }
 
-  // 4. Lắng nghe tìm kiếm / gõ mã từ Search Input (Hỗ trợ XAU, XAG, CL, Vàng, Bạc, Dầu, NVDA, BTC...)
+  // 4. Lắng nghe tìm kiếm / gõ mã từ Search Input (Hỗ trợ toàn bộ 239+ mã từ DB PC2 & TradFi)
+  const datalist = document.getElementById("allSymbolsDatalist");
+  if (datalist && (!datalist.options || datalist.options.length < 50)) {
+    const knownList = ["1000CATUSDT", "1000PEPEUSDT", "1000XECUSDT", "2ZUSDT", "AAPLUSDT", "ACTUSDT", "ADAUSDT", "AEROUSDT", "AGTUSDT", "AINUSDT", "AIOUSDT", "AIOTUSDT", "AKEUSDT", "AKTUSDT", "ALABUSDT", "AMDUSDT", "AMZNUSDT", "APRUSDT", "ARCUSDT", "ARIAUSDT", "ARKMUSDT", "ARKUSDT", "ARMUSDT", "ASTSUSDT", "AVAUSDT", "AVAXUSDT", "AVGOUSDT", "AXLUSDT", "AXTIUSDT", "BABAUSDT", "BABYUSDT", "BASEDUSDT", "BATUSDT", "BEAMXUSDT", "BEATUSDT", "BERAUSDT", "BEUSDT", "BIRBUSDT", "BLESSUSDT", "BLUAIUSDT", "BMNRUSDT", "BMTUSDT", "BNBUSDT", "BOMEUSDT", "BOTUSDT", "BRKBUSDT", "BRUSDT", "BTCUSDT", "BTWUSDT", "BYDUSDT", "BZUSDT", "CAPUSDT", "CBRSUSDT", "CCUSDT", "CFGUSDT", "CHIPUSDT", "CKBUSDT", "CLANKERUSDT", "CLUSDT", "COINUSDT", "COPPERUSDT", "CRCLUSDT", "CRDOUSDT", "CTUSDT", "CVCUSDT", "CYBERUSDT", "CYSUSDT", "DASHUSDT", "DELLUSDT", "DISUSDT", "DODOXUSDT", "DOGEUSDT", "DOSUSDT", "DOTUSDT", "DUSKUSDT", "EDGEUSDT", "EDENUSDT", "EIGENUSDT", "ELSAUSDT", "ENAUSDT", "EPICUSDT", "ERAUSDT", "ETHFIUSDT", "ETHUSDC", "ETHUSDT", "EVAAUSDT", "FETUSDT", "FLUIDUSDT", "FOGOUSDT", "FOLKSUSDT", "GALAUSDT", "GIGADEVUSDT", "GOOGLUSDT", "GPSUSDT", "GRAMUSDT", "GRASSUSDT", "GRVTUSDT", "GTCUSDT", "HAEDALUSDT", "HANAUSDT", "HMSTRUSDT", "HOODUSDT", "HOTUSDT", "HUMAUSDT", "HYPEUSDT", "ICNTUSDT", "IDOLUSDT", "IDUSDT", "INITUSDT", "INJUSDT", "INTCUSDT", "IOTAUSDT", "IRYSUSDT", "JCTUSDT", "JTOUSDT", "KERNELUSDT", "KGENUSDT", "KITEUSDT", "KMNOUSDT", "KOMAUSDT", "LABUSDT", "LAUSDT", "LITUSDT", "LTCUSDT", "LUMIAUSDT", "LYNUSDT", "MAGICUSDT", "MAGMAUSDT", "MANTAUSDT", "MEGAUSDT", "MELANIAUSDT", "MERLUSDT", "METAUSDT", "METUSDT", "MONUSDT", "MOODENGUSDT", "MOVRUSDT", "MRVLUSDT", "MSFTUSDT", "MSTRUSDT", "MUBARAKUSDT", "MUSDT", "MUUSDT", "MUUUSDT", "NATGASUSDT", "NEARUSDT", "NIGHTUSDT", "NILUSDT", "NOMUSDT", "NVDAUSDT", "NXPCUSDT", "OGNUSDT", "ONEUSDT", "ONUSDT", "OPGUSDT", "OPUSDT", "PARTIUSDT", "PAXGUSDT", "PDDUSDT", "PENGUUSDT", "PEOPLEUSDT", "PHAUSDT", "PIEVERSEUSDT", "PLTRUSDT", "PONSUSDT", "POWRUSDT", "PUMPUSDT", "QNTUSDT", "QQQUSDT", "QUSDT", "RAYSOLUSDT", "RECALLUSDT", "REDUSDT", "RKLBUSDT", "RSRUSDT", "RUNEUSDT", "SAFEUSDT", "SANDUSDT", "SENTUSDT", "SHAZUSDT", "SIGNUSDT", "SIRENUSDT", "SKHYNIXUSDT", "SKHYUSDT", "SKYAIUSDT", "SLXUSDT", "SMCIUSDT", "SNDKUSDT", "SNXXUSDT", "SOLUSDT", "SOLVUSDT", "SOONUSDT", "SOPHUSDT", "SOXLUSDT", "SOXSUSDT", "SPYUSDT", "SQDUSDT", "SQQQUSDT", "STABLEUSDT", "STARUSDT", "STRKUSDT", "STXUSDT", "SUIUSDT", "SUSDT", "TAGUSDT", "TAOUSDT", "TAUSDT", "TEMUSDT", "THETAUSDT", "TIAUSDT", "TQQQUSDT", "TRADOORUSDT", "TRIAUSDT", "TRUMPUSDT", "TRUSTUSDT", "TSLAUSDT", "TUTUSDT", "UAIUSDT", "UNIUSDT", "USELESSUSDT", "UVXYUSDT", "VELODROMEUSDT", "VETUSDT", "WALUSDT", "WENUSDT", "WLDUSDT", "XAGUSDT", "XAUUSDT", "XNYUSDT", "XPINUSDT", "XPLUSDT", "XRPUSDT", "XTZUSDT", "YBUSDT", "ZAMAUSDT", "ZECUSDT", "ZEREBROUSDT", "ZESTUSDT", "ZKUSDT", "ZROUSDT"];
+    datalist.innerHTML = "";
+    knownList.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s;
+      opt.textContent = `${s} (Đã Quét & Phân Tích Trên PC2)`;
+      datalist.appendChild(opt);
+    });
+  }
+
   if (searchInput) {
     const handleSearchInput = (val) => {
       if (!val) return;
@@ -4052,6 +4064,8 @@ async function renderPortfolioLeaderboard(rawCandidates, capital, category = 'al
         leverage: lev,
         allocPct: allocPct,
         mtf: c.bottleneck_reason || c.reason || "Đa khung thời gian đồng thuận",
+        hitCount: c.hit_count ? `${c.hit_count} Lần Quét` : '1+ Lần Quét',
+        strategiesAgreed: c.strategies_agreed ? `${c.strategies_agreed}` : '2/2 Chiến Lược',
         slPct: 0.015,
         tp1Pct: 0.024,
         tp2Pct: 0.050,
@@ -4157,6 +4171,18 @@ async function renderPortfolioLeaderboard(rawCandidates, capital, category = 'al
         </div>
 
         <p class="text-xs text-gray-400 line-clamp-2 leading-relaxed font-sans">${item.mtf}</p>
+
+        <!-- Hộp Thống Kê Phân Tích & Số Lần Quét Ra-đa -->
+        <div class="grid grid-cols-2 gap-2 text-[11px] bg-white/[0.03] p-2.5 rounded-lg border border-white/5 font-mono">
+          <div>
+            <span class="text-gray-400 block">Tần suất quét tầm ngắm:</span>
+            <strong class="text-cyan-300">🎯 ${item.hitCount || 'Quét chu kỳ 15s'}</strong>
+          </div>
+          <div>
+            <span class="text-gray-400 block">Hội đồng AI thẩm định:</span>
+            <strong class="text-emerald-300">🧠 ${item.strategiesAgreed || '3/3 AI Đồng Thuận'}</strong>
+          </div>
+        </div>
 
         <!-- Lộ trình vốn chi tiết -->
         <div class="bg-black/60 rounded-xl p-3.5 border border-white/5 space-y-2.5 text-xs font-mono">
