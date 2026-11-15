@@ -4433,7 +4433,7 @@ async function loadPortfolioChart(symbol, interval) {
         lowerWick,
         body,
         scanCount,
-        aiTrajVal: emaVal,
+        aiTrajVal: close,
         timeStr: new Date(k[0]).toLocaleString('vi-VN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
       });
 
