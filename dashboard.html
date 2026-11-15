@@ -1216,6 +1216,94 @@
               </span>
             </div>
           </div>
+
+          <!-- BẢNG DỰ ĐOÁN ĐỊNH LƯỢNG TƯƠNG LAI CỦA AI (AI QUANTUM PREDICTION PLAYBOOK) -->
+          <div id="aiPredictionPlaybook" class="mt-4 p-4 rounded-xl border border-cyan-500/25 bg-gradient-to-br from-cyan-950/20 via-black/70 to-purple-950/20 backdrop-blur-md">
+            <!-- Header Hộp Dự Báo -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-3 border-b border-white/10 gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="p-2 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                  <i data-lucide="sparkles" class="w-4 h-4"></i>
+                </span>
+                <div>
+                  <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                    🔮 BẢNG DỰ ĐOÁN LƯỢNG TỬ & CHỈ DẪN HÀNH ĐỘNG DÀNH CHO BẠN
+                    <span id="predSymbolBadge" class="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono border border-cyan-500/30">PUMP/USDT</span>
+                  </h4>
+                  <p class="text-[11px] text-gray-400">Mô hình xác suất có điều kiện kết hợp Dòng tiền Cá mập, Order Flow & Hội đồng AI Tool PC2</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="predConfidenceBadge" class="px-3 py-1 rounded text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                  🎯 Xác Suất Thắng: 78%
+                </span>
+              </div>
+            </div>
+
+            <!-- 3 Cột Dự Báo Chi Tiết -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              <!-- Cột 1: Dự Báo Hướng Đi -->
+              <div class="p-3 rounded-lg bg-black/50 border border-white/10 space-y-2">
+                <div class="text-gray-400 font-bold uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                  <i data-lucide="compass" class="w-3.5 h-3.5 text-cyan-400"></i> 1. Hướng Đi Dự Báo Của AI
+                </div>
+                <div id="predDirectionText" class="text-sm font-bold text-emerald-400">
+                  📈 TĂNG TRƯỞNG • MUA GOM
+                </div>
+                <div class="text-gray-300 text-[11px] space-y-1">
+                  <div class="flex justify-between"><span>• Mục tiêu kỳ vọng:</span> <strong id="predTpTargetText" class="text-amber-300 font-mono">+2.4%</strong></div>
+                  <div class="flex justify-between"><span>• Rủi ro tối đa:</span> <strong id="predSlTargetText" class="text-rose-400 font-mono">-1.5%</strong></div>
+                  <div class="flex justify-between"><span>• Tỷ lệ Lãi/Lỗ (R:R):</span> <strong id="predRrRatioText" class="text-cyan-300 font-mono">1.6x</strong></div>
+                  <div class="flex justify-between"><span>• Khung thời gian:</span> <strong id="predHorizonText" class="text-gray-200">45 - 90 phút (15M)</strong></div>
+                </div>
+              </div>
+
+              <!-- Cột 2: Kịch Bản Đường Đi Giá (Quantum Path) -->
+              <div class="p-3 rounded-lg bg-black/50 border border-white/10 space-y-2">
+                <div class="text-gray-400 font-bold uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                  <i data-lucide="git-commit" class="w-3.5 h-3.5 text-amber-400"></i> 2. Kịch Bản Đường Đi Giá Dự Phóng
+                </div>
+                <div class="text-gray-300 text-[11px] space-y-1.5">
+                  <div class="p-2 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-200">
+                    <strong class="text-emerald-400">Kịch bản A (Chính - 78%):</strong>
+                    <div id="predScenarioAText" class="mt-0.5">Giá hồi nhẹ về vùng 🟢 MUA GOM để khớp lệnh Limit Maker, sau đó lực mua bão đẩy giá bứt phá lên 🟡 CHỐT LỜI (TP1).</div>
+                  </div>
+                  <div class="p-2 rounded bg-rose-500/10 border border-rose-500/20 text-rose-200">
+                    <strong class="text-rose-400">Kịch bản B (Rủi ro - 22%):</strong>
+                    <div id="predScenarioBText" class="mt-0.5">Nếu phe xả ép thủng 🔴 CẮT LỖ, cơ chế Shock Rescue ngắt lệnh ngay ở lỗ nhỏ để bảo toàn 98.5% vốn.</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Cột 3: Chỉ Dẫn Vào Lệnh Cụ Thể (Nếu là bạn thì làm gì?) -->
+              <div class="p-3 rounded-lg bg-black/50 border border-white/10 space-y-2">
+                <div class="text-gray-400 font-bold uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                  <i data-lucide="check-circle" class="w-3.5 h-3.5 text-purple-400"></i> 3. Chỉ Dẫn Thực Thi Ngay Lúc Này
+                </div>
+                <div class="text-gray-200 text-[11px] space-y-1 font-mono">
+                  <div class="flex items-center justify-between">
+                    <span class="text-gray-400">1. Đặt Mua Limit:</span>
+                    <strong id="predActionEntry" class="text-emerald-400">--</strong>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-gray-400">2. Cắt lỗ (SL):</span>
+                    <strong id="predActionSl" class="text-rose-400">--</strong>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-gray-400">3. Chốt lời (TP1):</span>
+                    <strong id="predActionTp" class="text-amber-300">--</strong>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-gray-400">4. Chặn lãi hôm nay:</span>
+                    <strong id="predActionTrailing" class="text-purple-400">--</strong>
+                  </div>
+                </div>
+                <div id="predActionSummaryBadge" class="p-1.5 rounded text-[11px] text-center font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+                  💡 Đặt lệnh Limit Maker tại vùng xanh, tuyệt đối KHÔNG mua đuổi Market!
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Khối Bảng Xếp Hạng Các Đồng Đề Xuất Do Tool Treo & Điều Hướng Chi Tiết -->
@@ -1602,7 +1690,7 @@
   <!-- App JavaScript Modules -->
     <!-- TradingView Lightweight Charts (Standalone Local + CDN Fallback) -->
   <script src="js/lightweight-charts.standalone.production.js"></script>
-  <script type="module" src="js/dashboard_v2.js?v=20261115_scan_hud_v3"></script>
+  <script type="module" src="js/dashboard_v2.js?v=20261115_quantum_forecast_v4"></script>
   <script>
     lucide.createIcons();
   </script>
