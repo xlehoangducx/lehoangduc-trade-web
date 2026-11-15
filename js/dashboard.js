@@ -4569,6 +4569,23 @@ async function loadPortfolioChart(symbol, interval) {
     const chartTrailingVal = document.getElementById("chartTrailingVal");
     const adviceBadge = document.getElementById("chartActionAdviceBadge");
 
+    const chartLegendEntryLabel = document.getElementById("chartLegendEntryLabel");
+    const chartLegendEntryDot = document.getElementById("chartLegendEntryDot");
+    const chartLegendEntrySpan = document.getElementById("chartLegendEntrySpan");
+    const predActionEntryLabel = document.getElementById("predActionEntryLabel");
+
+    if (isShort) {
+      if (chartLegendEntryLabel) chartLegendEntryLabel.textContent = "Vùng Bán Xả (Short):";
+      if (chartLegendEntryDot) chartLegendEntryDot.className = "w-3 h-1.5 rounded-sm bg-rose-500 inline-block";
+      if (chartLegendEntrySpan) chartLegendEntrySpan.className = "inline-flex items-center gap-1.5 text-rose-400";
+      if (predActionEntryLabel) predActionEntryLabel.textContent = "1. Đặt Bán Short Limit:";
+    } else {
+      if (chartLegendEntryLabel) chartLegendEntryLabel.textContent = "Vùng Mua Gom:";
+      if (chartLegendEntryDot) chartLegendEntryDot.className = "w-3 h-1.5 rounded-sm bg-emerald-500 inline-block";
+      if (chartLegendEntrySpan) chartLegendEntrySpan.className = "inline-flex items-center gap-1.5 text-emerald-400";
+      if (predActionEntryLabel) predActionEntryLabel.textContent = "1. Đặt Mua Limit:";
+    }
+
     if (chartEntryVal) chartEntryVal.textContent = `${formatSmartPrice(entryP)}$`;
     if (chartSlVal) chartSlVal.textContent = isShort ? `${formatSmartPrice(slP)}$ (+1.5%)` : `${formatSmartPrice(slP)}$ (-1.5%)`;
     if (chartTpVal) chartTpVal.textContent = isShort ? `${formatSmartPrice(tp1P)}$ (-2.4%)` : `${formatSmartPrice(tp1P)}$ (+2.4%)`;
