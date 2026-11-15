@@ -2413,7 +2413,10 @@ function listenToBotTelemetry(userId, isAdmin) {
 
                     <span class="w-1.5 h-1.5 rounded-full ${p.isLong ? 'bg-emerald-400' : 'bg-rose-400'}"></span>
 
-                    <span>${p.symbol}</span>
+                    <a href="https://www.binance.com/vi/futures/${cleanSym}" target="_blank" rel="noopener noreferrer" class="font-bold text-white hover:text-amber-300 hover:underline mono-font text-xs inline-flex items-center gap-1" title="Bấm để mở ${p.symbol} trên Binance Futures">
+                      <span>${p.symbol}</span>
+                      <i data-lucide="external-link" class="w-2.5 h-2.5 opacity-60"></i>
+                    </a>
 
                   </div>
 
@@ -2491,7 +2494,10 @@ function listenToBotTelemetry(userId, isAdmin) {
 
                   <div class="flex items-center gap-2">
 
-                    <span class="font-black text-white mono-font text-sm tracking-wide">${p.symbol}</span>
+                    <a href="https://www.binance.com/vi/futures/${cleanSym}" target="_blank" rel="noopener noreferrer" class="font-black text-white hover:text-amber-300 hover:underline mono-font text-sm tracking-wide inline-flex items-center gap-1" title="Bấm để mở ${p.symbol} trên Binance Futures">
+                      <span>${p.symbol}</span>
+                      <i data-lucide="external-link" class="w-3 h-3 opacity-60"></i>
+                    </a>
 
                     <span class="px-2 py-0.5 rounded-full text-[11px] font-bold mono-font ${sideBadgeClass}">
 
@@ -3248,7 +3254,7 @@ function renderRadarLeaderboard(rawCandidates) {
               <span class="px-2 py-0.5 rounded-md text-xs font-black mono-font bg-white/[0.08] ${textRankColor} border border-white/10 shadow-sm">
                 ${rankBadge}
               </span>
-              <a href="https://www.binance.com/en/futures/${c.symbol.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}" target="_blank" rel="noopener noreferrer"
+              <a href="https://www.binance.com/vi/futures/${c.symbol.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}" target="_blank" rel="noopener noreferrer"
                  title="Bấm để mở biểu đồ ${safeSymbol} trên Binance Futures"
                  class="text-xs sm:text-sm mono-font font-black tracking-wider ${symColor} hover:underline hover:text-amber-300 inline-flex items-center gap-1 select-text cursor-pointer transition-colors z-20"
                  onclick="event.stopPropagation();">
