@@ -3861,7 +3861,7 @@ async function renderPortfolioLeaderboard(rawCandidates, capital) {
   if (window.lucide) lucide.createIcons();
 }
 
-// Tải & Vẽ Biểu Đồ TradingView Lightweight Charts
+// Tải & Vẽ Biểu Đồ TradingView Lightweight Charts (Nạp 600 nến đầy đủ nhiều ngày + Cập nhật Real-Time)
 async function loadPortfolioChart(symbol, interval) {
   const container = document.getElementById("portfolioChartContainer");
   const spinner = document.getElementById("chartLoadingSpinner");
@@ -3870,8 +3870,14 @@ async function loadPortfolioChart(symbol, interval) {
   if (!container) return;
 
   if (spinner) spinner.classList.remove("hidden");
-  const cleanSym = String(symbol || "SOLUSDT").replace('/', '').replace(':', '').toUpperCase();
+  const cleanSym = String(symbol || "BTCUSDT").replace('/', '').replace(':', '').toUpperCase();
   if (badge) badge.textContent = cleanSym;
+
+  // Hủy bộ đếm live ticker cũ nếu có
+  if (window._portfolioLiveTickerInterval) {
+    clearInterval(window._portfolioLiveTickerInterval);
+    window._portfolioLiveTickerInterval = null;
+  }
 
   // Tự động đồng bộ dropdown chọn mã
   if (symSelect) {
@@ -3898,7 +3904,8 @@ async function loadPortfolioChart(symbol, interval) {
       return;
     }
 
-    const url = `https://fapi.binance.com/fapi/v1/klines?symbol=${cleanSym}&interval=${interval}&limit=120`;
+    // Nạp đầy đủ 600 nến (thay vì 120) để hiển thị trọn vẹn nhiều ngày/tuần lịch sử
+    const url = `https://fapi.binance.com/fapi/v1/klines?symbol=${cleanSym}&interval=${interval}&limit=600`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Binance API error: ${res.status}`);
     const rawKlines = await res.json();
@@ -3924,7 +3931,8 @@ async function loadPortfolioChart(symbol, interval) {
       const lowerWick = (Math.min(open, close) - low) / range;
       const body = Math.abs(close - open) / range;
 
-      if (i > rawKlines.length - 35) {
+      // Gắn Dấu Chân Cá Mập trên 80 nến gần nhất
+      if (i > rawKlines.length - 80) {
         if (upperWick >= 0.38 && close < open) {
           markers.push({
             time,
@@ -3941,7 +3949,7 @@ async function loadPortfolioChart(symbol, interval) {
             shape: 'arrowUp',
             text: '💎 Gom đáy'
           });
-        } else if (body >= 0.70 && close > open && i % 8 === 0) {
+        } else if (body >= 0.70 && close > open && i % 6 === 0) {
           markers.push({
             time,
             position: 'belowBar',
@@ -3949,7 +3957,7 @@ async function loadPortfolioChart(symbol, interval) {
             shape: 'arrowUp',
             text: '🚀 Bão tăng'
           });
-        } else if (body >= 0.70 && close < open && lowerWick < 0.20 && i % 10 === 0) {
+        } else if (body >= 0.70 && close < open && lowerWick < 0.20 && i % 8 === 0) {
           markers.push({
             time,
             position: 'aboveBar',
@@ -3987,7 +3995,10 @@ async function loadPortfolioChart(symbol, interval) {
       timeScale: {
         borderColor: 'rgba(255, 255, 255, 0.1)',
         timeVisible: true,
-        secondsVisible: false
+        secondsVisible: false,
+        rightOffset: 12,
+        barSpacing: 7,
+        minBarSpacing: 1.5,
       }
     });
 
@@ -4007,6 +4018,9 @@ async function loadPortfolioChart(symbol, interval) {
     if (markers.length > 0) {
       portfolioCandleSeries.setMarkers(markers);
     }
+
+    // Cuộn mượt đến nến thời gian thực mới nhất hôm nay
+    portfolioChart.timeScale().scrollToRealTime();
 
     const curP = lastClose || 1.0;
     const entryP = curP * 0.998;
@@ -4059,6 +4073,27 @@ async function loadPortfolioChart(symbol, interval) {
     if (chartSlVal) chartSlVal.textContent = `${formatSmartPrice(slP)}$ (-1.5%)`;
     if (chartTpVal) chartTpVal.textContent = `${formatSmartPrice(tp1P)}$ (+2.4%)`;
     if (chartTrailingVal) chartTrailingVal.textContent = `${formatSmartPrice(trailingP)}$`;
+
+    // Cập nhật nến Live Ticker thời gian thực mỗi 2.5 giây
+    window._portfolioLiveTickerInterval = setInterval(async () => {
+      try {
+        const tickUrl = `https://fapi.binance.com/fapi/v1/klines?symbol=${cleanSym}&interval=${interval}&limit=2`;
+        const tickRes = await fetch(tickUrl);
+        if (tickRes.ok && portfolioCandleSeries) {
+          const tKlines = await tickRes.json();
+          if (tKlines && tKlines.length > 0) {
+            const lastK = tKlines[tKlines.length - 1];
+            portfolioCandleSeries.update({
+              time: Math.floor(lastK[0] / 1000),
+              open: parseFloat(lastK[1]),
+              high: parseFloat(lastK[2]),
+              low: parseFloat(lastK[3]),
+              close: parseFloat(lastK[4])
+            });
+          }
+        }
+      } catch (tickErr) {}
+    }, 2500);
 
     window.addEventListener('resize', () => {
       if (portfolioChart && container) {
