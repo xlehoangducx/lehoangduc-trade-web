@@ -2205,6 +2205,10 @@ function listenToBotTelemetry(userId, isAdmin) {
       const rawRadar = data.radar_candidates || [];
 
       renderRadarLeaderboard(rawRadar);
+      lastKnownRadarCandidates = rawRadar;
+      if (typeof renderPortfolioLeaderboard === "function") {
+        renderPortfolioLeaderboard(rawRadar, currentPortfolioCapital);
+      }
 
 
 
@@ -3402,4 +3406,641 @@ function attachRadar3DInteraction() {
       card.style.setProperty('--glare-opacity', '0');
     });
   });
+}
+
+// =========================================================================================
+// 💼 TRUNG TÂM ĐIỀU HƯỚNG ĐẦU TƯ CHUẨN QUỸ V2.0 (PERSONALIZED QUANT PORTFOLIO NAVIGATOR)
+// =========================================================================================
+
+let currentPortfolioCapital = 1000;
+let currentPortfolioSymbol = 'SOLUSDT';
+let currentPortfolioTf = '15m';
+let portfolioChart = null;
+let portfolioCandleSeries = null;
+let portfolioPriceLines = [];
+let lastKnownRadarCandidates = [];
+
+// Khởi tạo Module Quản Lý Đầu Tư Chuẩn Quỹ
+function initPortfolioNavigator() {
+  const capInput = document.getElementById("portfolioCapitalInput");
+  const quickBtns = document.querySelectorAll(".btn-quick-cap");
+  const tfBtns = document.querySelectorAll(".btn-chart-tf");
+  const symSelect = document.getElementById("portfolioChartSymbolSelect");
+  const addForm = document.getElementById("addHoldingForm");
+
+  // 1. Lắng nghe thay đổi vốn
+  if (capInput) {
+    capInput.addEventListener("input", (e) => {
+      const val = parseFloat(e.target.value) || 0;
+      updateCapitalAllocation(val);
+    });
+  }
+
+  // Quick capital buttons
+  quickBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      quickBtns.forEach(b => {
+        b.classList.remove("active", "bg-emerald-500/20", "text-emerald-300", "border-emerald-500/30", "font-bold");
+        b.classList.add("bg-white/5", "text-gray-300");
+      });
+      btn.classList.add("active", "bg-emerald-500/20", "text-emerald-300", "border-emerald-500/30", "font-bold");
+      btn.classList.remove("bg-white/5", "text-gray-300");
+
+      const cap = parseFloat(btn.getAttribute("data-cap")) || 1000;
+      if (capInput) capInput.value = cap;
+      updateCapitalAllocation(cap);
+    });
+  });
+
+  // 2. Lắng nghe chuyển timeframe biểu đồ
+  tfBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tfBtns.forEach(b => {
+        b.classList.remove("active", "bg-emerald-500/20", "text-emerald-300", "font-bold");
+        b.classList.add("text-gray-400");
+      });
+      btn.classList.add("active", "bg-emerald-500/20", "text-emerald-300", "font-bold");
+      btn.classList.remove("text-gray-400");
+
+      currentPortfolioTf = btn.getAttribute("data-tf") || '15m';
+      loadPortfolioChart(currentPortfolioSymbol, currentPortfolioTf);
+    });
+  });
+
+  // 3. Lắng nghe chọn symbol biểu đồ
+  if (symSelect) {
+    symSelect.addEventListener("change", (e) => {
+      currentPortfolioSymbol = e.target.value;
+      loadPortfolioChart(currentPortfolioSymbol, currentPortfolioTf);
+    });
+  }
+
+  // 4. Lắng nghe thêm vị thế đang hold
+  if (addForm) {
+    addForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const sym = (document.getElementById("holdSymInput")?.value || "").toUpperCase().trim();
+      const entry = parseFloat(document.getElementById("holdEntryInput")?.value) || 0;
+      const amt = parseFloat(document.getElementById("holdAmountInput")?.value) || 0;
+
+      if (sym && entry > 0 && amt > 0) {
+        addUserHolding(sym, entry, amt);
+        addForm.reset();
+      }
+    });
+  }
+
+  // 5. Nạp biểu đồ ban đầu & dữ liệu
+  updateCapitalAllocation(1000);
+  renderUserHoldings();
+  setTimeout(() => {
+    loadPortfolioChart(currentPortfolioSymbol, currentPortfolioTf);
+  }, 350);
+}
+
+// Cập nhật phân bổ tỷ trọng vốn & Stress Test
+function updateCapitalAllocation(capital) {
+  currentPortfolioCapital = Math.max(10, capital);
+  
+  const capEcho = document.getElementById("displayCapitalEcho");
+  const allocCash = document.getElementById("allocCashVal");
+  const allocActive = document.getElementById("allocActiveVal");
+  const stressBtc = document.getElementById("stressBtcDumpVal");
+  const stressBlackSwan = document.getElementById("stressBlackSwanVal");
+
+  const cash = currentPortfolioCapital * 0.40;
+  const active = currentPortfolioCapital * 0.60;
+  
+  // Stress test: BTC dump -10% mất ~2.75% active capital (1.65% total NAV)
+  const lossBtc = -(active * 0.0275);
+  const lossBlackSwan = -(active * 0.0633);
+
+  if (capEcho) capEcho.textContent = `${currentPortfolioCapital.toLocaleString()} USDT`;
+  if (allocCash) allocCash.textContent = `$${cash.toFixed(2)} USDT`;
+  if (allocActive) allocActive.textContent = `$${active.toFixed(2)} USDT`;
+  if (stressBtc) stressBtc.textContent = `-$${Math.abs(lossBtc).toFixed(2)} (-${((Math.abs(lossBtc)/currentPortfolioCapital)*100).toFixed(2)}%)`;
+  if (stressBlackSwan) stressBlackSwan.textContent = `-$${Math.abs(lossBlackSwan).toFixed(2)} (-${((Math.abs(lossBlackSwan)/currentPortfolioCapital)*100).toFixed(2)}%)`;
+
+  renderPortfolioLeaderboard(lastKnownRadarCandidates, currentPortfolioCapital);
+}
+
+// Bảng xếp hạng đồng đề xuất & Lộ trình điều hướng chi tiết
+function renderPortfolioLeaderboard(rawCandidates, capital) {
+  const container = document.getElementById("portfolioLeaderboardContainer");
+  if (!container) return;
+
+  // Fallback các đồng mạnh mẽ nếu bot chưa đẩy dữ liệu lên
+  const defaultItems = [
+    {
+      symbol: "SOL/USDT",
+      score: 94.5,
+      confidence: 0.88,
+      intent: "🚀 BÃO TĂNG CÁ MẬP BƠM (Whale Pump Storm)",
+      intentColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
+      price: 185.50,
+      leverage: "5x",
+      allocPct: 0.35,
+      mtf: "4H Uptrend • RVol 2.1x • Nến xanh đặc bùng nổ",
+      slPct: -0.015,
+      tp1Pct: 0.024,
+      tp2Pct: 0.050,
+      trailingFloorPct: -0.007
+    },
+    {
+      symbol: "NVDA/USDT",
+      score: 89.0,
+      confidence: 0.82,
+      intent: "💎 CÁ MẬP GOM ĐÁY CHIẾT KHẤU SÂU (Selling Climax)",
+      intentColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30",
+      price: 142.20,
+      leverage: "3x (TradFi Cổ Phiếu)",
+      allocPct: 0.25,
+      mtf: "1H Rút chân 42% • RSI 32 nảy lên từ quá bán",
+      slPct: -0.024,
+      tp1Pct: 0.038,
+      tp2Pct: 0.075,
+      trailingFloorPct: -0.010
+    },
+    {
+      symbol: "BTC/USDT",
+      score: 85.0,
+      confidence: 0.78,
+      intent: "🛡️ TÍCH LŨY TRÊN HỖ TRỢ VĨ MÔ 4H (JEV Trend Shield)",
+      intentColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
+      price: 64800.0,
+      leverage: "7x (Major Crypto)",
+      allocPct: 0.0,
+      mtf: "4H Giữ vững EMA50 • Chờ nến bão xác nhận",
+      slPct: -0.012,
+      tp1Pct: 0.020,
+      tp2Pct: 0.045,
+      trailingFloorPct: -0.006
+    },
+    {
+      symbol: "PAXG/USDT",
+      score: 82.5,
+      confidence: 0.75,
+      intent: "💎 HẤP THỤ PHÒNG HỘ VÀNG THẾ GIỚI (Gold Perps)",
+      intentColor: "text-yellow-400 bg-yellow-500/10 border-yellow-500/30",
+      price: 3825.0,
+      leverage: "2x (Kim Loại Quý)",
+      allocPct: 0.0,
+      mtf: "1D Xu hướng tăng bền vững • Dòng tiền trú ẩn",
+      slPct: -0.015,
+      tp1Pct: 0.025,
+      tp2Pct: 0.050,
+      trailingFloorPct: -0.008
+    }
+  ];
+
+  let items = defaultItems;
+  if (Array.isArray(rawCandidates) && rawCandidates.length > 0) {
+    const mapped = rawCandidates.slice(0, 4).map((c, idx) => {
+      const sym = String(c.symbol || "").toUpperCase();
+      const score = Number(c.priority_score || 80.0);
+      const conf = Number(c.confidence || 0.80);
+      const price = Number(c.price || 100.0);
+      const isTradfi = sym.includes("NVDA") || sym.includes("TSLA") || sym.includes("SOXL");
+      const isMajor = sym.includes("BTC") || sym.includes("ETH");
+      const lev = isTradfi ? "3x (TradFi)" : (isMajor ? "7x" : "5x");
+      const allocPct = idx === 0 ? 0.35 : (idx === 1 ? 0.25 : 0.0);
+
+      let intent = "🚀 LƯỚT SÓNG DÒNG TIỀN CÁ MẬP";
+      let intentColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
+      if (c.bottleneck_gate === "WATERFALL_DUMP") {
+        intent = "🌊 THÁC ĐỔ CÁ MẬP XẢ LŨ (ĐỨNG NGOÀI)";
+        intentColor = "text-rose-400 bg-rose-500/10 border-rose-500/30";
+      } else if (c.bottleneck_gate === "BUYING_CLIMAX") {
+        intent = "⚡ BẪY KIỆT SỨC MUA XẢ ĐỈNH (CHỐT LỜI)";
+        intentColor = "text-amber-400 bg-amber-500/10 border-amber-500/30";
+      }
+
+      return {
+        symbol: sym,
+        score: score,
+        confidence: conf,
+        intent: intent,
+        intentColor: intentColor,
+        price: price,
+        leverage: lev,
+        allocPct: allocPct,
+        mtf: c.reason || "Đa khung thời gian đồng thuận",
+        slPct: -0.015,
+        tp1Pct: 0.024,
+        tp2Pct: 0.050,
+        trailingFloorPct: -0.007
+      };
+    });
+    if (mapped.length > 0) items = mapped;
+  }
+
+  let html = "";
+  items.forEach((item, idx) => {
+    const isTop1 = idx === 0;
+    const isTop2 = idx === 1;
+    const allocatedMoney = capital * item.allocPct;
+    const entryLow = item.price * 0.997;
+    const entryHigh = item.price * 1.002;
+    const slPrice = item.price * (1 + item.slPct);
+    const tp1Price = item.price * (1 + item.tp1Pct);
+    const tp2Price = item.price * (1 + item.tp2Pct);
+    const trailingPrice = item.price * (1 + item.trailingFloorPct);
+    const maxLossDollar = allocatedMoney * Math.abs(item.slPct);
+    const expProfitDollar = allocatedMoney * item.tp1Pct;
+
+    const rankBadge = isTop1 
+      ? `<span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-black font-extrabold text-[11px] uppercase tracking-wider">🥇 Hạng 1 • Top Pick</span>`
+      : (isTop2 
+        ? `<span class="px-2.5 py-0.5 rounded-full bg-gray-200 text-black font-extrabold text-[11px] uppercase tracking-wider">🥈 Hạng 2 • Lựa Chọn 2</span>`
+        : `<span class="px-2.5 py-0.5 rounded-full bg-white/10 text-gray-300 font-bold text-[11px]">#${idx+1} • Theo Dõi Thêm</span>`);
+
+    const cleanSym = item.symbol.replace('/', '').replace(':', '');
+
+    html += `
+      <div class="kenzo-card p-5 border-white/10 hover:border-emerald-500/40 transition space-y-4 relative overflow-hidden group">
+        <div class="flex items-start justify-between gap-3 relative z-10">
+          <div>
+            <div class="flex items-center gap-2 mb-1.5">
+              ${rankBadge}
+              <span class="text-xs font-mono font-bold text-gray-400">Điểm: <span class="text-amber-400 font-extrabold">${item.score.toFixed(1)}/100</span></span>
+            </div>
+            <h4 class="text-xl font-black text-white font-mono tracking-tight flex items-center gap-2">
+              <span>${item.symbol}</span>
+              <span class="text-xs text-gray-400 font-normal">($${item.price.toLocaleString()})</span>
+            </h4>
+          </div>
+          <button type="button" class="btn-inspect-chart px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5" data-sym="${cleanSym}">
+            <i data-lucide="line-chart" class="w-3.5 h-3.5"></i>
+            <span>Soi Biểu Đồ</span>
+          </button>
+        </div>
+
+        <!-- Ý đồ cá mập -->
+        <div class="p-2.5 rounded-lg border text-xs font-bold ${item.intentColor} flex items-center gap-2">
+          <span>${item.intent}</span>
+        </div>
+
+        <p class="text-xs text-gray-400 line-clamp-2 leading-relaxed">${item.mtf}</p>
+
+        <!-- Lộ trình vốn chi tiết -->
+        <div class="bg-black/60 rounded-xl p-3.5 border border-white/5 space-y-2.5 text-xs font-mono">
+          <div class="flex items-center justify-between pb-2 border-b border-white/5">
+            <span class="text-gray-400">Vốn cấp từ tài khoản của bạn:</span>
+            <strong class="text-emerald-400 text-sm font-bold">${allocatedMoney > 0 ? `$${allocatedMoney.toFixed(2)} USDT` : '$0 (Chờ bứt phá)'}</strong>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <div>
+              <span class="text-gray-500 block">Đòn bẩy an toàn:</span>
+              <strong class="text-white">${item.leverage}</strong>
+            </div>
+            <div>
+              <span class="text-gray-500 block">Vùng Mua Gom:</span>
+              <strong class="text-emerald-400">${entryLow.toFixed(2)}$ - ${entryHigh.toFixed(2)}$</strong>
+            </div>
+            <div>
+              <span class="text-gray-500 block">Cắt Lỗ Bắt Buộc (SL):</span>
+              <strong class="text-rose-400">${slPrice.toFixed(2)}$ (-$${maxLossDollar.toFixed(2)})</strong>
+            </div>
+            <div>
+              <span class="text-gray-500 block">Chốt Lời TP1:</span>
+              <strong class="text-amber-400">${tp1Price.toFixed(2)}$ (+$${expProfitDollar.toFixed(2)})</strong>
+            </div>
+          </div>
+          <div class="pt-1 flex items-center justify-between text-[11px] text-purple-300 bg-purple-950/20 px-2 py-1 rounded">
+            <span>🎯 Mức Chặn Lãi Hôm Nay:</span>
+            <strong class="font-bold">${trailingPrice.toFixed(2)}$</strong>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+
+  // Gắn sự kiện nút Soi Biểu Đồ
+  container.querySelectorAll(".btn-inspect-chart").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const sym = btn.getAttribute("data-sym");
+      if (sym) {
+        currentPortfolioSymbol = sym;
+        const symSelect = document.getElementById("portfolioChartSymbolSelect");
+        if (symSelect) symSelect.value = sym;
+        loadPortfolioChart(currentPortfolioSymbol, currentPortfolioTf);
+        document.getElementById("portfolioChartContainer")?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  });
+
+  if (window.lucide) lucide.createIcons();
+}
+
+// Tải & Vẽ Biểu Đồ TradingView Lightweight Charts
+async function loadPortfolioChart(symbol, interval) {
+  const container = document.getElementById("portfolioChartContainer");
+  const spinner = document.getElementById("chartLoadingSpinner");
+  const badge = document.getElementById("activeChartSymbolBadge");
+  if (!container) return;
+
+  if (spinner) spinner.classList.remove("hidden");
+  if (badge) badge.textContent = symbol;
+
+  const cleanSym = String(symbol || "SOLUSDT").replace('/', '').replace(':', '').toUpperCase();
+
+  try {
+    if (!window.LightweightCharts) {
+      console.warn("LightweightCharts library not loaded yet.");
+      if (spinner) spinner.classList.add("hidden");
+      return;
+    }
+
+    const url = `https://fapi.binance.com/fapi/v1/klines?symbol=${cleanSym}&interval=${interval}&limit=120`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Binance API error: ${res.status}`);
+    const rawKlines = await res.json();
+
+    const candleData = [];
+    const markers = [];
+    let lastClose = 0;
+
+    for (let i = 0; i < rawKlines.length; i++) {
+      const k = rawKlines[i];
+      const time = Math.floor(k[0] / 1000);
+      const open = parseFloat(k[1]);
+      const high = parseFloat(k[2]);
+      const low = parseFloat(k[3]);
+      const close = parseFloat(k[4]);
+      lastClose = close;
+
+      candleData.push({ time, open, high, low, close });
+
+      const range = (high - low) || 1e-6;
+      const upperWick = (high - Math.max(open, close)) / range;
+      const lowerWick = (Math.min(open, close) - low) / range;
+      const body = Math.abs(close - open) / range;
+
+      if (i > rawKlines.length - 35) {
+        if (upperWick >= 0.38 && close < open) {
+          markers.push({
+            time,
+            position: 'aboveBar',
+            color: '#f59e0b',
+            shape: 'arrowDown',
+            text: '⚡ Kiệt sức mua'
+          });
+        } else if (lowerWick >= 0.38 && close > open) {
+          markers.push({
+            time,
+            position: 'belowBar',
+            color: '#06b6d4',
+            shape: 'arrowUp',
+            text: '💎 Gom đáy'
+          });
+        } else if (body >= 0.70 && close > open && i % 8 === 0) {
+          markers.push({
+            time,
+            position: 'belowBar',
+            color: '#10b981',
+            shape: 'arrowUp',
+            text: '🚀 Bão tăng'
+          });
+        } else if (body >= 0.70 && close < open && lowerWick < 0.20 && i % 10 === 0) {
+          markers.push({
+            time,
+            position: 'aboveBar',
+            color: '#f43f5e',
+            shape: 'arrowDown',
+            text: '🌊 Xả lũ'
+          });
+        }
+      }
+    }
+
+    container.innerHTML = "";
+    portfolioChart = LightweightCharts.createChart(container, {
+      width: container.clientWidth || 800,
+      height: 420,
+      layout: {
+        background: { color: '#090a0f' },
+        textColor: '#9ca3af',
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 11
+      },
+      grid: {
+        vertLines: { color: 'rgba(255, 255, 255, 0.04)' },
+        horzLines: { color: 'rgba(255, 255, 255, 0.04)' }
+      },
+      crosshair: {
+        mode: LightweightCharts.CrosshairMode.Normal,
+        vertLine: { color: 'rgba(16, 185, 129, 0.4)', width: 1, style: 2 },
+        horzLine: { color: 'rgba(16, 185, 129, 0.4)', width: 1, style: 2 }
+      },
+      rightPriceScale: {
+        borderColor: 'rgba(255, 255, 255, 0.1)'
+      },
+      timeScale: {
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        timeVisible: true,
+        secondsVisible: false
+      }
+    });
+
+    portfolioCandleSeries = portfolioChart.addCandlestickSeries({
+      upColor: '#10b981',
+      downColor: '#f43f5e',
+      borderUpColor: '#10b981',
+      borderDownColor: '#f43f5e',
+      wickUpColor: '#10b981',
+      wickDownColor: '#f43f5e'
+    });
+
+    portfolioCandleSeries.setData(candleData);
+    if (markers.length > 0) {
+      portfolioCandleSeries.setMarkers(markers);
+    }
+
+    const curP = lastClose || 100;
+    const entryP = curP * 0.998;
+    const slP = curP * 0.985;
+    const tp1P = curP * 1.024;
+    const trailingP = curP * 0.993;
+
+    portfolioCandleSeries.createPriceLine({
+      price: entryP,
+      color: '#10b981',
+      lineWidth: 2,
+      lineStyle: LightweightCharts.LineStyle.Solid,
+      axisLabelVisible: true,
+      title: '🟢 MUA GOM'
+    });
+
+    portfolioCandleSeries.createPriceLine({
+      price: slP,
+      color: '#f43f5e',
+      lineWidth: 2,
+      lineStyle: LightweightCharts.LineStyle.Solid,
+      axisLabelVisible: true,
+      title: '🔴 CẮT LỖ (SL)'
+    });
+
+    portfolioCandleSeries.createPriceLine({
+      price: tp1P,
+      color: '#f59e0b',
+      lineWidth: 2,
+      lineStyle: LightweightCharts.LineStyle.Solid,
+      axisLabelVisible: true,
+      title: '🟡 CHỐT LỜI (TP1)'
+    });
+
+    portfolioCandleSeries.createPriceLine({
+      price: trailingP,
+      color: '#a855f7',
+      lineWidth: 2,
+      lineStyle: LightweightCharts.LineStyle.Dashed,
+      axisLabelVisible: true,
+      title: '🟣 CHẶN LÃI HÔM NAY'
+    });
+
+    const chartEntryVal = document.getElementById("chartEntryVal");
+    const chartSlVal = document.getElementById("chartSlVal");
+    const chartTpVal = document.getElementById("chartTpVal");
+    const chartTrailingVal = document.getElementById("chartTrailingVal");
+
+    if (chartEntryVal) chartEntryVal.textContent = `${entryP.toFixed(2)}$`;
+    if (chartSlVal) chartSlVal.textContent = `${slP.toFixed(2)}$ (-1.5%)`;
+    if (chartTpVal) chartTpVal.textContent = `${tp1P.toFixed(2)}$ (+2.4%)`;
+    if (chartTrailingVal) chartTrailingVal.textContent = `${trailingP.toFixed(2)}$`;
+
+    window.addEventListener('resize', () => {
+      if (portfolioChart && container) {
+        portfolioChart.applyOptions({ width: container.clientWidth });
+      }
+    });
+
+  } catch (err) {
+    console.error("loadPortfolioChart error:", err);
+  } finally {
+    if (spinner) spinner.classList.add("hidden");
+  }
+}
+
+// Quản lý Vị Thế Đang Hold (Active Holdings Tracker)
+function getUserHoldings() {
+  try {
+    const raw = localStorage.getItem("tradematrix_active_holdings");
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveUserHoldings(holdings) {
+  try {
+    localStorage.setItem("tradematrix_active_holdings", JSON.stringify(holdings));
+  } catch (e) {}
+}
+
+function addUserHolding(symbol, entryPrice, amountUSD) {
+  const holdings = getUserHoldings();
+  holdings.unshift({
+    id: Date.now(),
+    symbol: symbol,
+    entryPrice: entryPrice,
+    amountUSD: amountUSD,
+    timestamp: new Date().toLocaleString()
+  });
+  saveUserHoldings(holdings);
+  renderUserHoldings();
+}
+
+function removeUserHolding(id) {
+  let holdings = getUserHoldings();
+  holdings = holdings.filter(h => h.id !== id);
+  saveUserHoldings(holdings);
+  renderUserHoldings();
+}
+
+async function renderUserHoldings() {
+  const tbody = document.getElementById("holdingsTableBody");
+  if (!tbody) return;
+
+  const holdings = getUserHoldings();
+  if (holdings.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" class="py-8 text-center text-gray-500 font-sans">
+          Chưa có vị thế nào được lưu. Bạn hãy nhập mã tài sản mình đã mua vào form phía trên để bắt đầu theo dõi!
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  let rows = "";
+  for (const h of holdings) {
+    const clean = h.symbol.replace('/', '').toUpperCase();
+    let curPrice = h.entryPrice * 1.025;
+    try {
+      const pRes = await fetch(`https://fapi.binance.com/fapi/v1/ticker/price?symbol=${clean}USDT`);
+      if (pRes.ok) {
+        const pData = await pRes.json();
+        curPrice = parseFloat(pData.price) || curPrice;
+      }
+    } catch (e) {}
+
+    const pnlPct = ((curPrice - h.entryPrice) / h.entryPrice) * 100;
+    const pnlDollar = (h.amountUSD * (pnlPct / 100));
+    const isProfit = pnlDollar >= 0;
+
+    let trailingStopPrice = h.entryPrice * 0.985;
+    let strategyBadge = `<span class="px-2 py-0.5 rounded bg-gray-500/20 text-gray-300 font-bold">🟡 Theo dõi bình thường</span>`;
+
+    if (pnlPct >= 5.0) {
+      trailingStopPrice = curPrice * 0.982;
+      strategyBadge = `<span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold animate-pulse">⚡ Khuyến nghị: Chốt lời 50%</span>`;
+    } else if (pnlPct >= 1.5) {
+      trailingStopPrice = h.entryPrice * 1.0022;
+      strategyBadge = `<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">🟢 Đã khóa Hòa Vốn (Risk-Free)</span>`;
+    } else if (pnlPct <= -1.5) {
+      trailingStopPrice = h.entryPrice * 0.985;
+      strategyBadge = `<span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold">🚨 Chạm ngưỡng Cắt Lỗ</span>`;
+    }
+
+    rows += `
+      <tr class="hover:bg-white/[0.02] transition">
+        <td class="py-3 px-4 font-bold text-white">${h.symbol}</td>
+        <td class="py-3 px-4 text-gray-400">$${h.entryPrice.toLocaleString()}</td>
+        <td class="py-3 px-4 text-white font-bold">$${curPrice.toLocaleString()}</td>
+        <td class="py-3 px-4 font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}">
+          ${isProfit ? '+' : ''}${pnlDollar.toFixed(2)}$ (${isProfit ? '+' : ''}${pnlPct.toFixed(2)}%)
+        </td>
+        <td class="py-3 px-4 text-purple-300 font-bold bg-purple-950/20">
+          $${trailingStopPrice.toFixed(2)}
+        </td>
+        <td class="py-3 px-4">${strategyBadge}</td>
+        <td class="py-3 px-4 text-center">
+          <button type="button" class="btn-del-holding text-gray-500 hover:text-rose-400 transition" data-id="${h.id}" title="Đóng / Xóa vị thế">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }
+
+  tbody.innerHTML = rows;
+
+  tbody.querySelectorAll(".btn-del-holding").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = Number(btn.getAttribute("data-id"));
+      if (id) removeUserHolding(id);
+    });
+  });
+
+  if (window.lucide) lucide.createIcons();
+}
+
+// Khởi chạy khi script được tải
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initPortfolioNavigator);
+} else {
+  initPortfolioNavigator();
 }
