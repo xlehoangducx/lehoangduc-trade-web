@@ -811,144 +811,151 @@ function showToast(message, type = "success") {
 
 
 
-// Send Remote Commands to Bot via Firestore (Non-blocking & Instant Feedback)
+// Send Remote Commands to Bot via Firestore (Non-blocking & Sub-second Feedback)
+let currentPendingCmdId = null;
+let currentPendingBtn = null;
+let currentPendingOriginalHtml = "";
+let currentPendingTimeout = null;
 
 async function sendBotCommand(command, extraData = {}, btnEl = null) {
-
   if (!currentUser) {
-
     showToast("Bạn cần đăng nhập để điều khiển bot!", "error");
-
     return;
-
   }
-
-
-
-  let originalHtml = "";
 
   if (btnEl) {
-
-    originalHtml = btnEl.innerHTML;
-
+    if (currentPendingBtn && currentPendingBtn !== btnEl) {
+      currentPendingBtn.innerHTML = currentPendingOriginalHtml;
+      currentPendingBtn.disabled = false;
+      currentPendingBtn.style.opacity = "1";
+    }
+    currentPendingBtn = btnEl;
+    currentPendingOriginalHtml = btnEl.innerHTML;
     btnEl.disabled = true;
-
     btnEl.style.opacity = "0.7";
-
     btnEl.innerHTML = `<span class="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Đang gửi...`;
-
   }
 
-
+  const cmdId = `${command}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  currentPendingCmdId = cmdId;
 
   try {
-
     const cmdRef = doc(db, "bot_commands", currentUser.uid);
-
     await setDoc(cmdRef, {
-
+      command_id: cmdId,
       command: command,
-
       ...extraData,
-
       status: "pending",
-
       updatedAt: serverTimestamp()
-
     }, { merge: true });
 
-
-
     let label = command.toUpperCase();
-
     if (command === 'close_position') label = `Đóng ${extraData.symbol || 'vị thế'}`;
-
     else if (command === 'emergency_close') label = "ĐÓNG TOÀN BỘ VỊ THẾ";
-
     else if (command === 'start') label = "BẬT BOT";
-
     else if (command === 'stop') label = "TẠM DỪNG BOT";
-
-    else if (command === 'toggle_free_roll_recycling') label = extraData.enabled ? 'BẬT GIA TĂNG VỊ THẾ' : 'TẮT GIA TĂNG VỊ THẾ';
+    else if (command === 'run_cycle') label = "QUÉT 1 CHU KỲ";
     else if (command === 'toggle_tradfi') label = extraData.only_tradfi ? 'CHỈ CỔ PHIẾU' : (extraData.enabled ? 'CẢ HAI (CRYPTO + CỔ PHIẾU)' : 'TẮT CỔ PHIẾU');
-
     else if (command === 'update_config') label = `ĐÒN BẨY ${extraData.max_leverage || ''}X & ${extraData.max_open_trades || ''} LỆNH`;
 
-
-
-    showToast(`⚡ Đã gửi lệnh [${label}]! Máy treo PC2 đang xử lý...`, "success");
-
-  } catch (err) {
-
-    console.error("Command error:", err);
-
-    showToast("Gửi lệnh thất bại: " + err.message, "error");
-
-  } finally {
+    showToast(`⚡ Đã gửi lệnh [${label}]! PC2 đang xử lý...`, "info");
 
     if (btnEl) {
-
-      setTimeout(() => {
-
-        btnEl.innerHTML = originalHtml;
-
-        btnEl.disabled = false;
-
-        btnEl.style.opacity = "1";
-
-      }, 2500);
-
+      btnEl.innerHTML = `<span class="inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Đang thi hành...`;
     }
 
-  }
+    if (currentPendingTimeout) clearTimeout(currentPendingTimeout);
+    currentPendingTimeout = setTimeout(() => {
+      if (currentPendingBtn) {
+        currentPendingBtn.innerHTML = currentPendingOriginalHtml;
+        currentPendingBtn.disabled = false;
+        currentPendingBtn.style.opacity = "1";
+        currentPendingBtn = null;
+      }
+      currentPendingCmdId = null;
+    }, 9000);
 
+  } catch (err) {
+    console.error("Command error:", err);
+    showToast("Gửi lệnh thất bại: " + err.message, "error");
+    if (btnEl) {
+      btnEl.innerHTML = currentPendingOriginalHtml;
+      btnEl.disabled = false;
+      btnEl.style.opacity = "1";
+      currentPendingBtn = null;
+      currentPendingCmdId = null;
+    }
+  }
 }
 
 window.sendBotCommand = sendBotCommand;
 
+// Lắng nghe phản hồi trạng thái hoàn tất lệnh từ xa từ PC2
+let unsubBotCommands = null;
+function listenToBotCommands(userId) {
+  if (unsubBotCommands) unsubBotCommands();
+  try {
+    const cmdRef = doc(db, "bot_commands", userId);
+    unsubBotCommands = onSnapshot(cmdRef, (snap) => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      if (!data) return;
 
-
-
-
-
+      if (currentPendingCmdId && (data.command_id === currentPendingCmdId || !data.command_id)) {
+        if (data.status === 'completed') {
+          const cmdLabel = (data.command || '').toUpperCase();
+          showToast(`✅ Đã thi hành thành công [${cmdLabel}] trên PC2!`, "success");
+          if (currentPendingBtn) {
+            currentPendingBtn.innerHTML = currentPendingOriginalHtml;
+            currentPendingBtn.disabled = false;
+            currentPendingBtn.style.opacity = "1";
+            currentPendingBtn = null;
+          }
+          currentPendingCmdId = null;
+          if (currentPendingTimeout) clearTimeout(currentPendingTimeout);
+        } else if (data.status === 'failed') {
+          const cmdLabel = (data.command || '').toUpperCase();
+          showToast(`❌ Lệnh [${cmdLabel}] thất bại: ${data.result_message || 'Thất bại'}`, "error");
+          if (currentPendingBtn) {
+            currentPendingBtn.innerHTML = currentPendingOriginalHtml;
+            currentPendingBtn.disabled = false;
+            currentPendingBtn.style.opacity = "1";
+            currentPendingBtn = null;
+          }
+          currentPendingCmdId = null;
+          if (currentPendingTimeout) clearTimeout(currentPendingTimeout);
+        }
+      }
+    }, (err) => {
+      console.warn("Lỗi onSnapshot bot_commands:", err);
+    });
+  } catch (e) {
+    console.warn("Không thể thiết lập listenToBotCommands:", e);
+  }
+}
+window.listenToBotCommands = listenToBotCommands;
 
 // Button Listeners for Remote Controls
-
-
-
-document.getElementById("btnStartBot")?.addEventListener("click", () => sendBotCommand("start"));
-
-
-
-document.getElementById("btnStopBot")?.addEventListener("click", () => sendBotCommand("stop"));
-
-
-
-document.getElementById("btnTriggerCycle")?.addEventListener("click", () => sendBotCommand("run_cycle"));
-
-
-
-document.getElementById("btnEmergencyClose")?.addEventListener("click", () => {
-
-
-
-  if (confirm("CẢNH BÁO: Bạn có chắc chắn muốn ĐÓNG TẤT CẢ VỊ THẾ ngay lập tức?")) {
-
-
-
-    sendBotCommand("emergency_close");
-
-
-
-  }
-
-
-
+document.getElementById("btnStartBot")?.addEventListener("click", (e) => {
+  const remoteStatusBadge = document.getElementById("remoteBotStatusBadge");
+  const remoteStatusText = document.getElementById("remoteBotStatusText");
+  if (remoteStatusText) remoteStatusText.textContent = "⏳ ĐANG GỬI LỆNH BẬT BOT...";
+  if (remoteStatusBadge) remoteStatusBadge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold mono-font bg-amber-500/10 text-amber-400 border border-amber-500/30";
+  sendBotCommand("start", {}, e.currentTarget);
 });
-
-
-
-
+document.getElementById("btnStopBot")?.addEventListener("click", (e) => {
+  const remoteStatusBadge = document.getElementById("remoteBotStatusBadge");
+  const remoteStatusText = document.getElementById("remoteBotStatusText");
+  if (remoteStatusText) remoteStatusText.textContent = "⏳ ĐANG GỬI LỆNH TẠM DỪNG...";
+  if (remoteStatusBadge) remoteStatusBadge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold mono-font bg-amber-500/10 text-amber-400 border border-amber-500/30";
+  sendBotCommand("stop", {}, e.currentTarget);
+});
+document.getElementById("btnTriggerCycle")?.addEventListener("click", (e) => sendBotCommand("run_cycle", {}, e.currentTarget));
+document.getElementById("btnEmergencyClose")?.addEventListener("click", (e) => {
+  if (confirm("CẢNH BÁO: Bạn có chắc chắn muốn ĐÓNG TẤT CẢ VỊ THẾ ngay lập tức?")) {
+    sendBotCommand("emergency_close", {}, e.currentTarget);
+  }
+});
 
 
 
@@ -976,14 +983,6 @@ document.getElementById("btnManualAdoptOff")?.addEventListener("click", (e) => {
 });
 document.getElementById("btnManualAdoptOn")?.addEventListener("click", (e) => {
   sendBotCommand("toggle_manual_adopt", { enabled: true }, e.currentTarget);
-});
-
-// Free-Roll Recycling Toggle Buttons
-document.getElementById("btnFreeRollOff")?.addEventListener("click", (e) => {
-  sendBotCommand("toggle_free_roll_recycling", { enabled: false }, e.currentTarget);
-});
-document.getElementById("btnFreeRollOn")?.addEventListener("click", (e) => {
-  sendBotCommand("toggle_free_roll_recycling", { enabled: true }, e.currentTarget);
 });
 
 // TradFi US Stocks Mode Toggle Buttons
@@ -1978,17 +1977,9 @@ function listenToBotTelemetry(userId, isAdmin) {
 
       if (specLev) specLev.textContent = `${maxLev}x`;
 
-      const freeRollEnabled = data.free_roll_recycling !== false;
       const specTrades = document.getElementById("specMaxTrades");
 
-      if (specTrades) {
-        const freeRollCnt = Number(data.free_roll_positions_count || 0);
-        if (freeRollEnabled && freeRollCnt > 0) {
-          specTrades.textContent = `${maxTrades} lệnh (+${freeRollCnt} bảo toàn)`;
-        } else {
-          specTrades.textContent = `${maxTrades} lệnh`;
-        }
-      }
+      if (specTrades) specTrades.textContent = `${maxTrades} lệnh`;
 
       const botModeBadge = document.getElementById("botModeBadge");
 
@@ -2062,30 +2053,6 @@ function listenToBotTelemetry(userId, isAdmin) {
       const btnManualAdoptOn = document.getElementById("btnManualAdoptOn");
       const manualAdoptBadge = document.getElementById("manualAdoptBadge");
 
-      
-      // Sync Free-Roll Recycling Status
-      const btnFreeRollOff = document.getElementById("btnFreeRollOff");
-      const btnFreeRollOn = document.getElementById("btnFreeRollOn");
-      const freeRollBadge = document.getElementById("freeRollBadge");
-
-      if (btnFreeRollOff && btnFreeRollOn) {
-        if (freeRollEnabled) {
-          btnFreeRollOn.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition bg-cyan-500/20 text-cyan-400 border border-cyan-500/40";
-          btnFreeRollOff.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition text-gray-400 hover:text-white border border-transparent";
-          if (freeRollBadge) {
-            freeRollBadge.textContent = "BẬT (GIA TĂNG LÃI)";
-            freeRollBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold mono-font bg-cyan-500/10 text-cyan-400 border border-cyan-500/30";
-          }
-        } else {
-          btnFreeRollOff.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition bg-white/10 text-white border border-white/20";
-          btnFreeRollOn.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition text-gray-400 hover:text-white border border-transparent";
-          if (freeRollBadge) {
-            freeRollBadge.textContent = "TẮT";
-            freeRollBadge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold mono-font bg-white/5 text-gray-400 border border-white/10";
-          }
-        }
-      }
-
       if (btnManualAdoptOff && btnManualAdoptOn) {
         if (manualAdoptEnabled) {
           btnManualAdoptOn.className = "px-3 py-1.5 rounded-lg text-[11px] font-bold mono-font transition bg-emerald-500/20 text-emerald-400 border border-emerald-500/40";
@@ -2151,39 +2118,39 @@ function listenToBotTelemetry(userId, isAdmin) {
 
 
       // Heartbeat Status (Đồng bộ nhãn & màu sắc badge xanh ngọc bích chuẩn)
-
       if (badgeText) {
-
         if (data.is_running === false) {
-
           badgeText.textContent = "PAUSED (TẠM DỪNG)";
-
           if (badgeEl) {
-
             badgeEl.className = "inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-[10px] mono-font font-bold shadow-sm shadow-amber-500/10";
-
             const pingDot = badgeEl.querySelector("span:first-child");
-
             if (pingDot) pingDot.className = "w-1.5 h-1.5 rounded-full bg-amber-400";
-
           }
-
         } else {
-
           badgeText.textContent = "ONLINE (SYNC REALTIME)";
-
           if (badgeEl) {
-
             badgeEl.className = "inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] mono-font font-bold shadow-sm shadow-emerald-500/10";
-
             const pingDot = badgeEl.querySelector("span:first-child");
-
             if (pingDot) pingDot.className = "w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping";
-
           }
-
         }
+      }
 
+      // Remote Bot Status Badge ngay trên Trung Tâm Điều Khiển
+      const remoteStatusBadge = document.getElementById("remoteBotStatusBadge");
+      const remoteStatusText = document.getElementById("remoteBotStatusText");
+      if (remoteStatusBadge && remoteStatusText) {
+        if (data.is_running === false) {
+          remoteStatusBadge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold mono-font bg-rose-500/10 text-rose-400 border border-rose-500/30";
+          const pingDot = remoteStatusBadge.querySelector("span:first-child");
+          if (pingDot) pingDot.className = "w-2 h-2 rounded-full bg-rose-400";
+          remoteStatusText.textContent = "🔴 BOT ĐÃ TẠM DỪNG";
+        } else {
+          remoteStatusBadge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold mono-font bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm shadow-emerald-500/10";
+          const pingDot = remoteStatusBadge.querySelector("span:first-child");
+          if (pingDot) pingDot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-ping";
+          remoteStatusText.textContent = "🟢 BOT ĐANG CHẠY (QUÉT NẾN 24/7)";
+        }
       }
 
 
@@ -2863,6 +2830,8 @@ onAuthStateChanged(auth, async (user) => {
     let fallbackStatus = isUserAdmin ? "approved" : "pending";
     if (!isUserAdmin) {
       try {
+        // users/{uid} có thể chậm hoặc bị Rules chặn, nhưng kênh license chính thức
+        // bot_commands vẫn xác nhận approved. Không khóa oan tài khoản đã được duyệt.
         const cmdSnap = await getDoc(doc(db, "bot_commands", user.uid));
         if (cmdSnap.exists() && cmdSnap.data().license_status === "approved") {
           fallbackStatus = "approved";
@@ -2993,6 +2962,7 @@ onAuthStateChanged(auth, async (user) => {
 
 
   listenToBotTelemetry(user.uid, isAdmin);
+  listenToBotCommands(user.uid);
 
 
 
@@ -3033,6 +3003,16 @@ function renderRadarLeaderboard(rawCandidates) {
     // Duy tri the hien tai, chi xoa & ve lai khi co du lieu tin hieu thay doi
 
     const normalizeSym = (s) => String(s || "").split(":")[0].replace(/\s+/g, "").toUpperCase();
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>\"']/g, (char) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', "'": '&#39;'
+    }[char]));
+    const statusFor = (candidate) => {
+      const gate = String(candidate.bottleneck_gate || '').toUpperCase();
+      if (gate === 'M1_SNIPER_STALKING') return 'STALKING';
+      if (['SLOT_CAPACITY', 'RISK_CAPACITY', 'MARGIN_CAPACITY'].includes(gate)) return 'WAITING_RESOURCE';
+      return 'BLOCKED';
+    };
+    const statusRank = { STALKING: 3, WAITING_RESOURCE: 2, BLOCKED: 0 };
 
     // 1. Khử trùng lặp tuyệt đối (Strict Deduplication) từ dữ liệu bot gửi lên
     const seen = new Set();
@@ -3044,7 +3024,7 @@ function renderRadarLeaderboard(rawCandidates) {
         const base = normalizeSym(c.symbol);
         if (!seen.has(base)) {
           seen.add(base);
-          candidates.push({ ...c, symbol: base });
+          candidates.push({ ...c, symbol: base, radar_status: c.radar_status || statusFor(c) });
         }
       }
     }
@@ -3059,7 +3039,7 @@ function renderRadarLeaderboard(rawCandidates) {
         <div class="p-5 rounded-2xl bg-[#090d16]/80 border border-white/10 text-center w-full min-h-[140px] flex flex-col items-center justify-center">
           <div class="text-2xl mb-1.5">📡</div>
           <div class="text-xs sm:text-sm font-bold text-white mono-font">Ra-đa Lượng Tử Đang Quét 50+ Cặp Tiền...</div>
-          <div class="text-[11px] text-gray-400 mt-1">Các chốt chặn vi mô đang bảo vệ an toàn vốn tuyệt đối. Chưa có tín hiệu nào bị nghẽn ở bước cuối.</div>
+          <div class="text-[11px] text-gray-400 mt-1">Không có ứng viên mới trong cửa sổ ra-đa 5 phút gần nhất.</div>
         </div>
       `;
       colRight.innerHTML = `
@@ -3072,8 +3052,11 @@ function renderRadarLeaderboard(rawCandidates) {
       return;
     }
 
-    // 3. Sắp xếp thứ hạng CHUẨN XÁC theo Tiềm Năng Khớp Lệnh (Readiness % giảm dần -> Confidence % -> Hit count)
+    // 3. Ưu tiên lệnh đang rình/đã qua tín hiệu trước ứng viên đang bị chặn.
     candidates.sort((a, b) => {
+      const sA = statusRank[a.radar_status] || 0;
+      const sB = statusRank[b.radar_status] || 0;
+      if (sB !== sA) return sB - sA;
       const rA = Number(a.readiness_pct) || 0;
       const rB = Number(b.readiness_pct) || 0;
       if (rB !== rA) return rB - rA;
@@ -3086,7 +3069,11 @@ function renderRadarLeaderboard(rawCandidates) {
     });
 
     // Kiểm tra state để chỉ kích hoạt hiệu ứng mượt khi có cập nhật tín hiệu
-    const currentKeys = candidates.map(c => (c.symbol || '') + '_' + (c.hit_count || 1) + '_' + (c.readiness_pct || 0)).join('|');
+    const currentKeys = JSON.stringify(candidates.map(c => [
+      c.symbol, c.side, c.radar_status, c.bottleneck_gate, c.bottleneck_reason,
+      c.hit_count, c.readiness_pct, c.confidence_pct, c.score,
+      c.strategies_agreed, c.dynamic_leverage, c.last_seen_str
+    ]));
     if (window._lastWebRadarKeys === currentKeys) {
       return;
     }
@@ -3101,6 +3088,36 @@ function renderRadarLeaderboard(rawCandidates) {
         ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
         : "bg-rose-500/20 text-rose-400 border-rose-500/40";
       const dirText = isLong ? "LONG" : "SHORT";
+      const safeSymbol = escapeHtml(c.symbol);
+      const safeTimeWindow = escapeHtml(c.time_window_str || c.last_seen_str || 'Gần đây');
+      const safeLastSeen = escapeHtml(c.last_seen_str || '--');
+      const safeReason = escapeHtml(c.bottleneck_reason || 'Đang kiểm tra ngưỡng an toàn');
+      const safeAgreement = escapeHtml(c.strategies_agreed || '—');
+      const safeLeverage = String(c.bottleneck_gate || '').toUpperCase() === 'M1_SNIPER_STALKING'
+        ? escapeHtml(c.dynamic_leverage || '—') : '—';
+      const confidenceValue = Number(c.confidence_pct);
+      const safeConfidence = Number.isFinite(confidenceValue) ? Math.max(0, Math.min(100, confidenceValue)).toFixed(1) : '--';
+      const scoreValue = Number(c.score);
+      const safeScore = Number.isFinite(scoreValue) && scoreValue !== 0 ? ` · ${scoreValue >= 0 ? '+' : ''}${scoreValue.toFixed(2)}` : '';
+      const radarStatus = c.radar_status || statusFor(c);
+      const statusLabel = radarStatus === 'STALKING' ? 'ĐANG RÌNH MAKER'
+        : radarStatus === 'WAITING_RESOURCE' ? 'TÍN HIỆU ĐẠT · CHỜ SLOT'
+        : 'BỊ CHẶN';
+      const gateLabel = escapeHtml(c.bottleneck_gate || 'PRE_TRADE_GATE');
+      const processOutcome = radarStatus === 'STALKING' ? 'RÌNH MAKER'
+        : radarStatus === 'WAITING_RESOURCE' ? 'CHỜ SLOT' : 'BỊ CHẶN';
+      const processColor = radarStatus === 'STALKING' ? '#6ee7b7'
+        : radarStatus === 'WAITING_RESOURCE' ? '#fcd34d' : '#fda4af';
+      const processBackground = radarStatus === 'STALKING' ? 'rgba(52,211,153,0.07)'
+        : radarStatus === 'WAITING_RESOURCE' ? 'rgba(251,191,36,0.07)' : 'rgba(251,113,133,0.07)';
+      const processNote = radarStatus === 'STALKING'
+        ? 'Lệnh Maker đang rình trong RAM; chưa gửi lên Binance.'
+        : radarStatus === 'WAITING_RESOURCE'
+          ? 'Tín hiệu đạt điều kiện; bot đang chờ slot/ký quỹ, chưa gửi lệnh Binance.'
+          : 'Ứng viên đã được phân tích nhưng bị chặn; chưa có lệnh gửi Binance.';
+      const priorityValue = Number(c.readiness_pct);
+      const radarPriority = Number.isFinite(priorityValue)
+        ? Math.max(0, Math.min(100, priorityValue)) : null;
 
       // 1. Phân loại hiệu ứng Hoán Đổi Vị Trí Game-like & Quỹ đạo bay 3D
       const prevRank = (window._prevRadarRankMap && window._prevRadarRankMap[c.symbol]) ? window._prevRadarRankMap[c.symbol] : null;
@@ -3149,7 +3166,6 @@ function renderRadarLeaderboard(rawCandidates) {
       let rankBg = '';
       let rankBorder = '';
       let glowBar = '';
-      let barGradient = '';
       let textRankColor = '';
       let symColor = '';
       let sweepBeam = '';
@@ -3163,7 +3179,6 @@ function renderRadarLeaderboard(rawCandidates) {
         rankBg = 'bg-gradient-to-br from-amber-500/[0.18] via-yellow-500/[0.06] to-[#070b14]';
         rankBorder = 'border-amber-400/65 shadow-amber-400/20';
         glowBar = 'from-amber-400 via-yellow-400 to-amber-200';
-        barGradient = 'from-amber-500 via-yellow-400 to-amber-200';
         textRankColor = 'text-amber-400';
         symColor = 'text-amber-300 font-black tracking-wider drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.95), transparent);';
@@ -3176,7 +3191,6 @@ function renderRadarLeaderboard(rawCandidates) {
         rankBg = 'bg-gradient-to-br from-cyan-500/[0.14] via-sky-500/[0.05] to-[#070b14]';
         rankBorder = 'border-cyan-400/55 shadow-cyan-400/15';
         glowBar = 'from-cyan-400 via-sky-400 to-blue-300';
-        barGradient = 'from-sky-500 via-cyan-400 to-teal-300';
         textRankColor = 'text-cyan-400';
         symColor = 'text-cyan-200 font-black tracking-wide drop-shadow-[0_0_8px_rgba(56,189,248,0.35)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.90), transparent);';
@@ -3189,7 +3203,6 @@ function renderRadarLeaderboard(rawCandidates) {
         rankBg = 'bg-gradient-to-br from-orange-500/[0.12] via-amber-600/[0.04] to-[#070b14]';
         rankBorder = 'border-orange-500/50 shadow-orange-500/15';
         glowBar = 'from-orange-500 via-amber-500 to-yellow-500';
-        barGradient = 'from-orange-600 via-amber-500 to-yellow-400';
         textRankColor = 'text-orange-400';
         symColor = 'text-orange-200 font-bold drop-shadow-[0_0_6px_rgba(249,115,22,0.3)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.85), transparent);';
@@ -3202,7 +3215,6 @@ function renderRadarLeaderboard(rawCandidates) {
         rankBg = 'bg-gradient-to-br from-emerald-500/[0.11] via-teal-600/[0.03] to-[#070b14]';
         rankBorder = 'border-emerald-500/45 shadow-emerald-500/15';
         glowBar = 'from-emerald-500 via-teal-400 to-cyan-400';
-        barGradient = 'from-emerald-600 via-teal-400 to-emerald-300';
         textRankColor = 'text-emerald-400';
         symColor = 'text-emerald-200 font-bold drop-shadow-[0_0_6px_rgba(16,185,129,0.3)]';
         sweepBeam = 'background: linear-gradient(90deg, transparent, rgba(16, 185, 129, 0.80), transparent);';
@@ -3212,15 +3224,11 @@ function renderRadarLeaderboard(rawCandidates) {
 
       // 3. Bậc thang thời gian chuyển động (Cascading Staggered Timing: 0.00s, 0.16s, 0.32s, 0.48s)
       const delaySec = (idx * 0.16).toFixed(2);
-      const readiness = Math.min(99, Math.max(10, Number(c.readiness_pct) || 75));
       const hitCount = (c.hit_count !== undefined && c.hit_count !== null && Number(c.hit_count) > 0)
         ? Number(c.hit_count)
         : 1;
 
       const hitTag = `<span class="px-2 py-0.5 rounded-md text-[10px] font-black mono-font bg-amber-400/15 text-amber-300 border border-amber-400/35 flex items-center gap-1 shrink-0 shadow-sm"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>🔥 ${hitCount} lần</span>`;
-
-      const timeWindow = c.time_window_str || c.last_seen_str || "Gần đây";
-      const bottleneckReason = c.bottleneck_reason || "Đang kiểm tra ngưỡng an toàn";
 
       // Hậu hiệu ứng: Sóng xung kích nổ khóa snap khi ráp vào vị trí
       const dockingBurstHtml = isSnapDocking ? `<div class="radar-docking-burst-fx" style="--rank-glow-color: ${glowColorRgba};"></div>` : '';
@@ -3240,11 +3248,11 @@ function renderRadarLeaderboard(rawCandidates) {
               <span class="px-2 py-0.5 rounded-md text-xs font-black mono-font bg-white/[0.08] ${textRankColor} border border-white/10 shadow-sm">
                 ${rankBadge}
               </span>
-              <a href="https://www.binance.com/en/futures/${(c.symbol || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}" target="_blank" rel="noopener noreferrer" 
-                 title="Bấm để mở biểu đồ ${(c.symbol || '')} trên Binance Futures"
+              <a href="https://www.binance.com/en/futures/${c.symbol.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()}" target="_blank" rel="noopener noreferrer"
+                 title="Bấm để mở biểu đồ ${safeSymbol} trên Binance Futures"
                  class="text-xs sm:text-sm mono-font font-black tracking-wider ${symColor} hover:underline hover:text-amber-300 inline-flex items-center gap-1 select-text cursor-pointer transition-colors z-20"
                  onclick="event.stopPropagation();">
-                <span class="select-text">${c.symbol}</span>
+                <span class="select-text">${safeSymbol}</span>
                 <i data-lucide="external-link" class="w-3 h-3 opacity-60 hover:opacity-100 shrink-0"></i>
               </a>
               <span class="px-1.5 py-0.5 rounded text-[10px] font-black mono-font border ${dirClass}">
@@ -3258,43 +3266,62 @@ function renderRadarLeaderboard(rawCandidates) {
           </div>
 
           <div class="flex items-center justify-between text-[10px] text-gray-400 mono-font mb-2 relative z-10">
-            <span>Thời điểm: <strong class="text-gray-300">${timeWindow}</strong></span>
-            <span>Cập nhật: <strong class="text-gray-300">${c.last_seen_str || '--'}</strong></span>
+            <span>Thời điểm: <strong class="text-gray-300">${safeTimeWindow}</strong></span>
+            <span>Cập nhật: <strong class="text-gray-300">${safeLastSeen}</strong></span>
           </div>
 
-          <div class="mb-2 relative z-10">
-            <div class="flex items-center justify-between text-[10px] sm:text-[11px] mono-font mb-1">
-              <span class="text-gray-300 font-semibold flex items-center gap-1">
-                <i data-lucide="crosshair" class="w-3.5 h-3.5 ${textRankColor}"></i>
-                <span>Độ Sẵn Sàng:</span>
-              </span>
-              <span class="${textRankColor} font-black">${readiness.toFixed(1)}%</span>
-            </div>
-            <div class="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden p-0.5 border border-white/10">
-              <div class="h-full rounded-full bg-gradient-to-r ${barGradient} transition-all duration-700 shadow-sm" style="width: ${readiness}%"></div>
-            </div>
+          <div class="flex items-center justify-between text-[10px] mono-font mb-2 relative z-10">
+            <span class="text-gray-400">Trạng thái:</span>
+            <strong class="${radarStatus === 'BLOCKED' ? 'text-rose-400' : textRankColor}">${statusLabel} · ${gateLabel}</strong>
           </div>
 
-          <div class="grid grid-cols-3 gap-1 mb-2 text-[10px] mono-font text-center relative z-10">
-            <div class="p-1 rounded-lg bg-black/60 border border-white/5">
-              <div class="text-[9px] text-gray-400">AI Ensemble</div>
-              <div class="font-bold text-white text-[10px] mt-0.5 truncate">${c.side === 'LONG' || c.side === 'BUY' ? 'BUY' : 'SELL'} ${c.confidence_pct || '--'}%</div>
+          <div class="mb-2 relative z-10 min-w-0" title="Điểm heuristic dùng để xếp hạng ứng viên; không phải tiến độ khớp lệnh hay xác suất thắng.">
+            <div class="flex items-center justify-between gap-2 text-[9px] sm:text-[10px] mono-font mb-1">
+              <span class="text-gray-300 font-bold">ĐIỂM ƯU TIÊN RADAR</span>
+              <span class="${textRankColor} font-black shrink-0">${radarPriority === null ? '—' : `${radarPriority.toFixed(1)}/100`}</span>
             </div>
-            <div class="p-1 rounded-lg bg-black/60 border border-white/5">
-              <div class="text-[9px] text-gray-400">Đồng Thuận</div>
-              <div class="font-bold text-white text-[10px] mt-0.5 truncate" title="${c.strategies_agreed || '--'}">${c.strategies_agreed || '2/2'}</div>
+            <div class="w-full h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500" style="width:${radarPriority ?? 0}%; background:${sparkColorHex};"></div>
             </div>
-            <div class="p-1 rounded-lg bg-black/60 border border-white/5">
+            <div class="text-[8px] text-gray-500 mt-1">Điểm xếp hạng ứng viên, không phải tiến độ lệnh.</div>
+          </div>
+
+          <div class="mb-2 relative z-10 min-w-0">
+            <div class="text-[9px] sm:text-[10px] text-gray-300 font-bold mono-font mb-1">TIẾN TRÌNH ỨNG VIÊN</div>
+            <div class="grid grid-cols-3 gap-1 min-w-0 text-center mono-font">
+              <div class="min-w-0 p-1 rounded-lg border border-emerald-400/30 bg-emerald-400/[0.06] overflow-hidden">
+                <div class="text-[8px] text-gray-500">BƯỚC 1</div><div class="text-[9px] text-emerald-300 font-black break-words">QUÉT ✓</div>
+              </div>
+              <div class="min-w-0 p-1 rounded-lg border border-emerald-400/30 bg-emerald-400/[0.06] overflow-hidden">
+                <div class="text-[8px] text-gray-500">BƯỚC 2</div><div class="text-[9px] text-emerald-300 font-black break-words">ĐÁNH GIÁ ✓</div>
+              </div>
+              <div class="min-w-0 p-1 rounded-lg border border-white/10 overflow-hidden" style="border-color:${processColor}66; background:${processBackground};">
+                <div class="text-[8px] text-gray-500">BƯỚC 3</div><div class="text-[9px] font-black break-words" style="color:${processColor};">${processOutcome}</div>
+              </div>
+            </div>
+            <div class="text-[9px] leading-snug text-gray-500 mt-1 break-words">${processNote}</div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-1 mb-2 text-[10px] mono-font text-center relative z-10 min-w-0">
+            <div class="min-w-0 overflow-hidden p-1 rounded-lg bg-black/60 border border-white/5">
+              <div class="text-[9px] text-gray-400">Độ tin cậy tín hiệu</div>
+              <div class="font-bold text-white text-[10px] mt-0.5 truncate">${dirText} ${safeConfidence}%${safeScore}</div>
+            </div>
+            <div class="min-w-0 overflow-hidden p-1 rounded-lg bg-black/60 border border-white/5">
+              <div class="text-[9px] text-gray-400">Nguồn đồng chiều</div>
+              <div class="font-bold text-white text-[10px] mt-0.5 truncate" title="${safeAgreement}">${safeAgreement}</div>
+            </div>
+            <div class="min-w-0 overflow-hidden p-1 rounded-lg bg-black/60 border border-white/5">
               <div class="text-[9px] text-gray-400">Đòn Bẩy</div>
-              <div class="font-bold ${textRankColor} text-[10px] mt-0.5">${c.dynamic_leverage || '5x'}</div>
+              <div class="font-bold ${textRankColor} text-[10px] mt-0.5">${safeLeverage}</div>
             </div>
           </div>
 
           <div class="p-2 rounded-xl bg-amber-500/[0.07] border border-amber-500/20 flex items-start gap-1.5 relative z-10">
             <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5"></i>
             <div class="text-[10px] sm:text-[11px] text-gray-300 leading-snug">
-              <span class="text-amber-400 font-bold">Lý do chặn:</span>
-              <span>${bottleneckReason}</span>
+              <span class="text-amber-400 font-bold">${radarStatus === 'STALKING' ? 'Lệnh đang rình:' : radarStatus === 'BLOCKED' ? 'Lý do chặn:' : 'Điều kiện còn chờ:'}</span>
+              <span>${safeReason}</span>
             </div>
           </div>
         </div>
@@ -3310,7 +3337,7 @@ function renderRadarLeaderboard(rawCandidates) {
         <div class="p-5 rounded-2xl bg-[#090d16]/50 border border-white/5 text-center flex flex-col items-center justify-center min-h-[140px]">
           <div class="text-lg mb-1 text-gray-500">⏳</div>
           <div class="text-xs text-gray-400 mono-font">Đang rà soát Top 3 & 4...</div>
-          <div class="text-[10px] text-gray-500 mt-1">Chỉ những coin đạt độ sẵn sàng cao mới được hiển thị.</div>
+          <div class="text-[10px] text-gray-500 mt-1">Ứng viên mới sẽ xuất hiện khi dữ liệu được cập nhật.</div>
         </div>
       `;
     }
@@ -3408,6 +3435,7 @@ function attachRadar3DInteraction() {
   });
 }
 
+
 // =========================================================================================
 // 💼 TRUNG TÂM ĐIỀU HƯỚNG ĐẦU TƯ CHUẨN QUỸ V2.0 (PERSONALIZED QUANT PORTFOLIO NAVIGATOR)
 // =========================================================================================
@@ -3415,11 +3443,31 @@ function attachRadar3DInteraction() {
 let currentPortfolioCapital = 1000;
 let currentPortfolioSymbol = 'SOLUSDT';
 let currentPortfolioTf = '15m';
+let currentPortfolioCategory = 'all';
 let portfolioChart = null;
 let portfolioCandleSeries = null;
 let portfolioPriceLines = [];
 let lastKnownRadarCandidates = [];
 const priceCache = {};
+let allPricesFetchedTs = 0;
+
+// Nạp toàn bộ giá thời gian thực từ Binance Futures (500+ cặp chỉ trong 1 request <100ms)
+async function refreshAllPrices() {
+  const now = Date.now();
+  if (now - allPricesFetchedTs < 12000 && Object.keys(priceCache).length > 20) return;
+  try {
+    const res = await fetch("https://fapi.binance.com/fapi/v1/ticker/price");
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        data.forEach(item => {
+          priceCache[item.symbol] = parseFloat(item.price);
+        });
+        allPricesFetchedTs = now;
+      }
+    }
+  } catch (e) {}
+}
 
 // Hàm định dạng giá thông minh chống bẹp về 0.00$ cho Altcoin nhỏ
 function formatSmartPrice(val) {
@@ -3440,12 +3488,45 @@ function getSmartPriceFormat(price) {
   return { type: 'price', precision: 8, minMove: 0.00000001 };
 }
 
+// Chuyển nhanh biểu đồ sang bất kỳ mã nào & cuộn mượt
+window.switchToPortfolioSymbol = function(symbol) {
+  const clean = String(symbol || "BTCUSDT").toUpperCase().trim().replace('/', '').replace(':', '');
+  currentPortfolioSymbol = clean;
+  const symSelect = document.getElementById("portfolioChartSymbolSelect");
+  const searchInput = document.getElementById("portfolioChartSearchInput");
+  if (searchInput) searchInput.value = clean;
+  if (symSelect) {
+    let exists = false;
+    for (let i = 0; i < symSelect.options.length; i++) {
+      if (symSelect.options[i].value === clean) {
+        exists = true;
+        symSelect.selectedIndex = i;
+        break;
+      }
+    }
+    if (!exists) {
+      const opt = document.createElement("option");
+      opt.value = clean;
+      opt.textContent = `${clean} (Đang xem)`;
+      symSelect.appendChild(opt);
+      symSelect.value = clean;
+    }
+  }
+  loadPortfolioChart(clean, currentPortfolioTf);
+  const chartSec = document.getElementById("portfolioChartContainer");
+  if (chartSec) {
+    chartSec.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+};
+
 // Khởi tạo Module Quản Lý Đầu Tư Chuẩn Quỹ
 function initPortfolioNavigator() {
   const capInput = document.getElementById("portfolioCapitalInput");
   const quickBtns = document.querySelectorAll(".btn-quick-cap");
   const tfBtns = document.querySelectorAll(".btn-chart-tf");
   const symSelect = document.getElementById("portfolioChartSymbolSelect");
+  const searchInput = document.getElementById("portfolioChartSearchInput");
+  const tabBtns = document.querySelectorAll(".btn-portfolio-tab");
   const addForm = document.getElementById("addHoldingForm");
 
   // 1. Lắng nghe thay đổi vốn
@@ -3487,15 +3568,63 @@ function initPortfolioNavigator() {
     });
   });
 
-  // 3. Lắng nghe chọn symbol biểu đồ
+  // 3. Lắng nghe chọn symbol từ Dropdown
   if (symSelect) {
     symSelect.addEventListener("change", (e) => {
       currentPortfolioSymbol = e.target.value;
+      if (searchInput) searchInput.value = currentPortfolioSymbol;
       loadPortfolioChart(currentPortfolioSymbol, currentPortfolioTf);
     });
   }
 
-  // 4. Lắng nghe thêm vị thế đang hold
+  // 4. Lắng nghe tìm kiếm / gõ mã từ Search Input (Hỗ trợ XAU, XAG, CL, Vàng, Bạc, Dầu, NVDA, BTC...)
+  if (searchInput) {
+    const handleSearchInput = (val) => {
+      if (!val) return;
+      let clean = String(val).toUpperCase().trim().replace('/', '').replace(':', '');
+      const aliasMap = {
+        'XAU': 'XAUUSDT', 'GOLD': 'XAUUSDT', 'VANG': 'XAUUSDT',
+        'XAG': 'XAGUSDT', 'SILVER': 'XAGUSDT', 'BAC': 'XAGUSDT',
+        'CL': 'CLUSDT', 'OIL': 'CLUSDT', 'CRUDE': 'CLUSDT', 'DAU': 'CLUSDT',
+        'BZ': 'BZUSDT', 'BRENT': 'BZUSDT',
+        'PAXG': 'PAXGUSDT', 'COPPER': 'COPPERUSDT', 'DONG': 'COPPERUSDT',
+        'PEPE': '1000PEPEUSDT', '1000PEPE': '1000PEPEUSDT',
+        'BTC': 'BTCUSDT', 'ETH': 'ETHUSDT', 'SOL': 'SOLUSDT', 'BNB': 'BNBUSDT', 'XRP': 'XRPUSDT',
+        'NVDA': 'NVDAUSDT', 'TSLA': 'TSLAUSDT', 'MSTR': 'MSTRUSDT', 'PLTR': 'PLTRUSDT',
+        'SOXL': 'SOXLUSDT', 'TQQQ': 'TQQQUSDT', 'SPY': 'SPYUSDT', 'QQQ': 'QQQUSDT'
+      };
+      if (aliasMap[clean]) clean = aliasMap[clean];
+      if (!clean.endsWith('USDT') && !clean.endsWith('BUSD') && !clean.endsWith('USDC')) {
+        clean = clean + 'USDT';
+      }
+      switchToPortfolioSymbol(clean);
+    };
+
+    searchInput.addEventListener("change", (e) => handleSearchInput(e.target.value));
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleSearchInput(e.target.value);
+      }
+    });
+  }
+
+  // 5. Lắng nghe Tabs Phân Loại Danh Mục Tài Sản (All, Commodity, TradFi, Major, Altcoin)
+  tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach(b => {
+        b.classList.remove("active", "bg-amber-500/20", "text-amber-300", "border-amber-500/40", "font-bold");
+        b.classList.add("text-gray-400", "bg-black/40", "border-white/10");
+      });
+      btn.classList.add("active", "bg-amber-500/20", "text-amber-300", "border-amber-500/40", "font-bold");
+      btn.classList.remove("text-gray-400", "bg-black/40", "border-white/10");
+
+      currentPortfolioCategory = btn.getAttribute("data-cat") || 'all';
+      renderPortfolioLeaderboard(lastKnownRadarCandidates, currentPortfolioCapital, currentPortfolioCategory);
+    });
+  });
+
+  // 6. Lắng nghe thêm vị thế đang hold
   if (addForm) {
     addForm.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -3510,7 +3639,8 @@ function initPortfolioNavigator() {
     });
   }
 
-  // 5. Nạp biểu đồ ban đầu & dữ liệu
+  // 7. Nạp biểu đồ ban đầu & dữ liệu
+  refreshAllPrices();
   updateCapitalAllocation(1000);
   renderUserHoldings();
   setTimeout(() => {
@@ -3541,117 +3671,339 @@ function updateCapitalAllocation(capital) {
   if (stressBtc) stressBtc.textContent = `-$${Math.abs(lossBtc).toFixed(2)} (-${((Math.abs(lossBtc)/currentPortfolioCapital)*100).toFixed(2)}%)`;
   if (stressBlackSwan) stressBlackSwan.textContent = `-$${Math.abs(lossBlackSwan).toFixed(2)} (-${((Math.abs(lossBlackSwan)/currentPortfolioCapital)*100).toFixed(2)}%)`;
 
-  renderPortfolioLeaderboard(lastKnownRadarCandidates, currentPortfolioCapital);
+  renderPortfolioLeaderboard(lastKnownRadarCandidates, currentPortfolioCapital, currentPortfolioCategory);
 }
 
 // Bảng xếp hạng đồng đề xuất & Lộ trình điều hướng chi tiết
-async function renderPortfolioLeaderboard(rawCandidates, capital) {
+async function renderPortfolioLeaderboard(rawCandidates, capital, category = 'all') {
   const container = document.getElementById("portfolioLeaderboardContainer");
   if (!container) return;
 
-  // Fallback các đồng mạnh mẽ nếu bot chưa đẩy dữ liệu lên
-  const defaultItems = [
+  await refreshAllPrices();
+
+  // Tự động đồng bộ các mã Ra-đa tươi vào <optgroup id="chartOptgroupRadar">
+  const radarOptgroup = document.getElementById("chartOptgroupRadar");
+  if (radarOptgroup && Array.isArray(rawCandidates) && rawCandidates.length > 0) {
+    radarOptgroup.innerHTML = "";
+    rawCandidates.slice(0, 10).forEach(c => {
+      const s = String(c.symbol || '').replace('/', '').replace(':', '').toUpperCase();
+      if (s) {
+        const opt = document.createElement("option");
+        opt.value = s;
+        opt.textContent = `${s} (Ra-đa ${c.side || 'LONG'})`;
+        radarOptgroup.appendChild(opt);
+      }
+    });
+  }
+
+  // Danh mục toàn diện các cơ hội đầu tư chuẩn quỹ (Kim loại quý, TradFi, Major, Altcoin)
+  const assetCatalog = [
+    // 🥇 KIM LOẠI QUÝ & HÀNG HÓA
     {
-      symbol: "SOL/USDT",
+      symbol: "XAU/USDT",
+      cleanSym: "XAUUSDT",
+      category: "commodity",
+      tag: "🥇 Kim Loại Quý",
       side: "LONG",
-      score: 94.5,
-      confidence: 0.88,
+      score: 93.5,
+      confidence: 0.90,
       status: "READY",
-      intent: "🚀 BÃO TĂNG CÁ MẬP BƠM (Whale Pump Storm)",
-      intentColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-      price: 185.50,
-      leverage: "5x",
-      allocPct: 0.35,
-      mtf: "4H Uptrend • RVol 2.1x • Nến xanh đặc bùng nổ",
-      slPct: -0.015,
-      tp1Pct: 0.024,
+      intent: "🛡️ HẤP THỤ PHÒNG HỘ VÀNG THẾ GIỚI (Gold Perps)",
+      intentColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
+      defaultPrice: 3840.0,
+      leverage: "2x (Hàng hóa Chuẩn Quỹ)",
+      allocPct: 0.25,
+      mtf: "Dòng tiền trú ẩn vĩ mô toàn cầu • Giao dịch 24/5 liên tục • Tránh sốc tiền tệ & lạm phát",
+      slPct: 0.015,
+      tp1Pct: 0.025,
       tp2Pct: 0.050,
-      trailingFloorPct: -0.007
+      trailingFloorPct: 0.008
     },
     {
-      symbol: "NVDA/USDT",
+      symbol: "XAG/USDT",
+      cleanSym: "XAGUSDT",
+      category: "commodity",
+      tag: "🥈 Kim Loại Bạc",
       side: "LONG",
       score: 89.0,
-      confidence: 0.82,
+      confidence: 0.85,
       status: "READY",
-      intent: "💎 CÁ MẬP GOM ĐÁY CHIẾT KHẤU SÂU (Selling Climax)",
+      intent: "⚡ SÓNG ĐẦU CƠ & BÁN DẪN BẠC (Silver Bull)",
       intentColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30",
-      price: 142.20,
-      leverage: "3x (TradFi Cổ Phiếu)",
-      allocPct: 0.25,
-      mtf: "1H Rút chân 42% • RSI 32 nảy lên từ quá bán",
-      slPct: -0.024,
-      tp1Pct: 0.038,
-      tp2Pct: 0.075,
-      trailingFloorPct: -0.010
+      defaultPrice: 47.5,
+      leverage: "2x (Hàng hóa)",
+      allocPct: 0.20,
+      mtf: "Nhu cầu pin năng lượng & chip bán dẫn tăng tốc • Biên độ mở rộng nhanh",
+      slPct: 0.020,
+      tp1Pct: 0.035,
+      tp2Pct: 0.070,
+      trailingFloorPct: 0.010
     },
     {
-      symbol: "BTC/USDT",
+      symbol: "CL/USDT",
+      cleanSym: "CLUSDT",
+      category: "commodity",
+      tag: "🛢️ Năng Lượng",
       side: "LONG",
-      score: 85.0,
-      confidence: 0.78,
-      status: "WAITING_RESOURCE",
-      intent: "🛡️ TÍCH LŨY TRÊN HỖ TRỢ VĨ MÔ 4H (JEV Trend Shield)",
-      intentColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-      price: 64800.0,
-      leverage: "7x (Major Crypto)",
-      allocPct: 0.0,
-      mtf: "4H Giữ vững EMA50 • Chờ nến bão xác nhận",
-      slPct: -0.012,
-      tp1Pct: 0.020,
-      tp2Pct: 0.045,
-      trailingFloorPct: -0.006
+      score: 85.5,
+      confidence: 0.82,
+      status: "READY",
+      intent: "🌊 BIẾN ĐỘNG NĂNG LƯỢNG TOÀN CẦU (Crude Oil)",
+      intentColor: "text-rose-400 bg-rose-500/10 border-rose-500/30",
+      defaultPrice: 87.7,
+      leverage: "2x (Hàng hóa)",
+      allocPct: 0.15,
+      mtf: "Căng thẳng địa chính trị & báo cáo tồn kho dầu thô EIA • Dao động mạnh",
+      slPct: 0.020,
+      tp1Pct: 0.030,
+      tp2Pct: 0.060,
+      trailingFloorPct: 0.010
     },
     {
       symbol: "PAXG/USDT",
+      cleanSym: "PAXGUSDT",
+      category: "commodity",
+      tag: "✨ Vàng Spot",
       side: "LONG",
-      score: 82.5,
-      confidence: 0.75,
-      status: "WAITING_RESOURCE",
-      intent: "💎 HẤP THỤ PHÒNG HỘ VÀNG THẾ GIỚI (Gold Perps)",
+      score: 88.0,
+      confidence: 0.84,
+      status: "READY",
+      intent: "💎 BẢO TOÀN VỐN VÀNG THỰC 1:1 (PAX Gold)",
       intentColor: "text-yellow-400 bg-yellow-500/10 border-yellow-500/30",
-      price: 3825.0,
-      leverage: "2x (Kim Loại Quý)",
-      allocPct: 0.0,
-      mtf: "1D Xu hướng tăng bền vững • Dòng tiền trú ẩn",
-      slPct: -0.015,
+      defaultPrice: 3825.0,
+      leverage: "2x (An toàn)",
+      allocPct: 0.20,
+      mtf: "Bảo chứng bằng vàng vật chất tại London • Giữ nguyên sức mua qua thời gian",
+      slPct: 0.012,
+      tp1Pct: 0.022,
+      tp2Pct: 0.045,
+      trailingFloorPct: 0.006
+    },
+
+    // 🏛️ CỔ PHIẾU MỸ & TRADFI
+    {
+      symbol: "NVDA/USDT",
+      cleanSym: "NVDAUSDT",
+      category: "tradfi",
+      tag: "🏛️ Cổ Phiếu AI",
+      side: "LONG",
+      score: 92.0,
+      confidence: 0.88,
+      status: "READY",
+      intent: "🚀 TRÙM BÁN DẪN & GPU TRUNG TÂM DỮ LIỆU AI",
+      intentColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
+      defaultPrice: 161.4,
+      leverage: "3x (TradFi Cổ Phiếu)",
+      allocPct: 0.25,
+      mtf: "Dẫn dắt toàn bộ chỉ số công nghệ Mỹ • Dòng tiền quỹ phố Wall liên tục tích lũy",
+      slPct: 0.020,
+      tp1Pct: 0.035,
+      tp2Pct: 0.070,
+      trailingFloorPct: 0.010
+    },
+    {
+      symbol: "TSLA/USDT",
+      cleanSym: "TSLAUSDT",
+      category: "tradfi",
+      tag: "⚡ Xe Điện & Robot",
+      side: "LONG",
+      score: 87.0,
+      confidence: 0.82,
+      status: "READY",
+      intent: "⚡ ĐỘT PHÁ TỰ HÀNH FSD & ROBOT OPTIMUS",
+      intentColor: "text-rose-400 bg-rose-500/10 border-rose-500/30",
+      defaultPrice: 386.7,
+      leverage: "3x (TradFi)",
+      allocPct: 0.20,
+      mtf: "Rung lắc mạnh mở phiên New York • Tận dụng nhịp chiết khấu sâu để gom",
+      slPct: 0.025,
+      tp1Pct: 0.045,
+      tp2Pct: 0.090,
+      trailingFloorPct: 0.012
+    },
+    {
+      symbol: "MSTR/USDT",
+      cleanSym: "MSTRUSDT",
+      category: "tradfi",
+      tag: "💎 Bitcoin Proxy",
+      side: "LONG",
+      score: 89.5,
+      confidence: 0.86,
+      status: "READY",
+      intent: "🔥 KHUẾCH ĐẠI TỶ SUẤT KHO DỰ TRỮ BITCOIN",
+      intentColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
+      defaultPrice: 100.1,
+      leverage: "2x (TradFi)",
+      allocPct: 0.20,
+      mtf: "Tương quan 94% với Bitcoin • Đòn bẩy vốn doanh nghiệp dự trữ BTC hàng đầu",
+      slPct: 0.025,
+      tp1Pct: 0.050,
+      tp2Pct: 0.100,
+      trailingFloorPct: 0.015
+    },
+    {
+      symbol: "SOXL/USDT",
+      cleanSym: "SOXLUSDT",
+      category: "tradfi",
+      tag: "📈 ETF Bán Dẫn 3x",
+      side: "LONG",
+      score: 86.0,
+      confidence: 0.83,
+      status: "READY",
+      intent: "🌊 SIÊU SÓNG NGÀNH CHIP & BÁN DẪN TOÀN CẦU",
+      intentColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30",
+      defaultPrice: 42.0,
+      leverage: "2x (TradFi ETF)",
+      allocPct: 0.15,
+      mtf: "Đòn bẩy 3x ngành bán dẫn • Khung cắt lỗ thích ứng ATR [1.8% - 3.5%]",
+      slPct: 0.025,
+      tp1Pct: 0.045,
+      tp2Pct: 0.090,
+      trailingFloorPct: 0.012
+    },
+
+    // 👑 CRYPTO MAJOR
+    {
+      symbol: "BTC/USDT",
+      cleanSym: "BTCUSDT",
+      category: "major",
+      tag: "👑 Vua Tiền Số",
+      side: "LONG",
+      score: 94.0,
+      confidence: 0.91,
+      status: "READY",
+      intent: "🛡️ TÍCH LŨY TRÊN HỖ TRỢ VĨ MÔ 4H (JEV Trend Shield)",
+      intentColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
+      defaultPrice: 64800.0,
+      leverage: "7x (Major Crypto)",
+      allocPct: 0.35,
+      mtf: "Giữ vững EMA50 4H • Thanh khoản vĩ mô ổn định, không chịu rủi ro sập sàn",
+      slPct: 0.012,
+      tp1Pct: 0.020,
+      tp2Pct: 0.045,
+      trailingFloorPct: 0.006
+    },
+    {
+      symbol: "ETH/USDT",
+      cleanSym: "ETHUSDT",
+      category: "major",
+      tag: "⚡ Nền Tảng HĐTM",
+      side: "LONG",
+      score: 88.0,
+      confidence: 0.84,
+      status: "READY",
+      intent: "🚀 DÒNG TIỀN PHỤC HỒI HỆ SINH THÁI LAYER 2",
+      intentColor: "text-indigo-400 bg-indigo-500/10 border-indigo-500/30",
+      defaultPrice: 1818.0,
+      leverage: "6x (Major Crypto)",
+      allocPct: 0.20,
+      mtf: "Tương quan chặt chẽ với BTC • Dòng tiền staking & phí gas lành mạnh",
+      slPct: 0.015,
       tp1Pct: 0.025,
+      tp2Pct: 0.055,
+      trailingFloorPct: 0.008
+    },
+    {
+      symbol: "SOL/USDT",
+      cleanSym: "SOLUSDT",
+      category: "major",
+      tag: "🚀 Siêu Tốc Layer 1",
+      side: "LONG",
+      score: 91.5,
+      confidence: 0.89,
+      status: "READY",
+      intent: "🔥 BÃO TĂNG DÒNG TIỀN CÁ MẬP (Whale Momentum)",
+      intentColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
+      defaultPrice: 71.3,
+      leverage: "5x (Major)",
+      allocPct: 0.25,
+      mtf: "Khối lượng giao dịch DEX vượt trội • Dòng tiền mua chủ động lớn",
+      slPct: 0.015,
+      tp1Pct: 0.024,
       tp2Pct: 0.050,
-      trailingFloorPct: -0.008
+      trailingFloorPct: 0.007
+    },
+
+    // 🚀 TOP ALTCOIN TOOL QUÉT
+    {
+      symbol: "1000PEPE/USDT",
+      cleanSym: "1000PEPEUSDT",
+      category: "altcoin",
+      tag: "🐸 Top Meme Coin",
+      side: "SHORT",
+      score: 85.0,
+      confidence: 0.82,
+      status: "READY",
+      intent: "⚡ BẮT ĐỈNH KIỆT SỨC XẢ HÀNG (Fading Short)",
+      intentColor: "text-rose-400 bg-rose-500/10 border-rose-500/30",
+      defaultPrice: 0.00395,
+      leverage: "3x (Altcoin)",
+      allocPct: 0.15,
+      mtf: "RVol suy kiệt tại kháng cự • Nến râu xả đỉnh 42% trên M15",
+      slPct: 0.020,
+      tp1Pct: 0.035,
+      tp2Pct: 0.070,
+      trailingFloorPct: 0.010
+    },
+    {
+      symbol: "SUI/USDT",
+      cleanSym: "SUIUSDT",
+      category: "altcoin",
+      tag: "🌊 High Vol Altcoin",
+      side: "SHORT",
+      score: 84.0,
+      confidence: 0.80,
+      status: "READY",
+      intent: "⚡ PHÂN KỲ GIẢM KHUNG 15M (Early Exhaustion)",
+      intentColor: "text-rose-400 bg-rose-500/10 border-rose-500/30",
+      defaultPrice: 0.72,
+      leverage: "4x (Altcoin)",
+      allocPct: 0.15,
+      mtf: "Lực mua chậm dần trước cản cứng EMA200 • Chờ xác nhận thủng đáy",
+      slPct: 0.018,
+      tp1Pct: 0.032,
+      tp2Pct: 0.065,
+      trailingFloorPct: 0.009
+    },
+    {
+      symbol: "PUMP/USDT",
+      cleanSym: "PUMPUSDT",
+      category: "altcoin",
+      tag: "🔥 Cá Mập Săn Đáy",
+      side: "LONG",
+      score: 86.5,
+      confidence: 0.83,
+      status: "READY",
+      intent: "💎 CÁ MẬP GOM ĐÁY CHIẾT KHẤU SÂU (Selling Climax)",
+      intentColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30",
+      defaultPrice: 0.00297,
+      leverage: "3x (Altcoin)",
+      allocPct: 0.15,
+      mtf: "Khối lượng nến đảo chiều rút chân 45% • RSI quá bán nảy lên mạnh",
+      slPct: 0.022,
+      tp1Pct: 0.040,
+      tp2Pct: 0.080,
+      trailingFloorPct: 0.011
     }
   ];
 
-  let items = defaultItems;
+  // Parse và tích hợp các ứng viên thực tế từ PC2 Radar
+  const liveRadarItems = [];
   if (Array.isArray(rawCandidates) && rawCandidates.length > 0) {
-    const mapped = [];
-    for (let idx = 0; idx < Math.min(rawCandidates.length, 4); idx++) {
-      const c = rawCandidates[idx];
+    rawCandidates.forEach((c, idx) => {
       const sym = String(c.symbol || "").toUpperCase();
       const cleanSym = sym.replace('/', '').replace(':', '');
       const side = String(c.side || 'LONG').toUpperCase().includes('SHORT') || String(c.side || '').toUpperCase().includes('SELL') ? 'SHORT' : 'LONG';
       const score = Number(c.score || c.priority_score || 80.0);
       const conf = Number(c.confidence || c.confidence_pct ? (c.confidence_pct > 1 ? c.confidence_pct/100 : c.confidence_pct) : 0.80);
-      
-      // Đọc giá thực tế hoặc lấy từ cache / fallback
-      let price = Number(c.price || priceCache[cleanSym] || 0.0);
-      if (price <= 0) {
-        try {
-          const pRes = await fetch(`https://fapi.binance.com/fapi/v1/ticker/price?symbol=${cleanSym}`);
-          if (pRes.ok) {
-            const pJson = await pRes.json();
-            price = parseFloat(pJson.price) || 1.0;
-            priceCache[cleanSym] = price;
-          }
-        } catch (e) {
-          price = 1.0;
-        }
-      }
+      const price = Number(c.price || priceCache[cleanSym] || 0.0);
 
-      const isTradfi = sym.includes("NVDA") || sym.includes("TSLA") || sym.includes("SOXL");
-      const isMajor = sym.includes("BTC") || sym.includes("ETH");
-      const lev = isTradfi ? "3x (TradFi)" : (isMajor ? "7x" : "5x");
+      const isTradfi = sym.includes("NVDA") || sym.includes("TSLA") || sym.includes("SOXL") || sym.includes("MSTR") || sym.includes("PLTR");
+      const isCommodity = sym.includes("XAU") || sym.includes("XAG") || sym.includes("CL") || sym.includes("PAXG");
+      const isMajor = sym.includes("BTC") || sym.includes("ETH") || sym.includes("SOL");
+      const itemCat = isCommodity ? "commodity" : (isTradfi ? "tradfi" : (isMajor ? "major" : "altcoin"));
+      const lev = isCommodity ? "2x" : (isTradfi ? "3x (TradFi)" : (isMajor ? "7x" : "5x"));
 
-      // [TRIỆT TIÊU ĐÁ NHAU GIỮA CÁC TẦNG]: Nhận diện chính xác trạng thái VETO vs STALKING vs WAITING
       const gate = String(c.bottleneck_gate || '').toUpperCase();
       const readiness = Number(c.readiness_pct || 0);
       const isBlocked = gate.includes('VETO') || gate === 'SIGNAL_AGGREGATOR_VETO' || gate === 'AI_BIAS_VETO' || gate === 'PRE_LLM_STRUCTURAL_VETO' || gate === 'JEV_UNAVAILABLE' || c.radar_status === 'BLOCKED' || readiness <= 50.0;
@@ -3677,7 +4029,7 @@ async function renderPortfolioLeaderboard(rawCandidates, capital) {
         status = "BLOCKED";
         intent = "🛑 CẢNH BÁO: BỊ VETO CHẶN (ĐỨNG NGOÀI TUYỆT ĐỐI)";
         intentColor = "text-rose-400 bg-rose-500/10 border-rose-500/30";
-        allocPct = 0.0; // TUYỆT ĐỐI CẤP 0$ KHI BỊ CHẶN!
+        allocPct = 0.0;
       } else {
         status = "READY";
         intent = side === 'SHORT' ? "⚡ BẮT ĐỈNH KIỆT SỨC XẢ HÀNG (SHORT)" : "🚀 LƯỚT SÓNG DÒNG TIỀN CÁ MẬP (BUY)";
@@ -3685,15 +4037,18 @@ async function renderPortfolioLeaderboard(rawCandidates, capital) {
         allocPct = idx === 0 ? 0.35 : (idx === 1 ? 0.25 : 0.0);
       }
 
-      mapped.push({
+      liveRadarItems.push({
         symbol: sym,
+        cleanSym: cleanSym,
+        category: itemCat,
+        tag: `🎯 Ra-đa PC2 (#${idx+1})`,
         side: side,
-        score: score,
+        score: Math.abs(score) > 1 ? Math.min(99.0, Math.abs(score)) : Math.min(99.0, Math.abs(score) * 100),
         confidence: conf,
         status: status,
         intent: intent,
         intentColor: intentColor,
-        price: price,
+        defaultPrice: price || 1.0,
         leverage: lev,
         allocPct: allocPct,
         mtf: c.bottleneck_reason || c.reason || "Đa khung thời gian đồng thuận",
@@ -3702,66 +4057,95 @@ async function renderPortfolioLeaderboard(rawCandidates, capital) {
         tp2Pct: 0.050,
         trailingFloorPct: 0.007
       });
-    }
-    if (mapped.length > 0) items = mapped;
+    });
+  }
+
+  // Kết hợp và lọc theo Category được chọn
+  let displayItems = [];
+  if (category === 'commodity') {
+    displayItems = assetCatalog.filter(i => i.category === 'commodity');
+  } else if (category === 'tradfi') {
+    displayItems = assetCatalog.filter(i => i.category === 'tradfi');
+  } else if (category === 'major') {
+    displayItems = assetCatalog.filter(i => i.category === 'major');
+  } else if (category === 'altcoin') {
+    displayItems = [
+      ...liveRadarItems.filter(i => i.category === 'altcoin'),
+      ...assetCatalog.filter(i => i.category === 'altcoin')
+    ];
+  } else {
+    // Tab "all" (Tất Cả / Ra-đa PC2):
+    // Ưu tiên các mã Ra-đa PC2 lên đầu, sau đó bổ sung Vàng XAU, Bạc XAG, Nvidia NVDA, Bitcoin BTC, Solana SOL!
+    const seen = new Set();
+    liveRadarItems.forEach(item => {
+      displayItems.push(item);
+      seen.add(item.cleanSym);
+    });
+    const pillars = ['XAUUSDT', 'XAGUSDT', 'NVDAUSDT', 'TSLAUSDT', 'BTCUSDT', 'SOLUSDT'];
+    assetCatalog.forEach(item => {
+      if (pillars.includes(item.cleanSym) && !seen.has(item.cleanSym)) {
+        displayItems.push(item);
+        seen.add(item.cleanSym);
+      }
+    });
   }
 
   let html = "";
-  items.forEach((item, idx) => {
+  displayItems.forEach((item, idx) => {
     const isTop1 = idx === 0;
     const isTop2 = idx === 1;
     const allocatedMoney = capital * item.allocPct;
     const isShort = item.side === 'SHORT';
 
+    const liveP = Number(priceCache[item.cleanSym] || item.defaultPrice || 1.0);
+
     // Tính toán theo đúng chiều lệnh (LONG vs SHORT)
     let entryLow, entryHigh, slPrice, tp1Price, tp2Price, trailingPrice;
     if (isShort) {
-      entryLow = item.price * 0.998;
-      entryHigh = item.price * 1.003;
-      slPrice = item.price * (1 + item.slPct); // Giá vượt đỉnh là cắt lỗ
-      tp1Price = item.price * (1 - item.tp1Pct); // Giá tụt xuống là chốt lời
-      tp2Price = item.price * (1 - item.tp2Pct);
-      trailingPrice = item.price * (1 + item.trailingFloorPct);
+      entryLow = liveP * 0.998;
+      entryHigh = liveP * 1.003;
+      slPrice = liveP * (1 + item.slPct); // Giá vượt đỉnh là cắt lỗ
+      tp1Price = liveP * (1 - item.tp1Pct); // Giá tụt xuống là chốt lời
+      tp2Price = liveP * (1 - item.tp2Pct);
+      trailingPrice = liveP * (1 + item.trailingFloorPct);
     } else {
-      entryLow = item.price * 0.997;
-      entryHigh = item.price * 1.002;
-      slPrice = item.price * (1 - item.slPct); // Giá thủng đáy là cắt lỗ
-      tp1Price = item.price * (1 + item.tp1Pct); // Giá tăng là chốt lời
-      tp2Price = item.price * (1 + item.tp2Pct);
-      trailingPrice = item.price * (1 - item.trailingFloorPct);
+      entryLow = liveP * 0.997;
+      entryHigh = liveP * 1.002;
+      slPrice = liveP * (1 - item.slPct); // Giá thủng đáy là cắt lỗ
+      tp1Price = liveP * (1 + item.tp1Pct); // Giá tăng là chốt lời
+      tp2Price = liveP * (1 + item.tp2Pct);
+      trailingPrice = liveP * (1 - item.trailingFloorPct);
     }
 
-    const maxLossDollar = allocatedMoney * Math.abs(item.slPct);
-    const expProfitDollar = allocatedMoney * item.tp1Pct;
+    const maxLossDollar = allocatedMoney > 0 ? allocatedMoney * Math.abs(item.slPct) : 0;
+    const expProfitDollar = allocatedMoney > 0 ? allocatedMoney * item.tp1Pct : 0;
 
     let rankBadge = "";
     if (item.status === "BLOCKED") {
       rankBadge = `<span class="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold text-[11px] uppercase tracking-wider">🛑 Bị Veto Chặn • Không Mở Lệnh</span>`;
-    } else if (isTop1) {
+    } else if (isTop1 && category === 'all') {
       rankBadge = `<span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-black font-extrabold text-[11px] uppercase tracking-wider">🥇 Hạng 1 • Top Pick (${item.side})</span>`;
-    } else if (isTop2) {
+    } else if (isTop2 && category === 'all') {
       rankBadge = `<span class="px-2.5 py-0.5 rounded-full bg-gray-200 text-black font-extrabold text-[11px] uppercase tracking-wider">🥈 Hạng 2 • Lựa Chọn 2 (${item.side})</span>`;
     } else {
-      rankBadge = `<span class="px-2.5 py-0.5 rounded-full bg-white/10 text-gray-300 font-bold text-[11px]">#${idx+1} • Theo Dõi Thêm</span>`;
+      rankBadge = `<span class="px-2.5 py-0.5 rounded-full bg-white/10 text-emerald-300 border border-white/10 font-bold text-[11px]">${item.tag || `#${idx+1}`}</span>`;
     }
-
-    const cleanSym = item.symbol.replace('/', '').replace(':', '');
 
     html += `
       <div class="kenzo-card p-5 border-white/10 hover:border-emerald-500/40 transition space-y-4 relative overflow-hidden group">
         <div class="flex items-start justify-between gap-3 relative z-10">
           <div>
-            <div class="flex items-center gap-2 mb-1.5">
+            <div class="flex items-center gap-2 mb-1.5 flex-wrap">
               ${rankBadge}
               <span class="text-xs font-mono font-bold text-gray-400">Điểm: <span class="text-amber-400 font-extrabold">${item.score.toFixed(1)}/100</span></span>
             </div>
             <h4 class="text-xl font-black text-white font-mono tracking-tight flex items-center gap-2">
               <span>${item.symbol}</span>
               <span class="text-xs font-mono font-bold ${item.side === 'SHORT' ? 'text-rose-400' : 'text-emerald-400'}">(${item.side})</span>
-              <span class="text-xs text-gray-400 font-normal">($${formatSmartPrice(item.price)})</span>
+              <span class="text-xs text-gray-400 font-normal">($${formatSmartPrice(liveP)})</span>
             </h4>
           </div>
-          <button type="button" class="btn-inspect-chart px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5" data-sym="${cleanSym}">
+          <button type="button" class="btn-inspect-chart px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5 shrink-0" data-sym="${item.cleanSym}">
             <i data-lucide="line-chart" class="w-3.5 h-3.5"></i>
             <span>Soi Biểu Đồ</span>
           </button>
@@ -3799,11 +4183,11 @@ async function renderPortfolioLeaderboard(rawCandidates, capital) {
               </div>
               <div>
                 <span class="text-gray-500 block">Cắt Lỗ Bắt Buộc (SL):</span>
-                <strong class="text-rose-400">${formatSmartPrice(slPrice)}$ (-$${maxLossDollar.toFixed(2)})</strong>
+                <strong class="text-rose-400">${formatSmartPrice(slPrice)}$ ${allocatedMoney > 0 ? `(-$${maxLossDollar.toFixed(2)})` : ''}</strong>
               </div>
               <div>
                 <span class="text-gray-500 block">Chốt Lời TP1:</span>
-                <strong class="text-amber-400">${formatSmartPrice(tp1Price)}$ (+$${expProfitDollar.toFixed(2)})</strong>
+                <strong class="text-amber-400">${formatSmartPrice(tp1Price)}$ ${allocatedMoney > 0 ? `(+$${expProfitDollar.toFixed(2)})` : ''}</strong>
               </div>
             </div>
             <div class="pt-1 flex items-center justify-between text-[11px] text-purple-300 bg-purple-950/20 px-2 py-1 rounded">
@@ -3823,9 +4207,7 @@ async function renderPortfolioLeaderboard(rawCandidates, capital) {
     btn.addEventListener("click", () => {
       const sym = btn.getAttribute("data-sym");
       if (sym) {
-        currentPortfolioSymbol = sym;
-        loadPortfolioChart(currentPortfolioSymbol, currentPortfolioTf);
-        document.getElementById("portfolioChartContainer")?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        window.switchToPortfolioSymbol(sym);
       }
     });
   });

@@ -3443,11 +3443,31 @@ function attachRadar3DInteraction() {
 let currentPortfolioCapital = 1000;
 let currentPortfolioSymbol = 'SOLUSDT';
 let currentPortfolioTf = '15m';
+let currentPortfolioCategory = 'all';
 let portfolioChart = null;
 let portfolioCandleSeries = null;
 let portfolioPriceLines = [];
 let lastKnownRadarCandidates = [];
 const priceCache = {};
+let allPricesFetchedTs = 0;
+
+// Nạp toàn bộ giá thời gian thực từ Binance Futures (500+ cặp chỉ trong 1 request <100ms)
+async function refreshAllPrices() {
+  const now = Date.now();
+  if (now - allPricesFetchedTs < 12000 && Object.keys(priceCache).length > 20) return;
+  try {
+    const res = await fetch("https://fapi.binance.com/fapi/v1/ticker/price");
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        data.forEach(item => {
+          priceCache[item.symbol] = parseFloat(item.price);
+        });
+        allPricesFetchedTs = now;
+      }
+    }
+  } catch (e) {}
+}
 
 // Hàm định dạng giá thông minh chống bẹp về 0.00$ cho Altcoin nhỏ
 function formatSmartPrice(val) {
@@ -3468,12 +3488,45 @@ function getSmartPriceFormat(price) {
   return { type: 'price', precision: 8, minMove: 0.00000001 };
 }
 
+// Chuyển nhanh biểu đồ sang bất kỳ mã nào & cuộn mượt
+window.switchToPortfolioSymbol = function(symbol) {
+  const clean = String(symbol || "BTCUSDT").toUpperCase().trim().replace('/', '').replace(':', '');
+  currentPortfolioSymbol = clean;
+  const symSelect = document.getElementById("portfolioChartSymbolSelect");
+  const searchInput = document.getElementById("portfolioChartSearchInput");
+  if (searchInput) searchInput.value = clean;
+  if (symSelect) {
+    let exists = false;
+    for (let i = 0; i < symSelect.options.length; i++) {
+      if (symSelect.options[i].value === clean) {
+        exists = true;
+        symSelect.selectedIndex = i;
+        break;
+      }
+    }
+    if (!exists) {
+      const opt = document.createElement("option");
+      opt.value = clean;
+      opt.textContent = `${clean} (Đang xem)`;
+      symSelect.appendChild(opt);
+      symSelect.value = clean;
+    }
+  }
+  loadPortfolioChart(clean, currentPortfolioTf);
+  const chartSec = document.getElementById("portfolioChartContainer");
+  if (chartSec) {
+    chartSec.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+};
+
 // Khởi tạo Module Quản Lý Đầu Tư Chuẩn Quỹ
 function initPortfolioNavigator() {
   const capInput = document.getElementById("portfolioCapitalInput");
   const quickBtns = document.querySelectorAll(".btn-quick-cap");
   const tfBtns = document.querySelectorAll(".btn-chart-tf");
   const symSelect = document.getElementById("portfolioChartSymbolSelect");
+  const searchInput = document.getElementById("portfolioChartSearchInput");
+  const tabBtns = document.querySelectorAll(".btn-portfolio-tab");
   const addForm = document.getElementById("addHoldingForm");
 
   // 1. Lắng nghe thay đổi vốn
@@ -3515,15 +3568,63 @@ function initPortfolioNavigator() {
     });
   });
 
-  // 3. Lắng nghe chọn symbol biểu đồ
+  // 3. Lắng nghe chọn symbol từ Dropdown
   if (symSelect) {
     symSelect.addEventListener("change", (e) => {
       currentPortfolioSymbol = e.target.value;
+      if (searchInput) searchInput.value = currentPortfolioSymbol;
       loadPortfolioChart(currentPortfolioSymbol, currentPortfolioTf);
     });
   }
 
-  // 4. Lắng nghe thêm vị thế đang hold
+  // 4. Lắng nghe tìm kiếm / gõ mã từ Search Input (Hỗ trợ XAU, XAG, CL, Vàng, Bạc, Dầu, NVDA, BTC...)
+  if (searchInput) {
+    const handleSearchInput = (val) => {
+      if (!val) return;
+      let clean = String(val).toUpperCase().trim().replace('/', '').replace(':', '');
+      const aliasMap = {
+        'XAU': 'XAUUSDT', 'GOLD': 'XAUUSDT', 'VANG': 'XAUUSDT',
+        'XAG': 'XAGUSDT', 'SILVER': 'XAGUSDT', 'BAC': 'XAGUSDT',
+        'CL': 'CLUSDT', 'OIL': 'CLUSDT', 'CRUDE': 'CLUSDT', 'DAU': 'CLUSDT',
+        'BZ': 'BZUSDT', 'BRENT': 'BZUSDT',
+        'PAXG': 'PAXGUSDT', 'COPPER': 'COPPERUSDT', 'DONG': 'COPPERUSDT',
+        'PEPE': '1000PEPEUSDT', '1000PEPE': '1000PEPEUSDT',
+        'BTC': 'BTCUSDT', 'ETH': 'ETHUSDT', 'SOL': 'SOLUSDT', 'BNB': 'BNBUSDT', 'XRP': 'XRPUSDT',
+        'NVDA': 'NVDAUSDT', 'TSLA': 'TSLAUSDT', 'MSTR': 'MSTRUSDT', 'PLTR': 'PLTRUSDT',
+        'SOXL': 'SOXLUSDT', 'TQQQ': 'TQQQUSDT', 'SPY': 'SPYUSDT', 'QQQ': 'QQQUSDT'
+      };
+      if (aliasMap[clean]) clean = aliasMap[clean];
+      if (!clean.endsWith('USDT') && !clean.endsWith('BUSD') && !clean.endsWith('USDC')) {
+        clean = clean + 'USDT';
+      }
+      switchToPortfolioSymbol(clean);
+    };
+
+    searchInput.addEventListener("change", (e) => handleSearchInput(e.target.value));
+    searchInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleSearchInput(e.target.value);
+      }
+    });
+  }
+
+  // 5. Lắng nghe Tabs Phân Loại Danh Mục Tài Sản (All, Commodity, TradFi, Major, Altcoin)
+  tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      tabBtns.forEach(b => {
+        b.classList.remove("active", "bg-amber-500/20", "text-amber-300", "border-amber-500/40", "font-bold");
+        b.classList.add("text-gray-400", "bg-black/40", "border-white/10");
+      });
+      btn.classList.add("active", "bg-amber-500/20", "text-amber-300", "border-amber-500/40", "font-bold");
+      btn.classList.remove("text-gray-400", "bg-black/40", "border-white/10");
+
+      currentPortfolioCategory = btn.getAttribute("data-cat") || 'all';
+      renderPortfolioLeaderboard(lastKnownRadarCandidates, currentPortfolioCapital, currentPortfolioCategory);
+    });
+  });
+
+  // 6. Lắng nghe thêm vị thế đang hold
   if (addForm) {
     addForm.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -3538,7 +3639,8 @@ function initPortfolioNavigator() {
     });
   }
 
-  // 5. Nạp biểu đồ ban đầu & dữ liệu
+  // 7. Nạp biểu đồ ban đầu & dữ liệu
+  refreshAllPrices();
   updateCapitalAllocation(1000);
   renderUserHoldings();
   setTimeout(() => {
@@ -3569,117 +3671,339 @@ function updateCapitalAllocation(capital) {
   if (stressBtc) stressBtc.textContent = `-$${Math.abs(lossBtc).toFixed(2)} (-${((Math.abs(lossBtc)/currentPortfolioCapital)*100).toFixed(2)}%)`;
   if (stressBlackSwan) stressBlackSwan.textContent = `-$${Math.abs(lossBlackSwan).toFixed(2)} (-${((Math.abs(lossBlackSwan)/currentPortfolioCapital)*100).toFixed(2)}%)`;
 
-  renderPortfolioLeaderboard(lastKnownRadarCandidates, currentPortfolioCapital);
+  renderPortfolioLeaderboard(lastKnownRadarCandidates, currentPortfolioCapital, currentPortfolioCategory);
 }
 
 // Bảng xếp hạng đồng đề xuất & Lộ trình điều hướng chi tiết
-async function renderPortfolioLeaderboard(rawCandidates, capital) {
+async function renderPortfolioLeaderboard(rawCandidates, capital, category = 'all') {
   const container = document.getElementById("portfolioLeaderboardContainer");
   if (!container) return;
 
-  // Fallback các đồng mạnh mẽ nếu bot chưa đẩy dữ liệu lên
-  const defaultItems = [
+  await refreshAllPrices();
+
+  // Tự động đồng bộ các mã Ra-đa tươi vào <optgroup id="chartOptgroupRadar">
+  const radarOptgroup = document.getElementById("chartOptgroupRadar");
+  if (radarOptgroup && Array.isArray(rawCandidates) && rawCandidates.length > 0) {
+    radarOptgroup.innerHTML = "";
+    rawCandidates.slice(0, 10).forEach(c => {
+      const s = String(c.symbol || '').replace('/', '').replace(':', '').toUpperCase();
+      if (s) {
+        const opt = document.createElement("option");
+        opt.value = s;
+        opt.textContent = `${s} (Ra-đa ${c.side || 'LONG'})`;
+        radarOptgroup.appendChild(opt);
+      }
+    });
+  }
+
+  // Danh mục toàn diện các cơ hội đầu tư chuẩn quỹ (Kim loại quý, TradFi, Major, Altcoin)
+  const assetCatalog = [
+    // 🥇 KIM LOẠI QUÝ & HÀNG HÓA
     {
-      symbol: "SOL/USDT",
+      symbol: "XAU/USDT",
+      cleanSym: "XAUUSDT",
+      category: "commodity",
+      tag: "🥇 Kim Loại Quý",
       side: "LONG",
-      score: 94.5,
-      confidence: 0.88,
+      score: 93.5,
+      confidence: 0.90,
       status: "READY",
-      intent: "🚀 BÃO TĂNG CÁ MẬP BƠM (Whale Pump Storm)",
-      intentColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
-      price: 185.50,
-      leverage: "5x",
-      allocPct: 0.35,
-      mtf: "4H Uptrend • RVol 2.1x • Nến xanh đặc bùng nổ",
-      slPct: -0.015,
-      tp1Pct: 0.024,
+      intent: "🛡️ HẤP THỤ PHÒNG HỘ VÀNG THẾ GIỚI (Gold Perps)",
+      intentColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
+      defaultPrice: 3840.0,
+      leverage: "2x (Hàng hóa Chuẩn Quỹ)",
+      allocPct: 0.25,
+      mtf: "Dòng tiền trú ẩn vĩ mô toàn cầu • Giao dịch 24/5 liên tục • Tránh sốc tiền tệ & lạm phát",
+      slPct: 0.015,
+      tp1Pct: 0.025,
       tp2Pct: 0.050,
-      trailingFloorPct: -0.007
+      trailingFloorPct: 0.008
     },
     {
-      symbol: "NVDA/USDT",
+      symbol: "XAG/USDT",
+      cleanSym: "XAGUSDT",
+      category: "commodity",
+      tag: "🥈 Kim Loại Bạc",
       side: "LONG",
       score: 89.0,
-      confidence: 0.82,
+      confidence: 0.85,
       status: "READY",
-      intent: "💎 CÁ MẬP GOM ĐÁY CHIẾT KHẤU SÂU (Selling Climax)",
+      intent: "⚡ SÓNG ĐẦU CƠ & BÁN DẪN BẠC (Silver Bull)",
       intentColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30",
-      price: 142.20,
-      leverage: "3x (TradFi Cổ Phiếu)",
-      allocPct: 0.25,
-      mtf: "1H Rút chân 42% • RSI 32 nảy lên từ quá bán",
-      slPct: -0.024,
-      tp1Pct: 0.038,
-      tp2Pct: 0.075,
-      trailingFloorPct: -0.010
+      defaultPrice: 47.5,
+      leverage: "2x (Hàng hóa)",
+      allocPct: 0.20,
+      mtf: "Nhu cầu pin năng lượng & chip bán dẫn tăng tốc • Biên độ mở rộng nhanh",
+      slPct: 0.020,
+      tp1Pct: 0.035,
+      tp2Pct: 0.070,
+      trailingFloorPct: 0.010
     },
     {
-      symbol: "BTC/USDT",
+      symbol: "CL/USDT",
+      cleanSym: "CLUSDT",
+      category: "commodity",
+      tag: "🛢️ Năng Lượng",
       side: "LONG",
-      score: 85.0,
-      confidence: 0.78,
-      status: "WAITING_RESOURCE",
-      intent: "🛡️ TÍCH LŨY TRÊN HỖ TRỢ VĨ MÔ 4H (JEV Trend Shield)",
-      intentColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
-      price: 64800.0,
-      leverage: "7x (Major Crypto)",
-      allocPct: 0.0,
-      mtf: "4H Giữ vững EMA50 • Chờ nến bão xác nhận",
-      slPct: -0.012,
-      tp1Pct: 0.020,
-      tp2Pct: 0.045,
-      trailingFloorPct: -0.006
+      score: 85.5,
+      confidence: 0.82,
+      status: "READY",
+      intent: "🌊 BIẾN ĐỘNG NĂNG LƯỢNG TOÀN CẦU (Crude Oil)",
+      intentColor: "text-rose-400 bg-rose-500/10 border-rose-500/30",
+      defaultPrice: 87.7,
+      leverage: "2x (Hàng hóa)",
+      allocPct: 0.15,
+      mtf: "Căng thẳng địa chính trị & báo cáo tồn kho dầu thô EIA • Dao động mạnh",
+      slPct: 0.020,
+      tp1Pct: 0.030,
+      tp2Pct: 0.060,
+      trailingFloorPct: 0.010
     },
     {
       symbol: "PAXG/USDT",
+      cleanSym: "PAXGUSDT",
+      category: "commodity",
+      tag: "✨ Vàng Spot",
       side: "LONG",
-      score: 82.5,
-      confidence: 0.75,
-      status: "WAITING_RESOURCE",
-      intent: "💎 HẤP THỤ PHÒNG HỘ VÀNG THẾ GIỚI (Gold Perps)",
+      score: 88.0,
+      confidence: 0.84,
+      status: "READY",
+      intent: "💎 BẢO TOÀN VỐN VÀNG THỰC 1:1 (PAX Gold)",
       intentColor: "text-yellow-400 bg-yellow-500/10 border-yellow-500/30",
-      price: 3825.0,
-      leverage: "2x (Kim Loại Quý)",
-      allocPct: 0.0,
-      mtf: "1D Xu hướng tăng bền vững • Dòng tiền trú ẩn",
-      slPct: -0.015,
+      defaultPrice: 3825.0,
+      leverage: "2x (An toàn)",
+      allocPct: 0.20,
+      mtf: "Bảo chứng bằng vàng vật chất tại London • Giữ nguyên sức mua qua thời gian",
+      slPct: 0.012,
+      tp1Pct: 0.022,
+      tp2Pct: 0.045,
+      trailingFloorPct: 0.006
+    },
+
+    // 🏛️ CỔ PHIẾU MỸ & TRADFI
+    {
+      symbol: "NVDA/USDT",
+      cleanSym: "NVDAUSDT",
+      category: "tradfi",
+      tag: "🏛️ Cổ Phiếu AI",
+      side: "LONG",
+      score: 92.0,
+      confidence: 0.88,
+      status: "READY",
+      intent: "🚀 TRÙM BÁN DẪN & GPU TRUNG TÂM DỮ LIỆU AI",
+      intentColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
+      defaultPrice: 161.4,
+      leverage: "3x (TradFi Cổ Phiếu)",
+      allocPct: 0.25,
+      mtf: "Dẫn dắt toàn bộ chỉ số công nghệ Mỹ • Dòng tiền quỹ phố Wall liên tục tích lũy",
+      slPct: 0.020,
+      tp1Pct: 0.035,
+      tp2Pct: 0.070,
+      trailingFloorPct: 0.010
+    },
+    {
+      symbol: "TSLA/USDT",
+      cleanSym: "TSLAUSDT",
+      category: "tradfi",
+      tag: "⚡ Xe Điện & Robot",
+      side: "LONG",
+      score: 87.0,
+      confidence: 0.82,
+      status: "READY",
+      intent: "⚡ ĐỘT PHÁ TỰ HÀNH FSD & ROBOT OPTIMUS",
+      intentColor: "text-rose-400 bg-rose-500/10 border-rose-500/30",
+      defaultPrice: 386.7,
+      leverage: "3x (TradFi)",
+      allocPct: 0.20,
+      mtf: "Rung lắc mạnh mở phiên New York • Tận dụng nhịp chiết khấu sâu để gom",
+      slPct: 0.025,
+      tp1Pct: 0.045,
+      tp2Pct: 0.090,
+      trailingFloorPct: 0.012
+    },
+    {
+      symbol: "MSTR/USDT",
+      cleanSym: "MSTRUSDT",
+      category: "tradfi",
+      tag: "💎 Bitcoin Proxy",
+      side: "LONG",
+      score: 89.5,
+      confidence: 0.86,
+      status: "READY",
+      intent: "🔥 KHUẾCH ĐẠI TỶ SUẤT KHO DỰ TRỮ BITCOIN",
+      intentColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
+      defaultPrice: 100.1,
+      leverage: "2x (TradFi)",
+      allocPct: 0.20,
+      mtf: "Tương quan 94% với Bitcoin • Đòn bẩy vốn doanh nghiệp dự trữ BTC hàng đầu",
+      slPct: 0.025,
+      tp1Pct: 0.050,
+      tp2Pct: 0.100,
+      trailingFloorPct: 0.015
+    },
+    {
+      symbol: "SOXL/USDT",
+      cleanSym: "SOXLUSDT",
+      category: "tradfi",
+      tag: "📈 ETF Bán Dẫn 3x",
+      side: "LONG",
+      score: 86.0,
+      confidence: 0.83,
+      status: "READY",
+      intent: "🌊 SIÊU SÓNG NGÀNH CHIP & BÁN DẪN TOÀN CẦU",
+      intentColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30",
+      defaultPrice: 42.0,
+      leverage: "2x (TradFi ETF)",
+      allocPct: 0.15,
+      mtf: "Đòn bẩy 3x ngành bán dẫn • Khung cắt lỗ thích ứng ATR [1.8% - 3.5%]",
+      slPct: 0.025,
+      tp1Pct: 0.045,
+      tp2Pct: 0.090,
+      trailingFloorPct: 0.012
+    },
+
+    // 👑 CRYPTO MAJOR
+    {
+      symbol: "BTC/USDT",
+      cleanSym: "BTCUSDT",
+      category: "major",
+      tag: "👑 Vua Tiền Số",
+      side: "LONG",
+      score: 94.0,
+      confidence: 0.91,
+      status: "READY",
+      intent: "🛡️ TÍCH LŨY TRÊN HỖ TRỢ VĨ MÔ 4H (JEV Trend Shield)",
+      intentColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
+      defaultPrice: 64800.0,
+      leverage: "7x (Major Crypto)",
+      allocPct: 0.35,
+      mtf: "Giữ vững EMA50 4H • Thanh khoản vĩ mô ổn định, không chịu rủi ro sập sàn",
+      slPct: 0.012,
+      tp1Pct: 0.020,
+      tp2Pct: 0.045,
+      trailingFloorPct: 0.006
+    },
+    {
+      symbol: "ETH/USDT",
+      cleanSym: "ETHUSDT",
+      category: "major",
+      tag: "⚡ Nền Tảng HĐTM",
+      side: "LONG",
+      score: 88.0,
+      confidence: 0.84,
+      status: "READY",
+      intent: "🚀 DÒNG TIỀN PHỤC HỒI HỆ SINH THÁI LAYER 2",
+      intentColor: "text-indigo-400 bg-indigo-500/10 border-indigo-500/30",
+      defaultPrice: 1818.0,
+      leverage: "6x (Major Crypto)",
+      allocPct: 0.20,
+      mtf: "Tương quan chặt chẽ với BTC • Dòng tiền staking & phí gas lành mạnh",
+      slPct: 0.015,
       tp1Pct: 0.025,
+      tp2Pct: 0.055,
+      trailingFloorPct: 0.008
+    },
+    {
+      symbol: "SOL/USDT",
+      cleanSym: "SOLUSDT",
+      category: "major",
+      tag: "🚀 Siêu Tốc Layer 1",
+      side: "LONG",
+      score: 91.5,
+      confidence: 0.89,
+      status: "READY",
+      intent: "🔥 BÃO TĂNG DÒNG TIỀN CÁ MẬP (Whale Momentum)",
+      intentColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
+      defaultPrice: 71.3,
+      leverage: "5x (Major)",
+      allocPct: 0.25,
+      mtf: "Khối lượng giao dịch DEX vượt trội • Dòng tiền mua chủ động lớn",
+      slPct: 0.015,
+      tp1Pct: 0.024,
       tp2Pct: 0.050,
-      trailingFloorPct: -0.008
+      trailingFloorPct: 0.007
+    },
+
+    // 🚀 TOP ALTCOIN TOOL QUÉT
+    {
+      symbol: "1000PEPE/USDT",
+      cleanSym: "1000PEPEUSDT",
+      category: "altcoin",
+      tag: "🐸 Top Meme Coin",
+      side: "SHORT",
+      score: 85.0,
+      confidence: 0.82,
+      status: "READY",
+      intent: "⚡ BẮT ĐỈNH KIỆT SỨC XẢ HÀNG (Fading Short)",
+      intentColor: "text-rose-400 bg-rose-500/10 border-rose-500/30",
+      defaultPrice: 0.00395,
+      leverage: "3x (Altcoin)",
+      allocPct: 0.15,
+      mtf: "RVol suy kiệt tại kháng cự • Nến râu xả đỉnh 42% trên M15",
+      slPct: 0.020,
+      tp1Pct: 0.035,
+      tp2Pct: 0.070,
+      trailingFloorPct: 0.010
+    },
+    {
+      symbol: "SUI/USDT",
+      cleanSym: "SUIUSDT",
+      category: "altcoin",
+      tag: "🌊 High Vol Altcoin",
+      side: "SHORT",
+      score: 84.0,
+      confidence: 0.80,
+      status: "READY",
+      intent: "⚡ PHÂN KỲ GIẢM KHUNG 15M (Early Exhaustion)",
+      intentColor: "text-rose-400 bg-rose-500/10 border-rose-500/30",
+      defaultPrice: 0.72,
+      leverage: "4x (Altcoin)",
+      allocPct: 0.15,
+      mtf: "Lực mua chậm dần trước cản cứng EMA200 • Chờ xác nhận thủng đáy",
+      slPct: 0.018,
+      tp1Pct: 0.032,
+      tp2Pct: 0.065,
+      trailingFloorPct: 0.009
+    },
+    {
+      symbol: "PUMP/USDT",
+      cleanSym: "PUMPUSDT",
+      category: "altcoin",
+      tag: "🔥 Cá Mập Săn Đáy",
+      side: "LONG",
+      score: 86.5,
+      confidence: 0.83,
+      status: "READY",
+      intent: "💎 CÁ MẬP GOM ĐÁY CHIẾT KHẤU SÂU (Selling Climax)",
+      intentColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30",
+      defaultPrice: 0.00297,
+      leverage: "3x (Altcoin)",
+      allocPct: 0.15,
+      mtf: "Khối lượng nến đảo chiều rút chân 45% • RSI quá bán nảy lên mạnh",
+      slPct: 0.022,
+      tp1Pct: 0.040,
+      tp2Pct: 0.080,
+      trailingFloorPct: 0.011
     }
   ];
 
-  let items = defaultItems;
+  // Parse và tích hợp các ứng viên thực tế từ PC2 Radar
+  const liveRadarItems = [];
   if (Array.isArray(rawCandidates) && rawCandidates.length > 0) {
-    const mapped = [];
-    for (let idx = 0; idx < Math.min(rawCandidates.length, 4); idx++) {
-      const c = rawCandidates[idx];
+    rawCandidates.forEach((c, idx) => {
       const sym = String(c.symbol || "").toUpperCase();
       const cleanSym = sym.replace('/', '').replace(':', '');
       const side = String(c.side || 'LONG').toUpperCase().includes('SHORT') || String(c.side || '').toUpperCase().includes('SELL') ? 'SHORT' : 'LONG';
       const score = Number(c.score || c.priority_score || 80.0);
       const conf = Number(c.confidence || c.confidence_pct ? (c.confidence_pct > 1 ? c.confidence_pct/100 : c.confidence_pct) : 0.80);
-      
-      // Đọc giá thực tế hoặc lấy từ cache / fallback
-      let price = Number(c.price || priceCache[cleanSym] || 0.0);
-      if (price <= 0) {
-        try {
-          const pRes = await fetch(`https://fapi.binance.com/fapi/v1/ticker/price?symbol=${cleanSym}`);
-          if (pRes.ok) {
-            const pJson = await pRes.json();
-            price = parseFloat(pJson.price) || 1.0;
-            priceCache[cleanSym] = price;
-          }
-        } catch (e) {
-          price = 1.0;
-        }
-      }
+      const price = Number(c.price || priceCache[cleanSym] || 0.0);
 
-      const isTradfi = sym.includes("NVDA") || sym.includes("TSLA") || sym.includes("SOXL");
-      const isMajor = sym.includes("BTC") || sym.includes("ETH");
-      const lev = isTradfi ? "3x (TradFi)" : (isMajor ? "7x" : "5x");
+      const isTradfi = sym.includes("NVDA") || sym.includes("TSLA") || sym.includes("SOXL") || sym.includes("MSTR") || sym.includes("PLTR");
+      const isCommodity = sym.includes("XAU") || sym.includes("XAG") || sym.includes("CL") || sym.includes("PAXG");
+      const isMajor = sym.includes("BTC") || sym.includes("ETH") || sym.includes("SOL");
+      const itemCat = isCommodity ? "commodity" : (isTradfi ? "tradfi" : (isMajor ? "major" : "altcoin"));
+      const lev = isCommodity ? "2x" : (isTradfi ? "3x (TradFi)" : (isMajor ? "7x" : "5x"));
 
-      // [TRIỆT TIÊU ĐÁ NHAU GIỮA CÁC TẦNG]: Nhận diện chính xác trạng thái VETO vs STALKING vs WAITING
       const gate = String(c.bottleneck_gate || '').toUpperCase();
       const readiness = Number(c.readiness_pct || 0);
       const isBlocked = gate.includes('VETO') || gate === 'SIGNAL_AGGREGATOR_VETO' || gate === 'AI_BIAS_VETO' || gate === 'PRE_LLM_STRUCTURAL_VETO' || gate === 'JEV_UNAVAILABLE' || c.radar_status === 'BLOCKED' || readiness <= 50.0;
@@ -3705,7 +4029,7 @@ async function renderPortfolioLeaderboard(rawCandidates, capital) {
         status = "BLOCKED";
         intent = "🛑 CẢNH BÁO: BỊ VETO CHẶN (ĐỨNG NGOÀI TUYỆT ĐỐI)";
         intentColor = "text-rose-400 bg-rose-500/10 border-rose-500/30";
-        allocPct = 0.0; // TUYỆT ĐỐI CẤP 0$ KHI BỊ CHẶN!
+        allocPct = 0.0;
       } else {
         status = "READY";
         intent = side === 'SHORT' ? "⚡ BẮT ĐỈNH KIỆT SỨC XẢ HÀNG (SHORT)" : "🚀 LƯỚT SÓNG DÒNG TIỀN CÁ MẬP (BUY)";
@@ -3713,15 +4037,18 @@ async function renderPortfolioLeaderboard(rawCandidates, capital) {
         allocPct = idx === 0 ? 0.35 : (idx === 1 ? 0.25 : 0.0);
       }
 
-      mapped.push({
+      liveRadarItems.push({
         symbol: sym,
+        cleanSym: cleanSym,
+        category: itemCat,
+        tag: `🎯 Ra-đa PC2 (#${idx+1})`,
         side: side,
-        score: score,
+        score: Math.abs(score) > 1 ? Math.min(99.0, Math.abs(score)) : Math.min(99.0, Math.abs(score) * 100),
         confidence: conf,
         status: status,
         intent: intent,
         intentColor: intentColor,
-        price: price,
+        defaultPrice: price || 1.0,
         leverage: lev,
         allocPct: allocPct,
         mtf: c.bottleneck_reason || c.reason || "Đa khung thời gian đồng thuận",
@@ -3730,66 +4057,95 @@ async function renderPortfolioLeaderboard(rawCandidates, capital) {
         tp2Pct: 0.050,
         trailingFloorPct: 0.007
       });
-    }
-    if (mapped.length > 0) items = mapped;
+    });
+  }
+
+  // Kết hợp và lọc theo Category được chọn
+  let displayItems = [];
+  if (category === 'commodity') {
+    displayItems = assetCatalog.filter(i => i.category === 'commodity');
+  } else if (category === 'tradfi') {
+    displayItems = assetCatalog.filter(i => i.category === 'tradfi');
+  } else if (category === 'major') {
+    displayItems = assetCatalog.filter(i => i.category === 'major');
+  } else if (category === 'altcoin') {
+    displayItems = [
+      ...liveRadarItems.filter(i => i.category === 'altcoin'),
+      ...assetCatalog.filter(i => i.category === 'altcoin')
+    ];
+  } else {
+    // Tab "all" (Tất Cả / Ra-đa PC2):
+    // Ưu tiên các mã Ra-đa PC2 lên đầu, sau đó bổ sung Vàng XAU, Bạc XAG, Nvidia NVDA, Bitcoin BTC, Solana SOL!
+    const seen = new Set();
+    liveRadarItems.forEach(item => {
+      displayItems.push(item);
+      seen.add(item.cleanSym);
+    });
+    const pillars = ['XAUUSDT', 'XAGUSDT', 'NVDAUSDT', 'TSLAUSDT', 'BTCUSDT', 'SOLUSDT'];
+    assetCatalog.forEach(item => {
+      if (pillars.includes(item.cleanSym) && !seen.has(item.cleanSym)) {
+        displayItems.push(item);
+        seen.add(item.cleanSym);
+      }
+    });
   }
 
   let html = "";
-  items.forEach((item, idx) => {
+  displayItems.forEach((item, idx) => {
     const isTop1 = idx === 0;
     const isTop2 = idx === 1;
     const allocatedMoney = capital * item.allocPct;
     const isShort = item.side === 'SHORT';
 
+    const liveP = Number(priceCache[item.cleanSym] || item.defaultPrice || 1.0);
+
     // Tính toán theo đúng chiều lệnh (LONG vs SHORT)
     let entryLow, entryHigh, slPrice, tp1Price, tp2Price, trailingPrice;
     if (isShort) {
-      entryLow = item.price * 0.998;
-      entryHigh = item.price * 1.003;
-      slPrice = item.price * (1 + item.slPct); // Giá vượt đỉnh là cắt lỗ
-      tp1Price = item.price * (1 - item.tp1Pct); // Giá tụt xuống là chốt lời
-      tp2Price = item.price * (1 - item.tp2Pct);
-      trailingPrice = item.price * (1 + item.trailingFloorPct);
+      entryLow = liveP * 0.998;
+      entryHigh = liveP * 1.003;
+      slPrice = liveP * (1 + item.slPct); // Giá vượt đỉnh là cắt lỗ
+      tp1Price = liveP * (1 - item.tp1Pct); // Giá tụt xuống là chốt lời
+      tp2Price = liveP * (1 - item.tp2Pct);
+      trailingPrice = liveP * (1 + item.trailingFloorPct);
     } else {
-      entryLow = item.price * 0.997;
-      entryHigh = item.price * 1.002;
-      slPrice = item.price * (1 - item.slPct); // Giá thủng đáy là cắt lỗ
-      tp1Price = item.price * (1 + item.tp1Pct); // Giá tăng là chốt lời
-      tp2Price = item.price * (1 + item.tp2Pct);
-      trailingPrice = item.price * (1 - item.trailingFloorPct);
+      entryLow = liveP * 0.997;
+      entryHigh = liveP * 1.002;
+      slPrice = liveP * (1 - item.slPct); // Giá thủng đáy là cắt lỗ
+      tp1Price = liveP * (1 + item.tp1Pct); // Giá tăng là chốt lời
+      tp2Price = liveP * (1 + item.tp2Pct);
+      trailingPrice = liveP * (1 - item.trailingFloorPct);
     }
 
-    const maxLossDollar = allocatedMoney * Math.abs(item.slPct);
-    const expProfitDollar = allocatedMoney * item.tp1Pct;
+    const maxLossDollar = allocatedMoney > 0 ? allocatedMoney * Math.abs(item.slPct) : 0;
+    const expProfitDollar = allocatedMoney > 0 ? allocatedMoney * item.tp1Pct : 0;
 
     let rankBadge = "";
     if (item.status === "BLOCKED") {
       rankBadge = `<span class="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold text-[11px] uppercase tracking-wider">🛑 Bị Veto Chặn • Không Mở Lệnh</span>`;
-    } else if (isTop1) {
+    } else if (isTop1 && category === 'all') {
       rankBadge = `<span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-black font-extrabold text-[11px] uppercase tracking-wider">🥇 Hạng 1 • Top Pick (${item.side})</span>`;
-    } else if (isTop2) {
+    } else if (isTop2 && category === 'all') {
       rankBadge = `<span class="px-2.5 py-0.5 rounded-full bg-gray-200 text-black font-extrabold text-[11px] uppercase tracking-wider">🥈 Hạng 2 • Lựa Chọn 2 (${item.side})</span>`;
     } else {
-      rankBadge = `<span class="px-2.5 py-0.5 rounded-full bg-white/10 text-gray-300 font-bold text-[11px]">#${idx+1} • Theo Dõi Thêm</span>`;
+      rankBadge = `<span class="px-2.5 py-0.5 rounded-full bg-white/10 text-emerald-300 border border-white/10 font-bold text-[11px]">${item.tag || `#${idx+1}`}</span>`;
     }
-
-    const cleanSym = item.symbol.replace('/', '').replace(':', '');
 
     html += `
       <div class="kenzo-card p-5 border-white/10 hover:border-emerald-500/40 transition space-y-4 relative overflow-hidden group">
         <div class="flex items-start justify-between gap-3 relative z-10">
           <div>
-            <div class="flex items-center gap-2 mb-1.5">
+            <div class="flex items-center gap-2 mb-1.5 flex-wrap">
               ${rankBadge}
               <span class="text-xs font-mono font-bold text-gray-400">Điểm: <span class="text-amber-400 font-extrabold">${item.score.toFixed(1)}/100</span></span>
             </div>
             <h4 class="text-xl font-black text-white font-mono tracking-tight flex items-center gap-2">
               <span>${item.symbol}</span>
               <span class="text-xs font-mono font-bold ${item.side === 'SHORT' ? 'text-rose-400' : 'text-emerald-400'}">(${item.side})</span>
-              <span class="text-xs text-gray-400 font-normal">($${formatSmartPrice(item.price)})</span>
+              <span class="text-xs text-gray-400 font-normal">($${formatSmartPrice(liveP)})</span>
             </h4>
           </div>
-          <button type="button" class="btn-inspect-chart px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5" data-sym="${cleanSym}">
+          <button type="button" class="btn-inspect-chart px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5 shrink-0" data-sym="${item.cleanSym}">
             <i data-lucide="line-chart" class="w-3.5 h-3.5"></i>
             <span>Soi Biểu Đồ</span>
           </button>
@@ -3827,11 +4183,11 @@ async function renderPortfolioLeaderboard(rawCandidates, capital) {
               </div>
               <div>
                 <span class="text-gray-500 block">Cắt Lỗ Bắt Buộc (SL):</span>
-                <strong class="text-rose-400">${formatSmartPrice(slPrice)}$ (-$${maxLossDollar.toFixed(2)})</strong>
+                <strong class="text-rose-400">${formatSmartPrice(slPrice)}$ ${allocatedMoney > 0 ? `(-$${maxLossDollar.toFixed(2)})` : ''}</strong>
               </div>
               <div>
                 <span class="text-gray-500 block">Chốt Lời TP1:</span>
-                <strong class="text-amber-400">${formatSmartPrice(tp1Price)}$ (+$${expProfitDollar.toFixed(2)})</strong>
+                <strong class="text-amber-400">${formatSmartPrice(tp1Price)}$ ${allocatedMoney > 0 ? `(+$${expProfitDollar.toFixed(2)})` : ''}</strong>
               </div>
             </div>
             <div class="pt-1 flex items-center justify-between text-[11px] text-purple-300 bg-purple-950/20 px-2 py-1 rounded">
@@ -3851,9 +4207,7 @@ async function renderPortfolioLeaderboard(rawCandidates, capital) {
     btn.addEventListener("click", () => {
       const sym = btn.getAttribute("data-sym");
       if (sym) {
-        currentPortfolioSymbol = sym;
-        loadPortfolioChart(currentPortfolioSymbol, currentPortfolioTf);
-        document.getElementById("portfolioChartContainer")?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        window.switchToPortfolioSymbol(sym);
       }
     });
   });

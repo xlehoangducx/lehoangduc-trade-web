@@ -1089,13 +1089,94 @@
             </div>
 
             <!-- Controls: Chọn mã & Chọn timeframe -->
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="relative">
+                <input id="portfolioChartSearchInput" list="allSymbolsDatalist" type="text" placeholder="🔍 Gõ mã (XAU, XAG, NVDA, BTC...)" class="bg-black/60 border border-white/20 text-white text-xs rounded-lg px-2.5 py-1.5 w-48 sm:w-56 font-mono outline-none focus:border-emerald-400 placeholder:text-gray-500 uppercase">
+                <datalist id="allSymbolsDatalist">
+                  <!-- Kim loại quý & Năng lượng -->
+                  <option value="XAUUSDT">XAU/USDT - Vàng Thế Giới (Gold Perps)</option>
+                  <option value="XAGUSDT">XAG/USDT - Bạc Thế Giới (Silver Perps)</option>
+                  <option value="CLUSDT">CL/USDT - Dầu Thô WTI (Crude Oil)</option>
+                  <option value="BZUSDT">BZ/USDT - Dầu Thô Brent</option>
+                  <option value="PAXGUSDT">PAXG/USDT - Vàng Token Hóa (PAX Gold)</option>
+                  <option value="COPPERUSDT">COPPER/USDT - Kim Loại Đồng</option>
+                  <option value="NATGASUSDT">NATGAS/USDT - Khí Tự Nhiên</option>
+                  <!-- TradFi Cổ Phiếu Mỹ -->
+                  <option value="NVDAUSDT">NVDA/USDT - NVIDIA (AI Chip Leader)</option>
+                  <option value="TSLAUSDT">TSLA/USDT - Tesla Inc</option>
+                  <option value="MSTRUSDT">MSTR/USDT - MicroStrategy (Bitcoin Proxy)</option>
+                  <option value="PLTRUSDT">PLTR/USDT - Palantir Technologies (AI Defense)</option>
+                  <option value="SOXLUSDT">SOXL/USDT - Bán Dẫn Semiconductor Bull 3x</option>
+                  <option value="TQQQUSDT">TQQQ/USDT - ProShares UltraPro QQQ 3x</option>
+                  <option value="COINUSDT">COIN/USDT - Coinbase Global</option>
+                  <option value="AAPLUSDT">AAPL/USDT - Apple Inc</option>
+                  <option value="MSFTUSDT">MSFT/USDT - Microsoft Corp</option>
+                  <option value="AMDUSDT">AMD/USDT - Advanced Micro Devices</option>
+                  <option value="SPYUSDT">SPY/USDT - S&P 500 ETF</option>
+                  <option value="QQQUSDT">QQQ/USDT - Invesco QQQ Trust</option>
+                  <!-- Crypto Major -->
+                  <option value="BTCUSDT">BTC/USDT - Bitcoin (King Crypto)</option>
+                  <option value="ETHUSDT">ETH/USDT - Ethereum (Smart Contract)</option>
+                  <option value="SOLUSDT">SOL/USDT - Solana (High Speed Layer 1)</option>
+                  <option value="BNBUSDT">BNB/USDT - BNB Chain</option>
+                  <option value="XRPUSDT">XRP/USDT - Ripple</option>
+                  <option value="DOGEUSDT">DOGE/USDT - Dogecoin</option>
+                  <!-- Altcoins Hot & PC2 Scanned -->
+                  <option value="PUMPUSDT">PUMP/USDT - Pump</option>
+                  <option value="1000PEPEUSDT">1000PEPE/USDT - Pepe</option>
+                  <option value="SUIUSDT">SUI/USDT - Sui Network</option>
+                  <option value="NEARUSDT">NEAR/USDT - Near Protocol</option>
+                  <option value="ENAUSDT">ENA/USDT - Ethena</option>
+                  <option value="TIAUSDT">TIA/USDT - Celestia</option>
+                  <option value="WLDUSDT">WLD/USDT - Worldcoin</option>
+                  <option value="TAOUSDT">TAO/USDT - Bittensor AI</option>
+                  <option value="AVAXUSDT">AVAX/USDT - Avalanche</option>
+                  <option value="MERLUSDT">MERL/USDT - Merlin</option>
+                  <option value="MOVRUSDT">MOVR/USDT - Moonriver</option>
+                  <option value="WALUSDT">WAL/USDT - Wal</option>
+                  <option value="PONSUSDT">PONS/USDT - Pons</option>
+                </datalist>
+              </div>
+
               <select id="portfolioChartSymbolSelect" class="bg-black/60 border border-white/20 text-white text-xs rounded-lg px-2.5 py-1.5 font-mono outline-none focus:border-emerald-400">
-                <option value="SOLUSDT" selected>SOL/USDT (Top Ra-da)</option>
-                <option value="BTCUSDT">BTC/USDT (Major)</option>
-                <option value="NVDAUSDT">NVDA/USDT (TradFi)</option>
-                <option value="PAXGUSDT">PAXG/USDT (Vàng Spot)</option>
-                <option value="ETHUSDT">ETH/USDT (Major)</option>
+                <optgroup label="🌟 RA-ĐA ĐANG QUÉT (LIVE PC2)" id="chartOptgroupRadar">
+                  <option value="SOLUSDT" selected>SOL/USDT (Top Ra-đa)</option>
+                  <option value="PUMPUSDT">PUMP/USDT (Top Ra-đa)</option>
+                  <option value="PONSUSDT">PONS/USDT (Top Ra-đa)</option>
+                </optgroup>
+                <optgroup label="🥇 KIM LOẠI QUÝ &amp; HÀNG HÓA">
+                  <option value="XAUUSDT">XAU/USDT (Vàng Thế Giới)</option>
+                  <option value="XAGUSDT">XAG/USDT (Bạc Thế Giới)</option>
+                  <option value="CLUSDT">CL/USDT (Dầu Thô WTI)</option>
+                  <option value="BZUSDT">BZ/USDT (Dầu Thô Brent)</option>
+                  <option value="PAXGUSDT">PAXG/USDT (Vàng Token Spot)</option>
+                  <option value="COPPERUSDT">COPPER/USDT (Đồng)</option>
+                </optgroup>
+                <optgroup label="🏛️ CỔ PHIẾU MỸ &amp; TRADFI">
+                  <option value="NVDAUSDT">NVDA/USDT (Nvidia AI)</option>
+                  <option value="TSLAUSDT">TSLA/USDT (Tesla)</option>
+                  <option value="MSTRUSDT">MSTR/USDT (MicroStrategy)</option>
+                  <option value="PLTRUSDT">PLTR/USDT (Palantir)</option>
+                  <option value="SOXLUSDT">SOXL/USDT (Bán Dẫn Bull 3x)</option>
+                  <option value="TQQQUSDT">TQQQ/USDT (Nasdaq Bull 3x)</option>
+                  <option value="COINUSDT">COIN/USDT (Coinbase)</option>
+                </optgroup>
+                <optgroup label="👑 CRYPTO MAJOR">
+                  <option value="BTCUSDT">BTC/USDT (Bitcoin)</option>
+                  <option value="ETHUSDT">ETH/USDT (Ethereum)</option>
+                  <option value="BNBUSDT">BNB/USDT (BNB)</option>
+                  <option value="XRPUSDT">XRP/USDT (Ripple)</option>
+                  <option value="DOGEUSDT">DOGE/USDT (Dogecoin)</option>
+                </optgroup>
+                <optgroup label="🚀 TOP ALTCOIN TOOL QUÉT">
+                  <option value="1000PEPEUSDT">1000PEPE/USDT</option>
+                  <option value="SUIUSDT">SUI/USDT</option>
+                  <option value="NEARUSDT">NEAR/USDT</option>
+                  <option value="ENAUSDT">ENA/USDT</option>
+                  <option value="TIAUSDT">TIA/USDT</option>
+                  <option value="WLDUSDT">WLD/USDT</option>
+                  <option value="TAOUSDT">TAO/USDT</option>
+                </optgroup>
               </select>
 
               <div class="flex rounded-lg bg-black/60 border border-white/20 p-0.5 text-xs font-mono">
@@ -1127,12 +1208,21 @@
 
         <!-- Khối Bảng Xếp Hạng Các Đồng Đề Xuất Do Tool Treo & Điều Hướng Chi Tiết -->
         <div class="space-y-4">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div class="flex items-center gap-2">
               <i data-lucide="award" class="w-5 h-5 text-amber-400"></i>
-              <h3 class="text-lg font-bold text-white tracking-wide">Top Đồng Đạt Điểm Ra-da Cao Nhất &amp; Hướng Chỉ Dẫn Vốn</h3>
+              <h3 class="text-lg font-bold text-white tracking-wide">Cơ Hội Đầu Tư Đa Tài Sản &amp; Hướng Chỉ Dẫn Vốn</h3>
             </div>
-            <span class="text-xs text-gray-400 font-mono">Cập nhật tự động 24/7 từ Tool PC2</span>
+            <span class="text-xs text-gray-400 font-mono">Tận dụng kho dữ liệu quét 24/7 từ Tool PC2 (Vàng, TradFi, Crypto)</span>
+          </div>
+
+          <!-- Tabs Phân Loại Danh Mục Tài Sản -->
+          <div class="flex flex-wrap items-center gap-2 pt-1 pb-1">
+            <button type="button" class="btn-portfolio-tab active px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 transition" data-cat="all">🔥 Tất Cả / Ra-đa PC2</button>
+            <button type="button" class="btn-portfolio-tab px-3 py-1.5 rounded-lg text-xs font-mono text-gray-400 hover:text-white bg-black/40 border border-white/10 transition" data-cat="commodity">🥇 Vàng, Bạc &amp; Dầu (XAU/XAG/CL)</button>
+            <button type="button" class="btn-portfolio-tab px-3 py-1.5 rounded-lg text-xs font-mono text-gray-400 hover:text-white bg-black/40 border border-white/10 transition" data-cat="tradfi">🏛️ Cổ Phiếu Mỹ TradFi (NVDA/TSLA/MSTR)</button>
+            <button type="button" class="btn-portfolio-tab px-3 py-1.5 rounded-lg text-xs font-mono text-gray-400 hover:text-white bg-black/40 border border-white/10 transition" data-cat="major">👑 Crypto Hàng Đầu (BTC/ETH/SOL)</button>
+            <button type="button" class="btn-portfolio-tab px-3 py-1.5 rounded-lg text-xs font-mono text-gray-400 hover:text-white bg-black/40 border border-white/10 transition" data-cat="altcoin">🚀 Top Altcoin Tool Quét (PEPE/SUI/PUMP)</button>
           </div>
 
           <div id="portfolioLeaderboardContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
