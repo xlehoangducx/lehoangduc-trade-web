@@ -3447,6 +3447,26 @@ let portfolioChart = null;
 let portfolioCandleSeries = null;
 let portfolioPriceLines = [];
 let lastKnownRadarCandidates = [];
+const priceCache = {};
+
+// Hàm định dạng giá thông minh chống bẹp về 0.00$ cho Altcoin nhỏ
+function formatSmartPrice(val) {
+  if (val === undefined || val === null || isNaN(val) || val === 0) return '0.00';
+  const num = Math.abs(Number(val));
+  if (num >= 1000) return Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (num >= 1) return Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+  if (num >= 0.01) return Number(val).toFixed(4);
+  if (num >= 0.0001) return Number(val).toFixed(6);
+  return Number(val).toFixed(8);
+}
+
+function getSmartPriceFormat(price) {
+  const num = Math.abs(Number(price || 1));
+  if (num >= 100) return { type: 'price', precision: 2, minMove: 0.01 };
+  if (num >= 1) return { type: 'price', precision: 4, minMove: 0.0001 };
+  if (num >= 0.01) return { type: 'price', precision: 6, minMove: 0.000001 };
+  return { type: 'price', precision: 8, minMove: 0.00000001 };
+}
 
 // Khởi tạo Module Quản Lý Đầu Tư Chuẩn Quỹ
 function initPortfolioNavigator() {
@@ -3553,7 +3573,7 @@ function updateCapitalAllocation(capital) {
 }
 
 // Bảng xếp hạng đồng đề xuất & Lộ trình điều hướng chi tiết
-function renderPortfolioLeaderboard(rawCandidates, capital) {
+async function renderPortfolioLeaderboard(rawCandidates, capital) {
   const container = document.getElementById("portfolioLeaderboardContainer");
   if (!container) return;
 
@@ -3561,8 +3581,10 @@ function renderPortfolioLeaderboard(rawCandidates, capital) {
   const defaultItems = [
     {
       symbol: "SOL/USDT",
+      side: "LONG",
       score: 94.5,
       confidence: 0.88,
+      status: "READY",
       intent: "🚀 BÃO TĂNG CÁ MẬP BƠM (Whale Pump Storm)",
       intentColor: "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
       price: 185.50,
@@ -3576,8 +3598,10 @@ function renderPortfolioLeaderboard(rawCandidates, capital) {
     },
     {
       symbol: "NVDA/USDT",
+      side: "LONG",
       score: 89.0,
       confidence: 0.82,
+      status: "READY",
       intent: "💎 CÁ MẬP GOM ĐÁY CHIẾT KHẤU SÂU (Selling Climax)",
       intentColor: "text-cyan-400 bg-cyan-500/10 border-cyan-500/30",
       price: 142.20,
@@ -3591,8 +3615,10 @@ function renderPortfolioLeaderboard(rawCandidates, capital) {
     },
     {
       symbol: "BTC/USDT",
+      side: "LONG",
       score: 85.0,
       confidence: 0.78,
+      status: "WAITING_RESOURCE",
       intent: "🛡️ TÍCH LŨY TRÊN HỖ TRỢ VĨ MÔ 4H (JEV Trend Shield)",
       intentColor: "text-amber-400 bg-amber-500/10 border-amber-500/30",
       price: 64800.0,
@@ -3606,8 +3632,10 @@ function renderPortfolioLeaderboard(rawCandidates, capital) {
     },
     {
       symbol: "PAXG/USDT",
+      side: "LONG",
       score: 82.5,
       confidence: 0.75,
+      status: "WAITING_RESOURCE",
       intent: "💎 HẤP THỤ PHÒNG HỘ VÀNG THẾ GIỚI (Gold Perps)",
       intentColor: "text-yellow-400 bg-yellow-500/10 border-yellow-500/30",
       price: 3825.0,
@@ -3623,42 +3651,86 @@ function renderPortfolioLeaderboard(rawCandidates, capital) {
 
   let items = defaultItems;
   if (Array.isArray(rawCandidates) && rawCandidates.length > 0) {
-    const mapped = rawCandidates.slice(0, 4).map((c, idx) => {
+    const mapped = [];
+    for (let idx = 0; idx < Math.min(rawCandidates.length, 4); idx++) {
+      const c = rawCandidates[idx];
       const sym = String(c.symbol || "").toUpperCase();
-      const score = Number(c.priority_score || 80.0);
-      const conf = Number(c.confidence || 0.80);
-      const price = Number(c.price || 100.0);
+      const cleanSym = sym.replace('/', '').replace(':', '');
+      const side = String(c.side || 'LONG').toUpperCase().includes('SHORT') || String(c.side || '').toUpperCase().includes('SELL') ? 'SHORT' : 'LONG';
+      const score = Number(c.score || c.priority_score || 80.0);
+      const conf = Number(c.confidence || c.confidence_pct ? (c.confidence_pct > 1 ? c.confidence_pct/100 : c.confidence_pct) : 0.80);
+      
+      // Đọc giá thực tế hoặc lấy từ cache / fallback
+      let price = Number(c.price || priceCache[cleanSym] || 0.0);
+      if (price <= 0) {
+        try {
+          const pRes = await fetch(`https://fapi.binance.com/fapi/v1/ticker/price?symbol=${cleanSym}`);
+          if (pRes.ok) {
+            const pJson = await pRes.json();
+            price = parseFloat(pJson.price) || 1.0;
+            priceCache[cleanSym] = price;
+          }
+        } catch (e) {
+          price = 1.0;
+        }
+      }
+
       const isTradfi = sym.includes("NVDA") || sym.includes("TSLA") || sym.includes("SOXL");
       const isMajor = sym.includes("BTC") || sym.includes("ETH");
       const lev = isTradfi ? "3x (TradFi)" : (isMajor ? "7x" : "5x");
-      const allocPct = idx === 0 ? 0.35 : (idx === 1 ? 0.25 : 0.0);
 
-      let intent = "🚀 LƯỚT SÓNG DÒNG TIỀN CÁ MẬP";
-      let intentColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
-      if (c.bottleneck_gate === "WATERFALL_DUMP") {
-        intent = "🌊 THÁC ĐỔ CÁ MẬP XẢ LŨ (ĐỨNG NGOÀI)";
-        intentColor = "text-rose-400 bg-rose-500/10 border-rose-500/30";
-      } else if (c.bottleneck_gate === "BUYING_CLIMAX") {
-        intent = "⚡ BẪY KIỆT SỨC MUA XẢ ĐỈNH (CHỐT LỜI)";
+      // [TRIỆT TIÊU ĐÁ NHAU GIỮA CÁC TẦNG]: Nhận diện chính xác trạng thái VETO vs STALKING vs WAITING
+      const gate = String(c.bottleneck_gate || '').toUpperCase();
+      const readiness = Number(c.readiness_pct || 0);
+      const isBlocked = gate.includes('VETO') || gate === 'SIGNAL_AGGREGATOR_VETO' || gate === 'AI_BIAS_VETO' || gate === 'PRE_LLM_STRUCTURAL_VETO' || gate === 'JEV_UNAVAILABLE' || c.radar_status === 'BLOCKED' || readiness <= 50.0;
+      const isStalking = gate === 'M1_SNIPER_STALKING' || c.radar_status === 'STALKING' || readiness >= 95.0;
+      const isWaitingResource = ['SLOT_CAPACITY', 'RISK_CAPACITY', 'MARGIN_CAPACITY'].includes(gate) || c.radar_status === 'WAITING_RESOURCE';
+
+      let status = "BLOCKED";
+      let intent = "🛑 CẢNH BÁO: BỊ VETO CHẶN (ĐỨNG NGOÀI TUYỆT ĐỐI)";
+      let intentColor = "text-rose-400 bg-rose-500/10 border-rose-500/30";
+      let allocPct = 0.0;
+
+      if (isStalking) {
+        status = "STALKING";
+        intent = "🎯 M1 SNIPER ĐANG RÌNH KHỚP LIMIT MAKER";
         intentColor = "text-amber-400 bg-amber-500/10 border-amber-500/30";
+        allocPct = idx === 0 ? 0.35 : (idx === 1 ? 0.25 : 0.0);
+      } else if (isWaitingResource) {
+        status = "WAITING_RESOURCE";
+        intent = "⏳ ĐÃ ĐẠT CHUẨN - CHỜ GIẢI PHÓNG SLOT VỐN";
+        intentColor = "text-cyan-400 bg-cyan-500/10 border-cyan-500/30";
+        allocPct = idx === 0 ? 0.35 : (idx === 1 ? 0.25 : 0.0);
+      } else if (isBlocked) {
+        status = "BLOCKED";
+        intent = "🛑 CẢNH BÁO: BỊ VETO CHẶN (ĐỨNG NGOÀI TUYỆT ĐỐI)";
+        intentColor = "text-rose-400 bg-rose-500/10 border-rose-500/30";
+        allocPct = 0.0; // TUYỆT ĐỐI CẤP 0$ KHI BỊ CHẶN!
+      } else {
+        status = "READY";
+        intent = side === 'SHORT' ? "⚡ BẮT ĐỈNH KIỆT SỨC XẢ HÀNG (SHORT)" : "🚀 LƯỚT SÓNG DÒNG TIỀN CÁ MẬP (BUY)";
+        intentColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
+        allocPct = idx === 0 ? 0.35 : (idx === 1 ? 0.25 : 0.0);
       }
 
-      return {
+      mapped.push({
         symbol: sym,
+        side: side,
         score: score,
         confidence: conf,
+        status: status,
         intent: intent,
         intentColor: intentColor,
         price: price,
         leverage: lev,
         allocPct: allocPct,
-        mtf: c.reason || "Đa khung thời gian đồng thuận",
-        slPct: -0.015,
+        mtf: c.bottleneck_reason || c.reason || "Đa khung thời gian đồng thuận",
+        slPct: 0.015,
         tp1Pct: 0.024,
         tp2Pct: 0.050,
-        trailingFloorPct: -0.007
-      };
-    });
+        trailingFloorPct: 0.007
+      });
+    }
     if (mapped.length > 0) items = mapped;
   }
 
@@ -3667,20 +3739,39 @@ function renderPortfolioLeaderboard(rawCandidates, capital) {
     const isTop1 = idx === 0;
     const isTop2 = idx === 1;
     const allocatedMoney = capital * item.allocPct;
-    const entryLow = item.price * 0.997;
-    const entryHigh = item.price * 1.002;
-    const slPrice = item.price * (1 + item.slPct);
-    const tp1Price = item.price * (1 + item.tp1Pct);
-    const tp2Price = item.price * (1 + item.tp2Pct);
-    const trailingPrice = item.price * (1 + item.trailingFloorPct);
+    const isShort = item.side === 'SHORT';
+
+    // Tính toán theo đúng chiều lệnh (LONG vs SHORT)
+    let entryLow, entryHigh, slPrice, tp1Price, tp2Price, trailingPrice;
+    if (isShort) {
+      entryLow = item.price * 0.998;
+      entryHigh = item.price * 1.003;
+      slPrice = item.price * (1 + item.slPct); // Giá vượt đỉnh là cắt lỗ
+      tp1Price = item.price * (1 - item.tp1Pct); // Giá tụt xuống là chốt lời
+      tp2Price = item.price * (1 - item.tp2Pct);
+      trailingPrice = item.price * (1 + item.trailingFloorPct);
+    } else {
+      entryLow = item.price * 0.997;
+      entryHigh = item.price * 1.002;
+      slPrice = item.price * (1 - item.slPct); // Giá thủng đáy là cắt lỗ
+      tp1Price = item.price * (1 + item.tp1Pct); // Giá tăng là chốt lời
+      tp2Price = item.price * (1 + item.tp2Pct);
+      trailingPrice = item.price * (1 - item.trailingFloorPct);
+    }
+
     const maxLossDollar = allocatedMoney * Math.abs(item.slPct);
     const expProfitDollar = allocatedMoney * item.tp1Pct;
 
-    const rankBadge = isTop1 
-      ? `<span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-black font-extrabold text-[11px] uppercase tracking-wider">🥇 Hạng 1 • Top Pick</span>`
-      : (isTop2 
-        ? `<span class="px-2.5 py-0.5 rounded-full bg-gray-200 text-black font-extrabold text-[11px] uppercase tracking-wider">🥈 Hạng 2 • Lựa Chọn 2</span>`
-        : `<span class="px-2.5 py-0.5 rounded-full bg-white/10 text-gray-300 font-bold text-[11px]">#${idx+1} • Theo Dõi Thêm</span>`);
+    let rankBadge = "";
+    if (item.status === "BLOCKED") {
+      rankBadge = `<span class="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold text-[11px] uppercase tracking-wider">🛑 Bị Veto Chặn • Không Mở Lệnh</span>`;
+    } else if (isTop1) {
+      rankBadge = `<span class="px-2.5 py-0.5 rounded-full bg-amber-400 text-black font-extrabold text-[11px] uppercase tracking-wider">🥇 Hạng 1 • Top Pick (${item.side})</span>`;
+    } else if (isTop2) {
+      rankBadge = `<span class="px-2.5 py-0.5 rounded-full bg-gray-200 text-black font-extrabold text-[11px] uppercase tracking-wider">🥈 Hạng 2 • Lựa Chọn 2 (${item.side})</span>`;
+    } else {
+      rankBadge = `<span class="px-2.5 py-0.5 rounded-full bg-white/10 text-gray-300 font-bold text-[11px]">#${idx+1} • Theo Dõi Thêm</span>`;
+    }
 
     const cleanSym = item.symbol.replace('/', '').replace(':', '');
 
@@ -3694,7 +3785,8 @@ function renderPortfolioLeaderboard(rawCandidates, capital) {
             </div>
             <h4 class="text-xl font-black text-white font-mono tracking-tight flex items-center gap-2">
               <span>${item.symbol}</span>
-              <span class="text-xs text-gray-400 font-normal">($${item.price.toLocaleString()})</span>
+              <span class="text-xs font-mono font-bold ${item.side === 'SHORT' ? 'text-rose-400' : 'text-emerald-400'}">(${item.side})</span>
+              <span class="text-xs text-gray-400 font-normal">($${formatSmartPrice(item.price)})</span>
             </h4>
           </div>
           <button type="button" class="btn-inspect-chart px-3 py-1.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5" data-sym="${cleanSym}">
@@ -3708,36 +3800,45 @@ function renderPortfolioLeaderboard(rawCandidates, capital) {
           <span>${item.intent}</span>
         </div>
 
-        <p class="text-xs text-gray-400 line-clamp-2 leading-relaxed">${item.mtf}</p>
+        <p class="text-xs text-gray-400 line-clamp-2 leading-relaxed font-sans">${item.mtf}</p>
 
         <!-- Lộ trình vốn chi tiết -->
         <div class="bg-black/60 rounded-xl p-3.5 border border-white/5 space-y-2.5 text-xs font-mono">
           <div class="flex items-center justify-between pb-2 border-b border-white/5">
             <span class="text-gray-400">Vốn cấp từ tài khoản của bạn:</span>
-            <strong class="text-emerald-400 text-sm font-bold">${allocatedMoney > 0 ? `$${allocatedMoney.toFixed(2)} USDT` : '$0 (Chờ bứt phá)'}</strong>
+            <strong class="${allocatedMoney > 0 ? 'text-emerald-400' : 'text-gray-500'} text-sm font-bold">
+              ${allocatedMoney > 0 ? `$${allocatedMoney.toFixed(2)} USDT` : '$0 (Đứng ngoài bảo toàn vốn)'}
+            </strong>
           </div>
-          <div class="grid grid-cols-2 gap-2 text-[11px]">
-            <div>
-              <span class="text-gray-500 block">Đòn bẩy an toàn:</span>
-              <strong class="text-white">${item.leverage}</strong>
+          
+          ${item.status === 'BLOCKED' ? `
+            <div class="p-2.5 rounded bg-rose-950/20 border border-rose-500/20 text-rose-300 text-[11px] leading-relaxed">
+              ⚠️ <strong>CẢNH BÁO BẢO TOÀN VỐN:</strong> Bot trên PC2 đang chặn mã này vì không đủ điều kiện an toàn. Tuyệt đối <strong>CẤM MỞ LỆNH TAY</strong> để tránh dính bẫy dao rơi!
             </div>
-            <div>
-              <span class="text-gray-500 block">Vùng Mua Gom:</span>
-              <strong class="text-emerald-400">${entryLow.toFixed(2)}$ - ${entryHigh.toFixed(2)}$</strong>
+          ` : `
+            <div class="grid grid-cols-2 gap-2 text-[11px]">
+              <div>
+                <span class="text-gray-500 block">Đòn bẩy an toàn:</span>
+                <strong class="text-white">${item.leverage}</strong>
+              </div>
+              <div>
+                <span class="text-gray-500 block">${isShort ? '🔴 Vùng Bán Khống:' : '🟢 Vùng Mua Gom:'}</span>
+                <strong class="${isShort ? 'text-rose-400' : 'text-emerald-400'}">${formatSmartPrice(entryLow)}$ - ${formatSmartPrice(entryHigh)}$</strong>
+              </div>
+              <div>
+                <span class="text-gray-500 block">Cắt Lỗ Bắt Buộc (SL):</span>
+                <strong class="text-rose-400">${formatSmartPrice(slPrice)}$ (-$${maxLossDollar.toFixed(2)})</strong>
+              </div>
+              <div>
+                <span class="text-gray-500 block">Chốt Lời TP1:</span>
+                <strong class="text-amber-400">${formatSmartPrice(tp1Price)}$ (+$${expProfitDollar.toFixed(2)})</strong>
+              </div>
             </div>
-            <div>
-              <span class="text-gray-500 block">Cắt Lỗ Bắt Buộc (SL):</span>
-              <strong class="text-rose-400">${slPrice.toFixed(2)}$ (-$${maxLossDollar.toFixed(2)})</strong>
+            <div class="pt-1 flex items-center justify-between text-[11px] text-purple-300 bg-purple-950/20 px-2 py-1 rounded">
+              <span>🎯 Mức Chặn Lãi Hôm Nay:</span>
+              <strong class="font-bold">${formatSmartPrice(trailingPrice)}$</strong>
             </div>
-            <div>
-              <span class="text-gray-500 block">Chốt Lời TP1:</span>
-              <strong class="text-amber-400">${tp1Price.toFixed(2)}$ (+$${expProfitDollar.toFixed(2)})</strong>
-            </div>
-          </div>
-          <div class="pt-1 flex items-center justify-between text-[11px] text-purple-300 bg-purple-950/20 px-2 py-1 rounded">
-            <span>🎯 Mức Chặn Lãi Hôm Nay:</span>
-            <strong class="font-bold">${trailingPrice.toFixed(2)}$</strong>
-          </div>
+          `}
         </div>
       </div>
     `;
@@ -3751,8 +3852,6 @@ function renderPortfolioLeaderboard(rawCandidates, capital) {
       const sym = btn.getAttribute("data-sym");
       if (sym) {
         currentPortfolioSymbol = sym;
-        const symSelect = document.getElementById("portfolioChartSymbolSelect");
-        if (symSelect) symSelect.value = sym;
         loadPortfolioChart(currentPortfolioSymbol, currentPortfolioTf);
         document.getElementById("portfolioChartContainer")?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
@@ -3767,12 +3866,30 @@ async function loadPortfolioChart(symbol, interval) {
   const container = document.getElementById("portfolioChartContainer");
   const spinner = document.getElementById("chartLoadingSpinner");
   const badge = document.getElementById("activeChartSymbolBadge");
+  const symSelect = document.getElementById("portfolioChartSymbolSelect");
   if (!container) return;
 
   if (spinner) spinner.classList.remove("hidden");
-  if (badge) badge.textContent = symbol;
-
   const cleanSym = String(symbol || "SOLUSDT").replace('/', '').replace(':', '').toUpperCase();
+  if (badge) badge.textContent = cleanSym;
+
+  // Tự động đồng bộ dropdown chọn mã
+  if (symSelect) {
+    let exists = false;
+    for (let i = 0; i < symSelect.options.length; i++) {
+      if (symSelect.options[i].value === cleanSym) {
+        exists = true;
+        break;
+      }
+    }
+    if (!exists) {
+      const opt = document.createElement("option");
+      opt.value = cleanSym;
+      opt.textContent = `${cleanSym} (Đang xem)`;
+      symSelect.appendChild(opt);
+    }
+    symSelect.value = cleanSym;
+  }
 
   try {
     if (!window.LightweightCharts) {
@@ -3797,11 +3914,12 @@ async function loadPortfolioChart(symbol, interval) {
       const high = parseFloat(k[2]);
       const low = parseFloat(k[3]);
       const close = parseFloat(k[4]);
+      const vol = parseFloat(k[5]);
       lastClose = close;
 
       candleData.push({ time, open, high, low, close });
 
-      const range = (high - low) || 1e-6;
+      const range = (high - low) || 1e-9;
       const upperWick = (high - Math.max(open, close)) / range;
       const lowerWick = (Math.min(open, close) - low) / range;
       const body = Math.abs(close - open) / range;
@@ -3863,7 +3981,8 @@ async function loadPortfolioChart(symbol, interval) {
         horzLine: { color: 'rgba(16, 185, 129, 0.4)', width: 1, style: 2 }
       },
       rightPriceScale: {
-        borderColor: 'rgba(255, 255, 255, 0.1)'
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        autoScale: true
       },
       timeScale: {
         borderColor: 'rgba(255, 255, 255, 0.1)',
@@ -3872,13 +3991,16 @@ async function loadPortfolioChart(symbol, interval) {
       }
     });
 
+    const smartFormat = getSmartPriceFormat(lastClose);
+
     portfolioCandleSeries = portfolioChart.addCandlestickSeries({
       upColor: '#10b981',
       downColor: '#f43f5e',
       borderUpColor: '#10b981',
       borderDownColor: '#f43f5e',
       wickUpColor: '#10b981',
-      wickDownColor: '#f43f5e'
+      wickDownColor: '#f43f5e',
+      priceFormat: smartFormat
     });
 
     portfolioCandleSeries.setData(candleData);
@@ -3886,7 +4008,7 @@ async function loadPortfolioChart(symbol, interval) {
       portfolioCandleSeries.setMarkers(markers);
     }
 
-    const curP = lastClose || 100;
+    const curP = lastClose || 1.0;
     const entryP = curP * 0.998;
     const slP = curP * 0.985;
     const tp1P = curP * 1.024;
@@ -3933,10 +4055,10 @@ async function loadPortfolioChart(symbol, interval) {
     const chartTpVal = document.getElementById("chartTpVal");
     const chartTrailingVal = document.getElementById("chartTrailingVal");
 
-    if (chartEntryVal) chartEntryVal.textContent = `${entryP.toFixed(2)}$`;
-    if (chartSlVal) chartSlVal.textContent = `${slP.toFixed(2)}$ (-1.5%)`;
-    if (chartTpVal) chartTpVal.textContent = `${tp1P.toFixed(2)}$ (+2.4%)`;
-    if (chartTrailingVal) chartTrailingVal.textContent = `${trailingP.toFixed(2)}$`;
+    if (chartEntryVal) chartEntryVal.textContent = `${formatSmartPrice(entryP)}$`;
+    if (chartSlVal) chartSlVal.textContent = `${formatSmartPrice(slP)}$ (-1.5%)`;
+    if (chartTpVal) chartTpVal.textContent = `${formatSmartPrice(tp1P)}$ (+2.4%)`;
+    if (chartTrailingVal) chartTrailingVal.textContent = `${formatSmartPrice(trailingP)}$`;
 
     window.addEventListener('resize', () => {
       if (portfolioChart && container) {
@@ -4036,13 +4158,13 @@ async function renderUserHoldings() {
     rows += `
       <tr class="hover:bg-white/[0.02] transition">
         <td class="py-3 px-4 font-bold text-white">${h.symbol}</td>
-        <td class="py-3 px-4 text-gray-400">$${h.entryPrice.toLocaleString()}</td>
-        <td class="py-3 px-4 text-white font-bold">$${curPrice.toLocaleString()}</td>
+        <td class="py-3 px-4 text-gray-400">$${formatSmartPrice(h.entryPrice)}</td>
+        <td class="py-3 px-4 text-white font-bold">$${formatSmartPrice(curPrice)}</td>
         <td class="py-3 px-4 font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}">
           ${isProfit ? '+' : ''}${pnlDollar.toFixed(2)}$ (${isProfit ? '+' : ''}${pnlPct.toFixed(2)}%)
         </td>
         <td class="py-3 px-4 text-purple-300 font-bold bg-purple-950/20">
-          $${trailingStopPrice.toFixed(2)}
+          $${formatSmartPrice(trailingStopPrice)}
         </td>
         <td class="py-3 px-4">${strategyBadge}</td>
         <td class="py-3 px-4 text-center">
