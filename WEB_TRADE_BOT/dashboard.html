@@ -1200,6 +1200,16 @@
 
           <!-- Vùng Vẽ Biểu Đồ TradingView Lightweight Charts -->
           <div id="portfolioChartContainer" class="w-full rounded-xl overflow-hidden border border-white/10 bg-black/80 relative" style="height: 420px;">
+            <!-- HUD Thông Tin Nến & Số Lần Quét Lịch Sử Quá Khứ -->
+            <div id="chartHoverHud" class="absolute top-2 left-3 z-10 px-3 py-1.5 rounded-lg bg-black/85 border border-white/15 text-xs font-mono text-gray-300 pointer-events-none flex flex-wrap items-center gap-3 backdrop-blur-md shadow-lg">
+              <span>📅 <span id="hudTime" class="text-white font-bold">Di chuột lên nến để soi lịch sử quét quá khứ</span></span>
+              <span id="hudMetrics" class="hidden sm:inline-flex items-center gap-3">
+                <span>🎯 Tần suất quét: <strong id="hudScanCount" class="text-cyan-400">--</strong></span>
+                <span>🧠 AI Thẩm định: <strong id="hudAiIntent" class="text-amber-300">--</strong></span>
+                <span>📊 Khối lượng: <strong id="hudVolume" class="text-emerald-400">--</strong></span>
+              </span>
+            </div>
+
             <div id="chartLoadingSpinner" class="absolute inset-0 flex items-center justify-center bg-black/60 z-20">
               <span class="inline-flex items-center gap-2 text-xs text-emerald-400 font-mono">
                 <i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Đang tải dữ liệu nến Binance...
@@ -1592,7 +1602,7 @@
   <!-- App JavaScript Modules -->
     <!-- TradingView Lightweight Charts (Standalone Local + CDN Fallback) -->
   <script src="js/lightweight-charts.standalone.production.js"></script>
-  <script type="module" src="js/dashboard_v2.js?v=20261106_instant_cmd"></script>
+  <script type="module" src="js/dashboard_v2.js?v=20261115_scan_hud_v3"></script>
   <script>
     lucide.createIcons();
   </script>

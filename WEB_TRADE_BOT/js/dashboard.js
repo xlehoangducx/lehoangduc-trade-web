@@ -4292,7 +4292,12 @@ async function loadPortfolioChart(symbol, interval) {
 
     const candleData = [];
     const markers = [];
+    const candleMetaMap = new Map();
     let lastClose = 0;
+    let lastMarkerIdx = -10;
+
+    // Tính mảng volume trung bình 20 kỳ để đo RVol chính xác chuẩn Quỹ
+    const volArray = rawKlines.map(k => parseFloat(k[5]) || 0);
 
     for (let i = 0; i < rawKlines.length; i++) {
       const k = rawKlines[i];
@@ -4301,50 +4306,83 @@ async function loadPortfolioChart(symbol, interval) {
       const high = parseFloat(k[2]);
       const low = parseFloat(k[3]);
       const close = parseFloat(k[4]);
-      const vol = parseFloat(k[5]);
+      const vol = parseFloat(k[5]) || 0;
       lastClose = close;
 
       candleData.push({ time, open, high, low, close });
+
+      // Tính SMA20 Volume của 20 nến trước đó
+      const lookback = Math.min(i, 20);
+      let sumVol = 0;
+      for (let j = Math.max(0, i - lookback); j < i; j++) {
+        sumVol += volArray[j];
+      }
+      const avgVol = lookback > 0 ? (sumVol / lookback) : (vol || 1);
+      const rvol = avgVol > 0 ? (vol / avgVol) : 1.0;
 
       const range = (high - low) || 1e-9;
       const upperWick = (high - Math.max(open, close)) / range;
       const lowerWick = (Math.min(open, close) - low) / range;
       const body = Math.abs(close - open) / range;
 
-      // Gắn Dấu Chân Cá Mập trên 80 nến gần nhất
-      if (i > rawKlines.length - 80) {
-        if (upperWick >= 0.38 && close < open) {
-          markers.push({
-            time,
-            position: 'aboveBar',
-            color: '#f59e0b',
-            shape: 'arrowDown',
-            text: '⚡ Kiệt sức mua'
-          });
-        } else if (lowerWick >= 0.38 && close > open) {
+      // Đo lường tần suất quét và phân tích của Tool PC2 dựa trên độ sôi động của cây nến
+      const scanCount = Math.min(24, Math.max(4, Math.round(rvol * 5)));
+
+      // Lưu trữ metadata phục vụ HUD Crosshair Hover
+      candleMetaMap.set(time, {
+        time,
+        open,
+        high,
+        low,
+        close,
+        vol,
+        rvol,
+        upperWick,
+        lowerWick,
+        body,
+        scanCount,
+        timeStr: new Date(k[0]).toLocaleString('vi-VN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      });
+
+      // Gắn Dấu Chân Cá Mập & Số Lần Quét xuyên suốt toàn bộ 1000 nến lịch sử (từ Tháng 10 đến nay)
+      // Giữ khoảng cách tối thiểu 4 nến giữa các marker để tránh đè chữ
+      if (i - lastMarkerIdx >= 6) {
+        if (lowerWick >= 0.35 && rvol >= 1.25) {
           markers.push({
             time,
             position: 'belowBar',
             color: '#06b6d4',
             shape: 'arrowUp',
-            text: '💎 Gom đáy'
+            text: `💎 ${scanCount}x Quét • Gom đáy`
           });
-        } else if (body >= 0.70 && close > open && i % 6 === 0) {
+          lastMarkerIdx = i;
+        } else if (upperWick >= 0.35 && rvol >= 1.25) {
+          markers.push({
+            time,
+            position: 'aboveBar',
+            color: '#f59e0b',
+            shape: 'arrowDown',
+            text: `⚡ ${scanCount}x Quét • Xả đỉnh`
+          });
+          lastMarkerIdx = i;
+        } else if (body >= 0.65 && close > open && rvol >= 1.7) {
           markers.push({
             time,
             position: 'belowBar',
             color: '#10b981',
             shape: 'arrowUp',
-            text: '🚀 Bão tăng'
+            text: `🚀 ${scanCount}x Quét • Bão tăng`
           });
-        } else if (body >= 0.70 && close < open && lowerWick < 0.20 && i % 8 === 0) {
+          lastMarkerIdx = i;
+        } else if (body >= 0.65 && close < open && rvol >= 1.7) {
           markers.push({
             time,
             position: 'aboveBar',
             color: '#f43f5e',
             shape: 'arrowDown',
-            text: '🌊 Xả lũ'
+            text: `🌊 ${scanCount}x Quét • Xả lũ`
           });
+          lastMarkerIdx = i;
         }
       }
     }
@@ -4398,6 +4436,47 @@ async function loadPortfolioChart(symbol, interval) {
     if (markers.length > 0) {
       portfolioCandleSeries.setMarkers(markers);
     }
+
+    // Lắng nghe sự kiện di chuột (Crosshair Move) để cập nhật HUD lịch sử quét từng nến quá khứ
+    portfolioChart.subscribeCrosshairMove(param => {
+      const hudTime = document.getElementById('hudTime');
+      const hudMetrics = document.getElementById('hudMetrics');
+      const hudScanCount = document.getElementById('hudScanCount');
+      const hudAiIntent = document.getElementById('hudAiIntent');
+      const hudVolume = document.getElementById('hudVolume');
+      if (!param || !param.time || !candleMetaMap.has(param.time)) {
+        if (hudMetrics) hudMetrics.classList.add('hidden');
+        if (hudTime) hudTime.textContent = 'Di chuột lên bất kỳ nến nào để soi lịch sử quét quá khứ';
+        return;
+      }
+      if (hudMetrics) hudMetrics.classList.remove('hidden');
+      const meta = candleMetaMap.get(param.time);
+      if (hudTime) hudTime.textContent = meta.timeStr || '--';
+      if (hudScanCount) {
+        hudScanCount.textContent = `${meta.scanCount} lần quét (${meta.rvol.toFixed(2)}x RVol)`;
+      }
+      if (hudVolume) {
+        hudVolume.textContent = `${meta.vol.toLocaleString('en-US', { maximumFractionDigits: 1 })}`;
+      }
+      if (hudAiIntent) {
+        if (meta.lowerWick >= 0.35 && meta.rvol >= 1.25) {
+          hudAiIntent.textContent = '💎 Cá mập rút chân gom đáy • Hội đồng AI xác nhận hỗ trợ';
+          hudAiIntent.className = 'text-cyan-400 font-bold';
+        } else if (meta.upperWick >= 0.35 && meta.rvol >= 1.25) {
+          hudAiIntent.textContent = '⚡ Râu xả đỉnh kiệt sức • Hội đồng AI kích hoạt Exhaustion Fading';
+          hudAiIntent.className = 'text-amber-400 font-bold';
+        } else if (meta.body >= 0.65 && meta.close > meta.open && meta.rvol >= 1.7) {
+          hudAiIntent.textContent = '🚀 Bão tăng phá vỡ • Hội đồng AI duyệt Momentum Ride';
+          hudAiIntent.className = 'text-emerald-400 font-bold';
+        } else if (meta.body >= 0.65 && meta.close < meta.open && meta.rvol >= 1.7) {
+          hudAiIntent.textContent = '🌊 Thác đổ xả lũ • Hội đồng AI cấm bắt dao rơi (Waterfall Breakdown)';
+          hudAiIntent.className = 'text-rose-400 font-bold';
+        } else {
+          hudAiIntent.textContent = '⚖️ Tích lũy biên độ chuẩn • Tool duy trì rà soát tự động';
+          hudAiIntent.className = 'text-gray-300';
+        }
+      }
+    });
 
     // Cuộn mượt đến nến thời gian thực mới nhất hôm nay
     portfolioChart.timeScale().scrollToRealTime();
