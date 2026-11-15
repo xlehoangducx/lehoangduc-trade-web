@@ -4306,12 +4306,14 @@ async function loadPortfolioChart(symbol, interval) {
 
     const candleData = [];
     const markers = [];
+    const trajectoryData = [];
     const candleMetaMap = new Map();
     let lastClose = 0;
     let lastMarkerIdx = -10;
     let histWinCount = 0;
     let histLossCount = 0;
     let histActiveCount = 0;
+    let emaVal = 0;
 
     // Tính mảng volume trung bình 20 kỳ để đo RVol chính xác chuẩn Quỹ
     const volArray = rawKlines.map(k => parseFloat(k[5]) || 0);
@@ -4337,6 +4339,12 @@ async function loadPortfolioChart(symbol, interval) {
       const avgVol = lookback > 0 ? (sumVol / lookback) : (vol || 1);
       const rvol = avgVol > 0 ? (vol / avgVol) : 1.0;
 
+      // Tính Đường Chỉ Báo Cấu Trúc Lượng Tử AI (AI Quantum Trajectory) xuyên suốt từ quá khứ
+      const baseAlpha = 2 / (21 + 1);
+      const adaptiveAlpha = Math.min(0.25, Math.max(0.06, baseAlpha * Math.sqrt(rvol)));
+      emaVal = (i === 0) ? close : (close * adaptiveAlpha + emaVal * (1 - adaptiveAlpha));
+      trajectoryData.push({ time, value: emaVal });
+
       const range = (high - low) || 1e-9;
       const upperWick = (high - Math.max(open, close)) / range;
       const lowerWick = (Math.min(open, close) - low) / range;
@@ -4358,6 +4366,7 @@ async function loadPortfolioChart(symbol, interval) {
         lowerWick,
         body,
         scanCount,
+        aiTrajVal: emaVal,
         timeStr: new Date(k[0]).toLocaleString('vi-VN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })
       });
 
@@ -4523,6 +4532,16 @@ async function loadPortfolioChart(symbol, interval) {
       portfolioCandleSeries.setMarkers(markers);
     }
 
+    // Vẽ Đường Chỉ Báo Cấu Trúc Lượng Tử AI (AI Quantum Trajectory Baseline) Xuyên Suốt Toàn Bộ Quá Khứ ➔ Hiện Tại
+    const aiTrajectorySeries = portfolioChart.addLineSeries({
+      color: isVetoed ? '#a855f7' : (isShort ? '#f59e0b' : '#06b6d4'),
+      lineWidth: 2,
+      lineStyle: LightweightCharts.LineStyle.Solid,
+      priceFormat: smartFormat,
+      title: isVetoed ? '🟣 ĐƯỜNG CẤU TRÚC AI (VETO)' : (isShort ? '⚡ ĐƯỜNG CẤU TRÚC AI (SHORT)' : '🔮 ĐƯỜNG CẤU TRÚC AI (LONG)')
+    });
+    aiTrajectorySeries.setData(trajectoryData);
+
     // Lắng nghe sự kiện di chuột (Crosshair Move) để cập nhật HUD lịch sử quét từng nến quá khứ
     portfolioChart.subscribeCrosshairMove(param => {
       const hudTime = document.getElementById('hudTime');
@@ -4551,7 +4570,7 @@ async function loadPortfolioChart(symbol, interval) {
       const meta = candleMetaMap.get(param.time);
       if (hudTime) hudTime.textContent = meta.timeStr || '--';
       if (hudScanCount) {
-        hudScanCount.textContent = `${meta.scanCount} lần quét (${meta.rvol.toFixed(2)}x RVol)`;
+        hudScanCount.textContent = `${meta.scanCount} lần quét (${meta.rvol.toFixed(2)}x RVol) • Đường AI: ${formatSmartPrice(meta.aiTrajVal || meta.close)}$`;
       }
       if (hudVolume) {
         hudVolume.textContent = `${meta.vol.toLocaleString('en-US', { maximumFractionDigits: 1 })}`;
@@ -4671,6 +4690,8 @@ async function loadPortfolioChart(symbol, interval) {
     if (chartSlVal) chartSlVal.textContent = isShort ? `${formatSmartPrice(slP)}$ (+1.5%)` : `${formatSmartPrice(slP)}$ (-1.5%)`;
     if (chartTpVal) chartTpVal.textContent = isShort ? `${formatSmartPrice(tp1P)}$ (-2.4%)` : `${formatSmartPrice(tp1P)}$ (+2.4%)`;
     if (chartTrailingVal) chartTrailingVal.textContent = `${formatSmartPrice(trailingP)}$`;
+    const chartAiLineVal = document.getElementById("chartAiLineVal");
+    if (chartAiLineVal) chartAiLineVal.textContent = `${formatSmartPrice(emaVal)}$`;
 
     const updateAdvice = (price) => {
       if (!adviceBadge) return;
@@ -4850,6 +4871,15 @@ async function loadPortfolioChart(symbol, interval) {
               low: parseFloat(lastK[3]),
               close: liveClose
             });
+            if (aiTrajectorySeries && trajectoryData.length > 0) {
+              const liveEma = liveClose * 0.15 + emaVal * 0.85;
+              aiTrajectorySeries.update({
+                time: Math.floor(lastK[0] / 1000),
+                value: liveEma
+              });
+              const chartAiLineValLive = document.getElementById("chartAiLineVal");
+              if (chartAiLineValLive) chartAiLineValLive.textContent = `${formatSmartPrice(liveEma)}$`;
+            }
             updateAdvice(liveClose);
           }
         }
