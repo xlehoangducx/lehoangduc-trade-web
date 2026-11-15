@@ -4258,8 +4258,8 @@ async function loadPortfolioChart(symbol, interval) {
       return;
     }
 
-    // Nạp đầy đủ 600 nến (thay vì 120) để hiển thị trọn vẹn nhiều ngày/tuần lịch sử
-    const url = `https://fapi.binance.com/fapi/v1/klines?symbol=${cleanSym}&interval=${interval}&limit=600`;
+    // Nạp đầy đủ 1000 nến để hiển thị trọn vẹn nhiều ngày/tuần/tháng lịch sử
+    const url = `https://fapi.binance.com/fapi/v1/klines?symbol=${cleanSym}&interval=${interval}&limit=1000`;
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Binance API error: ${res.status}`);
     const rawKlines = await res.json();
@@ -4422,11 +4422,27 @@ async function loadPortfolioChart(symbol, interval) {
     const chartSlVal = document.getElementById("chartSlVal");
     const chartTpVal = document.getElementById("chartTpVal");
     const chartTrailingVal = document.getElementById("chartTrailingVal");
+    const adviceBadge = document.getElementById("chartActionAdviceBadge");
 
     if (chartEntryVal) chartEntryVal.textContent = `${formatSmartPrice(entryP)}$`;
     if (chartSlVal) chartSlVal.textContent = `${formatSmartPrice(slP)}$ (-1.5%)`;
     if (chartTpVal) chartTpVal.textContent = `${formatSmartPrice(tp1P)}$ (+2.4%)`;
     if (chartTrailingVal) chartTrailingVal.textContent = `${formatSmartPrice(trailingP)}$`;
+
+    const updateAdvice = (price) => {
+      if (!adviceBadge) return;
+      if (price > entryP * 1.004) {
+        adviceBadge.className = "px-2.5 py-0.5 rounded text-[11px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 font-mono";
+        adviceBadge.textContent = "⏳ Giá đang cao hơn vùng gom • Đặt Limit chờ hồi (CẤM FOMO Mua Đuổi)";
+      } else if (price >= slP && price <= entryP * 1.004) {
+        adviceBadge.className = "px-2.5 py-0.5 rounded text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono";
+        adviceBadge.textContent = "🟢 Đang trong vùng gom giá hời • Có thể đặt lệnh";
+      } else {
+        adviceBadge.className = "px-2.5 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 font-mono";
+        adviceBadge.textContent = "🛑 Thủng đáy cắt lỗ • Đứng ngoài tuyệt đối";
+      }
+    };
+    updateAdvice(curP);
 
     // Cập nhật nến Live Ticker thời gian thực mỗi 2.5 giây
     window._portfolioLiveTickerInterval = setInterval(async () => {
@@ -4437,13 +4453,15 @@ async function loadPortfolioChart(symbol, interval) {
           const tKlines = await tickRes.json();
           if (tKlines && tKlines.length > 0) {
             const lastK = tKlines[tKlines.length - 1];
+            const liveClose = parseFloat(lastK[4]);
             portfolioCandleSeries.update({
               time: Math.floor(lastK[0] / 1000),
               open: parseFloat(lastK[1]),
               high: parseFloat(lastK[2]),
               low: parseFloat(lastK[3]),
-              close: parseFloat(lastK[4])
+              close: liveClose
             });
+            updateAdvice(liveClose);
           }
         }
       } catch (tickErr) {}
