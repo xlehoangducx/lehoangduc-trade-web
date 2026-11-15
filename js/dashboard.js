@@ -4559,6 +4559,14 @@ async function loadPortfolioChart(symbol, interval) {
       }
     }
 
+    if (portfolioChart && typeof portfolioChart.remove === 'function') {
+      try { portfolioChart.remove(); } catch (e) {}
+      portfolioChart = null;
+    }
+    window._activeChartMarkers = null;
+    window._activeAiTrajectorySeries = null;
+    window._activeForecastSeries = null;
+
     container.innerHTML = "";
     portfolioChart = LightweightCharts.createChart(container, {
       width: container.clientWidth || 800,
@@ -4685,6 +4693,10 @@ async function loadPortfolioChart(symbol, interval) {
     });
 
     portfolioCandleSeries.setData(candleData);
+    window._activeChartMarkers = markers;
+    if (window._chartVisibility.markers && markers.length > 0) {
+      portfolioCandleSeries.setMarkers(markers);
+    }
 
     // Vẽ Đường Chỉ Báo Cấu Trúc Neo Trục Entry AI Xuyên Suốt Toàn Bộ Quá Khứ ➔ Hiện Tại
     const aiTrajectorySeries = portfolioChart.addLineSeries({
@@ -4695,9 +4707,7 @@ async function loadPortfolioChart(symbol, interval) {
       title: isVetoed ? '🟣 ĐƯỜNG ENTRY AI (VETO)' : (isShort ? '⚡ ĐƯỜNG ENTRY AI (SHORT)' : '🔮 ĐƯỜNG ENTRY AI (LONG)')
     });
     aiTrajectorySeries.setData(trajectoryData);
-
-    // Lưu trữ tham chiếu toàn cục để điều khiển Ẩn/Hiện bằng nút bấm
-    window._activeChartMarkers = markers;
+    aiTrajectorySeries.applyOptions({ visible: window._chartVisibility.aiLine });
     window._activeAiTrajectorySeries = aiTrajectorySeries;
 
     // Lắng nghe sự kiện di chuột (Crosshair Move) để cập nhật HUD lịch sử quét từng nến quá khứ
@@ -4831,18 +4841,6 @@ async function loadPortfolioChart(symbol, interval) {
     const chartAiLineVal = document.getElementById("chartAiLineVal");
     if (chartAiLineVal) chartAiLineVal.textContent = `${formatSmartPrice(entryP)}$`;
 
-    // Khởi tạo và đồng bộ trạng thái các nút Ẩn/Hiện Tín hiệu & Đường AI
-    if (portfolioCandleSeries && window._activeChartMarkers) {
-      portfolioCandleSeries.setMarkers(window._chartVisibility.markers ? window._activeChartMarkers : []);
-    }
-    if (aiTrajectorySeries) {
-      aiTrajectorySeries.applyOptions({ visible: window._chartVisibility.aiLine });
-    }
-    if (window._activeForecastSeries) {
-      window._activeForecastSeries.applyOptions({ visible: window._chartVisibility.forecast });
-    }
-    setupChartVisibilityButtons();
-
     const updateAdvice = (price) => {
       if (!adviceBadge) return;
       if (isVetoed) {
@@ -4889,7 +4887,6 @@ async function loadPortfolioChart(symbol, interval) {
         priceFormat: smartFormat,
         title: isVetoed ? '🛑 ĐƯỜNG CẢNH BÁO VETO' : (isShort ? '⚡ ĐƯỜNG DỰ PHÓNG SHORT' : '🔮 ĐƯỜNG DỰ PHÓNG AI')
       });
-      window._activeForecastSeries = forecastSeries;
 
       if (isVetoed) {
         forecastSeries.setData([
@@ -4901,7 +4898,7 @@ async function loadPortfolioChart(symbol, interval) {
         ]);
       } else if (isShort) {
         forecastSeries.setData([
-          { time: lastTime, value: curP },
+          { time: lastTime, value: entryP },
           { time: lastTime + stepSeconds * 1, value: entryP },
           { time: lastTime + stepSeconds * 2, value: entryP * 0.992 },
           { time: lastTime + stepSeconds * 3, value: entryP * 0.984 },
@@ -4909,14 +4906,19 @@ async function loadPortfolioChart(symbol, interval) {
         ]);
       } else {
         forecastSeries.setData([
-          { time: lastTime, value: curP },
+          { time: lastTime, value: entryP },
           { time: lastTime + stepSeconds * 1, value: entryP },
           { time: lastTime + stepSeconds * 2, value: entryP * 1.008 },
           { time: lastTime + stepSeconds * 3, value: entryP * 1.016 },
           { time: lastTime + stepSeconds * 4, value: tp1P }
         ]);
       }
+      forecastSeries.applyOptions({ visible: window._chartVisibility.forecast });
+      window._activeForecastSeries = forecastSeries;
     }
+
+    // Thiết lập và đồng bộ trạng thái các nút Ẩn/Hiện Tín hiệu & Đường AI
+    setupChartVisibilityButtons();
 
     // Cập nhật Bảng Dự Đoán Định Lượng & Chỉ Dẫn Hành Động
     const predSymbolBadge = document.getElementById("predSymbolBadge");
@@ -5023,13 +5025,13 @@ async function loadPortfolioChart(symbol, interval) {
               close: liveClose
             });
             if (aiTrajectorySeries && trajectoryData.length > 0) {
-              const liveEma = liveClose * 0.15 + emaVal * 0.85;
+              const liveLine = liveClose * 0.15 + entryP * 0.85;
               aiTrajectorySeries.update({
                 time: Math.floor(lastK[0] / 1000),
-                value: liveEma
+                value: liveLine
               });
               const chartAiLineValLive = document.getElementById("chartAiLineVal");
-              if (chartAiLineValLive) chartAiLineValLive.textContent = `${formatSmartPrice(liveEma)}$`;
+              if (chartAiLineValLive) chartAiLineValLive.textContent = `${formatSmartPrice(liveLine)}$`;
             }
             updateAdvice(liveClose);
           }
@@ -5037,11 +5039,14 @@ async function loadPortfolioChart(symbol, interval) {
       } catch (tickErr) {}
     }, 2500);
 
-    window.addEventListener('resize', () => {
-      if (portfolioChart && container) {
-        portfolioChart.applyOptions({ width: container.clientWidth });
-      }
-    });
+    if (!window._portfolioChartResizeBound) {
+      window._portfolioChartResizeBound = true;
+      window.addEventListener('resize', () => {
+        if (portfolioChart && container) {
+          portfolioChart.applyOptions({ width: container.clientWidth });
+        }
+      });
+    }
 
   } catch (err) {
     console.error("loadPortfolioChart error:", err);
